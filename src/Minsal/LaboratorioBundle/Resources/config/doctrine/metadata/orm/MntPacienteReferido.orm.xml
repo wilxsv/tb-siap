@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntPacienteReferido" table="mnt_paciente_referido">
+    <indexes>
+      <index name="IDX_29EB2C67A7194A90" columns="id_sexo"/>
+      <index name="IDX_29EB2C676B3CA4B" columns="id_user"/>
+      <index name="IDX_29EB2C67AC39DE56" columns="id_user_mod"/>
+      <index name="IDX_29EB2C67220BCD31" columns="id_area_cotizacion"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="primerNombre" type="string" column="primer_nombre" length="25" nullable="false"/>
+    <field name="segundoNombre" type="string" column="segundo_nombre" length="25" nullable="true"/>
+    <field name="tercerNombre" type="string" column="tercer_nombre" length="25" nullable="true"/>
+    <field name="primerApellido" type="string" column="primer_apellido" length="25" nullable="false"/>
+    <field name="segundoApellido" type="string" column="segundo_apellido" length="25" nullable="true"/>
+    <field name="apellidoCasada" type="string" column="apellido_casada" length="25" nullable="true"/>
+    <field name="fechaNacimiento" type="date" column="fecha_nacimiento" nullable="true"/>
+    <field name="nombreResponsable" type="string" column="nombre_responsable" length="80" nullable="true"/>
+    <field name="nombreMadre" type="string" column="nombre_madre" length="80" nullable="true"/>
+    <field name="nombrePadre" type="string" column="nombre_padre" length="80" nullable="true"/>
+    <field name="fechaRegistro" type="datetime" column="fecha_registro" nullable="true"/>
+    <field name="fechaMod" type="datetime" column="fecha_mod" nullable="true"/>
+    <field name="numeroAfiliacion" type="string" column="numero_afiliacion" length="12" nullable="true"/>
+    <field name="asegurado" type="boolean" column="asegurado" nullable="true"/>
+    <many-to-one field="idAreaCotizacion" target-entity="CtlAreaCotizante">
+      <join-columns>
+        <join-column name="id_area_cotizacion" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idUserMod" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="id_user_mod" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idUser" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="id_user" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idSexo" target-entity="CtlSexo">
+      <join-columns>
+        <join-column name="id_sexo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

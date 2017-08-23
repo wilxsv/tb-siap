@@ -1,0 +1,38 @@
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+<table class="vista_paciente" border="0" width="100%">
+    <tr class="titulo_vista">
+        <td colspan="4"><b>Identificación del Paciente</b></td>
+    </tr>
+    <tr class="dat_paciente_content">
+        <td ><label>Número Expediente:</label></td>
+        <td style="font-size: 16pt;">
+            <b>{{expediente.numero}}</b>
+        </td>
+        <td ><label>Fecha Actual:</label></td>
+        <td >{{ "now" | date ("d-m-Y") }}</td>
+    </tr>
+    <tr>
+        <td><label>Nombre:</label> </td>
+        <td colspan="3"> {{expediente.getIdPaciente().getNombrePaciente()}}   </td>
+    </tr>
+    <tr class="dat_paciente_content">
+        <td><label id="edad_paciente" value="{{edad}}">Edad:</label></td><td>{{edad}}</td>
+        <td><label id="sexo_paciente" value="{{expediente.getIdPaciente().getIdSexo().getAbreviatura()}}">Sexo:</label></td><td>{{expediente.getIdPaciente().idSexo}}</td>
+    </tr>
+    <tr class="dat_paciente_content">
+        <td><label>Conocido por:</label></td><td>{{expediente.getIdPaciente().getConocidoPor()}}</td>
+        <td><label>Documento Identidad:</label></td><td>{{expediente.getIdPaciente().getIdDocPaciente()}}{{expediente.getIdPaciente().getNumeroDocIdePaciente() ? (': ' ~ expediente.getIdPaciente().getNumeroDocIdePaciente() ) : ''}}</td>
+    </tr>
+    <tr>
+        <td><label>Dirección:</label> </td>
+        <td colspan="3"> {{expediente.getIdPaciente().getDireccion()}}</td>
+    </tr>
+    <tr class="dat_paciente_content">
+        <td><label>Departamento Domicilio:</label></td><td>{{expediente.getIdPaciente().getIdDepartamentoDomicilio()}}</td>
+        <td><label>Municipio Domicilio:</label></td><td>{{expediente.getIdPaciente().getIdMunicipioDomicilio()}}</td>
+    </tr>
+</table>
+<br/>

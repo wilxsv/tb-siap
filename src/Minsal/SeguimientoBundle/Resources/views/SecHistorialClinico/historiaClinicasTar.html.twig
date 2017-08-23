@@ -1,0 +1,166 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+{% set url_parameters = { '_external': 'true', '_modulo': 'seguimiento_clinico', 'tipoPacPertenencia': 'local' } %}
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+    </script>
+    <script type="text/javascript">
+
+        jQuery(document).ready(function ($) {
+
+            var tipoDiag1 = $('select[id$="_i375_s138"]');
+            var tipoDiag2 = $('select[id$="_i379_s138"]');
+            var tipoDiag3 = $('select[id$="_i383_s138"]');
+
+            var diag1 = $('input[id$="_i376_s138"]');
+            var diag2 = $('input[id$="_i380_s138"]');
+            var diag3 = $('input[id$="_i384_s138"]');
+
+            var espec1 = $('textarea[id$="_i377_s138"]');
+
+            tipoDiag1.select2("val", 1);
+            tipoDiag2.select2("val", 2);
+            tipoDiag3.select2("val", 3);
+
+            tipoDiag1.select2("readonly", true);
+            tipoDiag2.select2("readonly", true);
+            tipoDiag3.select2("readonly", true);
+
+            var labelDiag1 = $('label[for$="_i376_s138"]');
+            var labelDiag1e = $('label[for$="_i377_s138"]');
+            labelDiag1.append('*');
+            labelDiag1e.append('*');
+
+            initDiagnosticoSearch(diag1, 'Seleccione el Diagnostico Principal...');
+            initDiagnosticoSearch(diag2, 'Seleccione el Diagnostico Secundario...');
+            initDiagnosticoSearch(diag3, 'Seleccione la Causa Externa...');
+
+            $('form').on('submit', function (e) {
+                if (!diag1.select2('val')) {
+                    showDialogMsg('Establecer Diagnostico Principal', '<span class="glyphicon glyphicon-remove"></span> Debe establecer el Diagnostico Principal para continuar.', 'dialog-error');
+                    e.preventDefault();
+                    diag1.focus();
+                }
+                else if (espec1.val() == '') {
+                    showDialogMsg('Brinde una Observación', 'Debe agregar alguna especificación u observación sobre el Diagnostico Principal.', 'dialog-error');
+                    e.preventDefault();
+                    espec1.focus();
+                }
+            });
+
+            $("#generar-ficha").on("click", function () {
+
+                    var parameters = {{ url_parameters|json_encode|raw }};
+                    var winParams = [];
+                    var path = "{{ url('admin_minsal_seguimiento_tarsectar_createespe',{'idhistoria':idHistorialClinico}) }}";
+
+                    winParams['method'] = "post";
+                    winParams['action'] = path;
+                    winParams['target'] = "Ficha Tar";
+                    winParams['parameters'] = parameters;
+                    openPostPopUpWindows(winParams);
+
+              });
+
+
+        });//fin document ready
+
+        function repoFormatSelection(repo) {
+            console.log(repo);
+            /*if(repo.text.length > 0)
+             return repo.data1[0].text;
+             else*/
+            return repo.data1[0].text;
+        }
+
+
+
+        //Calcula indice de masa corporal
+
+
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {# {{ form_start(form) }} #}
+
+    {% block sonata_tab_content %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-success">
+                    <div class="box-header">
+                        <h4 class="box-title">
+                        </h4>
+                    </div>
+                    <div class="box-body">
+                        {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+
+                        {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+<table class="vista_paciente padding-table" border="0" width="100%">
+                            <tr class="titulo_vista">
+                                <td colspan="4"><b>Ficha TAR</b></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">  <div class="col-md-3" align="center"></div>
+                                    <div class="col-md-3" align="center">
+                                        <button type="button" class="btn btn-primary" id="generar-ficha" style="margin-left: 25px;"><span class="fa fa-plus-square"></span> Generar</button>
+                                    </div>
+                                    <div class="col-md-3" align="center">
+                                       <!-- <button type="button" class="btn btn-primary" id="ver-ficha" style="margin-left: 25px;"><span class="fa fa-list-alt"></span> Ver</button>-->
+                                    </div> <div class="col-md-3" align="center"></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="sonata-ba-collapsed-fields">
+                            {{ form(form) }}
+                            {# {% for item in form.children %}
+                                {% if item.vars.name == 'i375_s112' or item.vars.name == 'i379_s112' or item.vars.name == 'i383_s112' %}
+                                    <div class="row-fluid">
+                                        <div style="">
+                                            {{ form_label( item ) }}
+                                            {{ form_errors( item) }}
+                                            {{ form_widget( item ) }}
+                                        </div>
+                                {% elseif  item.vars.name == 'i378_s112' or item.vars.name == 'i382_s112' or item.vars.name == 'i385_s112'%}
+                                        <div style="">
+                                            {{ form_label( item ) }}
+                                            {{ form_errors( item) }}
+                                            {{ form_widget( item ) }}
+                                        </div>
+                                    </div>
+                                {% elseif item.vars.name == 'i376_s112' or item.vars.name == 'i377_s112' or item.vars.name == 'i380_s112' or item.vars.name == 'i381_s112' or item.vars.name == 'i384_s112' %}
+                                    <div style="">
+                                            {{ form_label( item ) }}
+                                            {{ form_errors( item) }}
+                                            {{ form_widget( item ) }}
+                                    </div>
+                                {% else %}
+                                    {{ form_row( item ) }}
+                                {% endif %}
+                            {% endfor %} #}
+
+                            {# {{ form(form) }} #}
+                            {# {{ form(form, { 'attr': { 'class': 'form-horizontal' } }) }} #}
+                            {# {{ form_row(form) }} #}
+
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endblock %}
+
+    {# {{ form_end(form) }}
+    {{ form_rest(form) }} #}
+{% endblock %}

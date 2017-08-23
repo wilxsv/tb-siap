@@ -1,0 +1,88 @@
+{% extends "ApplicationCoreBundle:Reports:standardHtmlReports.html.twig" %}
+{# Definiendo variables globales #}
+{% set urlDefault = url('procedimientosbuildcomprobante', { 'id': id }) %}
+{% set urlTicket = url('procedimientosbuildcomprobante_ticket', { 'id': id }) %}
+
+{% if print_ticket is defined and app.session.get("_moduleSelection") in print_ticket %}
+    {% set availableTicket = true %}
+{% else %}
+    {% set availableTicket = false %}
+{% endif %}
+
+{% block title %}Comprobante de Cita{% endblock %}
+{% block javascript %}
+    {{ parent() }}
+    <!--script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $iframe = $('iframe#content-iframe');
+
+            $iframe.load(function() {
+                  this.contentWindow.print();
+            });
+        });
+    </script-->
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                var selectedPrinted = $('#printer-selection option:selected').val();
+                hideShowComprobante(selectedPrinted);
+
+                $('#printer-selection').on('change', function() {
+                    hideShowComprobante($(this).val());
+                });
+
+                function hideShowComprobante(selectedPrinted) {
+                    switch (selectedPrinted) {
+                        case 'ticket':
+                            $('#content-iframe').addClass('hidden');
+                            // $('#footer-page').addClass('hidden');
+                            $('#content-ticket').removeClass('hidden');
+                            break;
+                        default:
+                            $('#content-ticket').addClass('hidden');
+                            $('#content-iframe').removeClass('hidden');
+                            // $('#footer-page').removeClass('hidden');
+                            break;
+                    }
+                }
+            });
+        </script>
+{% endblock %}
+
+{% block stylesheet %}
+    {{ parent() }}
+    {% if availableTicket is sameas(true) %}
+        <style media="screen">
+            html, body {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="row{% if availableTicket is sameas(false) %} hidden{% endif %}">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align:center;margin-top:10px;">
+            <strong>Seleccionar Tipo de Impresi&oacute;n</strong>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align:center;">
+            <select id="printer-selection" class="form-control col-xs-12" style="width:450px;display:block;margin: 10px auto 20px auto;float:none;">
+                <option value="default" {% if availableTicket is sameas(false) %}selected{% endif %}>Impresora</option>
+                <option value="ticket" {% if availableTicket is sameas(true) %}selected{% endif %}>Ticket</option>
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            {% block iframe %}
+                <center id="content-default">
+                    <iframe id="content-ticket" src="{{ urlTicket }}" style="width:100%; height:100%;min-height: 481px;"></iframe>
+                    <iframe id="content-iframe" name="content-iframe" src="{{ urlDefault }}" scrolling="no"></iframe>
+                </center>
+            {% endblock %}
+            {% block content%}
+                {{ parent() }}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}

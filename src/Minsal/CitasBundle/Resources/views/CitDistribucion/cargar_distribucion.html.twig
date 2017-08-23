@@ -1,0 +1,65 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['aLengthMenu']= [[15, 40, 80, -1], [15, 40, 80, "Todos"]];
+            opcionesTable['bSort']=false;
+            opcionesTable['sDom']='<"top"lp>frt<"bottom"i>';
+            tablaResultados.DataTable(opcionesTable);
+            // tablaResultados.fnSort([[0,'asc'],[8,'asc']]);//ORDERNARLOS POR LA FICHA DE INICIO
+
+        });
+    </script>
+{% endblock javascripts %}
+<table id="tablaResultados" class="table table-bordered table-striped table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <td>Año</td>
+            <td>Mes</td>
+            <td>Día</td>
+            <td>Horario</td>
+            <td>Tipo de Distribución Especial</td>
+            <td>Consultorio</td>
+            <td>Primera Vez</td>
+            <td>Subsecuentes</td>
+            <td>Agregados</td>
+            <td>Médico</td>
+            <td>Estado</td>
+            <td>Acci&oacute;n</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for distribucion in distribuciones %}
+            <tr>
+                <td>{{distribucion.getYrs()}}</td>
+                <td>{{distribucion.getNombreMes()}}</td>
+                <td>{{distribucion.getDiaSemana()}}</td>
+                <td>{{distribucion.getIdRangohora()}}</td>
+                <td>{{distribucion.getIdTipoDistribucion()}}</td>
+                <td>{{distribucion.getIdConsultorio()}}</td>
+                <td>{{distribucion.getPrimera()}}</td>
+                <td>{{distribucion.getSubsecuente()}}</td>
+                <td>{{distribucion.getMaxCitasAgregadas()}}</td>
+                <td>{{distribucion.getIdEmpleado()}}</td>
+                <td>{{distribucion.getIdEstadoDistribucion()}}</td>
+                <td>
+                    {% if distribucion.getIdEstadoDistribucion()!='Cerrado' %}
+                        {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+                            {% if distribucion.getYrs() > "now"|date("Y") %}
+                                <a id="borrar" class="btn btn-sm btn-default view_link" href="{{ path('admin_minsal_citas_citdistribucion_delete',{id:distribucion.id})}}"><i class="glyphicon glyphicon-remove"></i>&nbsp; Borrar/Cerrar</a>
+                            {% elseif distribucion.getMes() >= "now"|date("m") %}
+                                <a id="borrar" class="btn btn-sm btn-default view_link" href="{{ path('admin_minsal_citas_citdistribucion_delete',{id:distribucion.id})}}"><i class="glyphicon glyphicon-remove"></i>&nbsp; Borrar/Cerrar</a>
+                            {% endif %}
+                        {% else %}
+                            <a id="borrar" class="btn btn-sm btn-default view_link" href="{{ path('admin_minsal_citas_citdistribucion_delete',{id:distribucion.id})}}"><i class="glyphicon glyphicon-remove"></i>&nbsp; Borrar/Cerrar</a>
+                        {% endif %}
+                    {% elseif distribucion.getIdEstadoDistribucion()=='Cerrado'%}
+                        <a id="borrar" class="btn btn-sm btn-success view_link" href="{{ path('admin_minsal_citas_citdistribucion_activar',{id:distribucion.id})}}"><i class="glyphicon glyphicon-ok"></i>&nbsp; Activar</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

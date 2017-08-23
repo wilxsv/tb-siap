@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://siap.establecimiento/app_dev.php/soap" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap14="http://schemas.xmlsoap.org/wsdl/soap14/" name="servicio6" targetNamespace="urn:servicio6">
+    <types>
+        <xsd:schema targetNamespace="urn:servicio6">
+            <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+            <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/"/>
+        </xsd:schema>
+    </types>
+    <portType name="servicio6PortType">
+        <operation name="ingresarResultados" >
+            <input message="tns:ingresarResultadosRequest"/>
+            <output message="tns:ingresarResultadosResponse"/>
+        </operation>
+    </portType>
+
+    <binding name="servicio6Binding" type="tns:servicio6PortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="ingresarResultados">
+            <soap:operation soapAction="urn:servicio6#ingresarResultados"/>
+            <input>
+                <soap:body use="literal" namespace="urn:servicio6" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+            </input>
+            <output>
+                <soap:body use="literal" namespace="urn:servicio6" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+            </output>
+        </operation>
+    </binding>
+
+    <service name="servicio6">
+        <port name="servicio6Port" binding="tns:servicio6Binding">
+            <soap:address location="http://siap.establecimiento/app_dev.php/soap/laboratoriowebservice"/>
+        </port>
+    </service>
+
+    <message name="ingresarResultadosRequest">
+        <part name="datos" type="xsd:string"/>
+    </message>
+    <message name="ingresarResultadosResponse">
+        <part name="return" type="xsd:string"/>
+    </message>
+</definitions>

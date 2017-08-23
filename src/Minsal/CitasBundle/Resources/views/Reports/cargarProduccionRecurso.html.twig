@@ -1,0 +1,47 @@
+{% block javascripts %}
+<script type="text/javascript">
+    jQuery(document).ready(function ($) {
+        var tablaResultados=$('#tablaResultados');
+        var opcionesTable=setDataTableOptions(tablaResultados);
+        var now=moment();
+
+        opcionesTable['displayLength']=15;
+        opcionesTable['dom']=
+                                  "<'row'<'col-sm-3'l><'col-sm-7'f><'col-sm-2'B>>" +
+                                  "<'row'<'col-sm-12 table-toolbar'>>" +
+                                  "<'row'<'col-sm-12 table-responsive'tr>>" +
+                                  "<'row'<'col-sm-5'i><'col-sm-7'p>>";
+        opcionesTable['buttons'] = ['excel', 'pdf'];
+        // opcionesTable['buttons'] = ['copy', 'csv', 'excel', 'pdf', 'print'];
+        opcionesTable['aLengthMenu']= [[15, 20, 25, -1], [15, 20, 25, "Todos"]];
+        tablaResultados.DataTable(opcionesTable);
+    });
+</script>
+{% endblock javascripts %}
+<div class="alert alert-info alert-dismissable">
+    <button class="close" aria-hidden="true" data-dismiss="alert" type="button">×</button>
+    <span class="fa fa-info" aria-hidden="true"></span>
+    <p>Las cantidad de citas que se muestran en el siguiente reporte incluyen las citas que fueron otorgadas y luego eliminadas.</p>
+
+
+</div>
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th class="text-center"><strong>Nombre Empleado</strong></th>
+            <th class="text-center"><strong>Tipo Empleado</strong></th>
+            <th class="text-center"><strong>Citas Médicas Otorgadas</strong></th>
+            <th class="text-center"><strong>Citas de Procedimientos Otorgadas</strong></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for detalle in produccion %}
+            <tr>
+                <td>{{ detalle['nombreempleado']}}</td>
+                <td>{{ detalle['tipo_empleado']}}</td>
+                <td>{{ detalle['citas_medicas']}}</td>
+                <td>{{ detalle['citas_procedimientos']}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

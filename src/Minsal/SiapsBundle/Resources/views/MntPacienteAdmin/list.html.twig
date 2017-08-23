@@ -1,0 +1,371 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntPacienteAdmin/list.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+
+{% block javascripts %}
+    {{parent()}}
+    <script type="text/javascript">
+      $(document).ready(function () {
+
+        $('#idEstablecimientoReferencia').val('');
+
+        $('#dui').mask("99999999-9");
+        $("#fecha_nacimiento").mask("99/99/9999");
+        $("#primer_apellido").focus();
+
+        $("#capturar").hide().click(function () {
+          var url = $(this).attr("href");
+          url += "?primer_nombre=" + $("#primer_nombre").val();
+          url += "&primer_apellido=" + $("#primer_apellido").val();
+          url += "&segundo_apellido=" + $("#segundo_apellido").val();
+          url += "&segundo_nombre=" + $("#segundo_nombre").val();
+          url += "&tercer_nombre=" + $("#tercer_nombre").val();
+          url += "&nombre_madre=" + $("#nombre_madre").val();
+          url += "&conocido_por=" + $("#conocido_por").val();
+          url += "&fecha_nacimiento=" + $("#fecha_nacimiento").val();
+          url += "&dui=" + $("#dui").val();
+          url += "&nec=" + $("#nec").val();
+          url += "&procedencia=" + $("#procedencia").val();
+          url += "&origenCita=" + $("#origenCita").val();
+          url += "&idEstablecimientoReferencia=" + $("#idEstablecimientoReferencia").val();
+          url += "&expedienteReferencia=" + $("#expedienteReferencia").val();
+          url += "&clasificacion=0";
+          $(this).attr("href", url);
+        });
+
+        $("#buscarGlobal").hide();
+
+        $("#limpiar").click(function () {
+          $('#resultadoBusqueda').empty();
+          $('#buscarForm')[0].reset();
+          $("#buscar").show();
+          $("#buscarGlobal").hide();
+          $("#capturar").hide();
+
+          return false;
+        });
+
+        $("#buscar").click(function (e) {
+          regexp = /^[0-9]{1,}$/;
+
+            //Si es búsqueda del módulo de citas
+            {% if origenCita is defined %}
+                if ($("#idEstablecimientoReferencia").val() == ''){
+                    /*PARA MOSTRAR MENSAJE DE ERROR DE FORMATO DE EXPEDIENTE
+                    * PRIMERO SE CREA O ELIMINA EL ELEMENTO
+                    * LUEGO SE CREA CON EL MENSAJE ADECUADO Y SE COLOCA
+                    * LUEGO DEL FORMULARIO PARA ABRIRSE.
+                    * */
+                    var title='Campos Obligatorios';
+                    var body="Debe seleccionar un establecimiento de referencia.";
+                    var clase='dialog-error';
+                    var arrayBtns = [{text: 'Cerrar',
+                                click: function( event, ui) {
+                                jQuery( this ).dialog( "close" );
+                                $("#idEstablecimientoReferencia").select2('open');
+                              }}
+                            ];
+                    showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                    return false;
+                }
+            {% endif %}
+
+          if ($("#nec").val() != '') {
+            var valores = $("#nec").val().split('-');
+            if (valores.length > 2) {
+              /*PARA MOSTRAR MENSAJE DE ERROR DE FORMATO DE EXPEDIENTE
+              * PRIMERO SE CREA O ELIMINA EL ELEMENTO
+              * LUEGO SE CREA CON EL MENSAJE ADECUADO Y SE COLOCA
+              * LUEGO DEL FORMULARIO PARA ABRIRSE.
+              * */
+              var title='Error de Formato de Expediente';
+              var body="El formato del número de expediente no es el adecuado.";
+              var clase='dialog-error';
+              var arrayBtns = [{text: 'Cerrar',
+                          click: function( event, ui) {
+                          jQuery( this ).dialog( "close" );
+                          $("#nec").val('');
+                          $("#nec").focus();
+                        }}
+                      ];
+              showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+              e.preventDefault();
+            } else {
+              if (!regexp.test(valores[0])) {
+                if (valores[0].charAt(0).toLowerCase() == 't') {
+                  if (!regexp.test(valores[0].substring(1, valores[0].length))) {
+                    var title='Error de escritura';
+                    var body="El Número de Expediente no puede contener letras";
+                    var clase='dialog-error';
+                    var arrayBtns = [{text: 'Cerrar',
+                                click: function( event, ui) {
+                                jQuery( this ).dialog( "close" );
+                                $("#nec").val('');
+                                $("#nec").focus();
+                              }}
+                            ];
+                    showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                    e.preventDefault();
+                  } else {
+                    $("#capturar").show();
+                    cargarResultadoBusqueda();
+                  }
+                } else {
+                  /*PARA MOSTRAR MENSAJE DE ERROR DE FORMATO DE EXPEDIENTE
+                  * PRIMERO SE CREA O ELIMINA EL ELEMENTO
+                  * LUEGO SE CREA CON EL MENSAJE ADECUADO Y SE COLOCA
+                  * LUEGO DEL FORMULARIO PARA ABRIRSE.
+                  * */
+                  var title='Error de escritura';
+                  var body="El Número de Expediente no puede contener letras";
+                  var clase='dialog-error';
+                  var arrayBtns = [{text: 'Cerrar',
+                              click: function( event, ui) {
+                              jQuery( this ).dialog( "close" );
+                              $("#nec").val('');
+                              $("#nec").focus();
+                            }}
+                          ];
+                  showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                  e.preventDefault();
+                }
+              } else {
+                if (valores.length > 1) {
+                  if (!regexp.test(valores[1])) {
+                    /*PARA MOSTRAR MENSAJE DE ERROR DE FORMATO DE EXPEDIENTE
+                    * PRIMERO SE CREA O ELIMINA EL ELEMENTO
+                    * LUEGO SE CREA CON EL MENSAJE ADECUADO Y SE COLOCA
+                    * LUEGO DEL FORMULARIO PARA ABRIRSE.
+                    * */
+                    var title='Error de escritura';
+                    var body="El Número de Expediente no puede contener letras";
+                    var clase='dialog-error';
+                    var arrayBtns = [{text: 'Cerrar',
+                                click: function( event, ui) {
+                                jQuery( this ).dialog( "close" );
+                                $("#nec").val('');
+                                $("#nec").focus();
+                              }}
+                            ];
+                    showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                    e.preventDefault();
+                  } else {
+                    $("#capturar").show();
+                    cargarResultadoBusqueda();
+                    // $("#buscarGlobal").show();
+                    //$("#buscar").show();
+                  }
+                } else {
+                  $("#capturar").show();
+                  cargarResultadoBusqueda();
+                  // $("#buscarGlobal").show();
+                  //$("#buscar").show();
+                }
+              }
+            }
+           } else {
+            if ($("#dui").val() != '') {
+              $("#capturar").show();
+              cargarResultadoBusqueda();
+              // $("#buscarGlobal").show();
+              //$("#buscar").show();
+            } else {
+              if ($("#fecha_nacimiento").val() != '') {
+                $("#capturar").show();
+                cargarResultadoBusqueda();
+              }
+              else {
+                if ($("#primer_apellido").val() == '' && $("#primer_nombre").val() == '') {
+                  //SE LE ASIGNA VALOR AL ELEMENTO
+                  var title='Campos Obligatorios';
+                  var body="Los campos:\n\
+                  <ul><li> <strong>Primer Apellido</strong> </li><li><strong>Primer Nombre</strong></li></ul>";
+                  var clase='dialog-error';
+                  var arrayBtns = [{text: 'Cerrar',
+                              click: function( event, ui) {
+                              jQuery( this ).dialog( "close" );
+                                $("#primer_apellido").focus();
+                            }}
+                          ];
+                  showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                  e.preventDefault();
+                } else {
+                  $("#capturar").show();
+                  cargarResultadoBusqueda();
+                }
+              }
+            }
+          }
+          e.preventDefault();
+        });
+
+
+        $("#buscarGlobal").click(function () {
+          if ($("#primer_apellido").val() == '' && $("#primer_nombre").val() == '') {
+            //SE LE ASIGNA VALOR AL ELEMENTO
+            var title='Campos Obligatorios';
+            var body="Los campos:\n\
+            <ul><li> <strong>Primer Apellido</strong> </li><li><strong>Primer Nombre</strong></li></ul>";
+            var clase='dialog-error';
+            var arrayBtns = [{text: 'Cerrar',
+                        click: function( event, ui) {
+                        jQuery( this ).dialog( "close" );
+                          $("#primer_apellido").focus();
+                      }}
+                    ];
+            showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+            e.preventDefault();
+
+          } else {
+            $("#capturar").show();
+            $(this).hide();
+            $("#buscar").show();
+            $('#resultadoBusqueda').empty();
+            $('#resultadoBusqueda').append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+            $('#resultadoBusqueda').load(Routing.generate('buscar_paciente_global'));
+          }
+          return false;
+        });
+
+        function cargarResultadoBusqueda(){
+            $('#resultadoBusqueda').empty();
+            $('#resultadoBusqueda').waitMe({'text':'Buscando'});
+            $('#resultadoBusqueda').load(Routing.generate('buscar_paciente',{'datos':$('#buscarForm').serialize(),'tipo_busqueda':'l'}));
+        }
+
+        //PASANDO A MAYUSCULAS LOS ELEMENTOS
+        $('input.nombres').blur(function () {
+            $(this).val(limpiar_nombres($(this).val()))
+        });
+        $('input.nombresLargos').blur(function () {
+            $(this).val(limpiar_nombres($(this).val()))
+        });
+
+        {% if origenCita is defined %}
+            $idEstablecimientoReferencia = $('#idEstablecimientoReferencia');
+
+            $idEstablecimientoReferencia.select2({
+                allowClear: true,
+                placeholder: 'Seleccionar...',
+                minimumInputLength: 4,
+                dropdownAutoWidth: true,
+                width: '100%',
+                ajax: {
+                    url: Routing.generate('obtener_establecimientos'),
+                    dataType: 'json',
+                    quietMillis: 500,
+                    data: function(term, page) {
+                        return {
+                            clue: term, //search term
+                            page_limit: 10, // page size
+                            page: page, // page number
+                        };
+                    },
+                    results: function(data, page) {
+                        var more = (page * 10) < data.total;
+
+                        return {results: data.datos, more: more};
+                    }
+                }
+            });
+        {% endif %}
+      });
+    </script>
+{% endblock %}
+
+{% block notice %}
+{% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+{% block list_table -%}
+    <h4><img class="icono" src={{ asset('bundles/minsalsiaps/imagenes/buscar-paciente.png') }} />Buscar Registro de Identificación de  Pacientes</h4>
+    <br/>
+    <form id="buscarForm" method="post" >
+        <table class="table table-bordered cuadro">
+            <tbody>
+                <tr>
+                    <td class="sonata-ba-list-field-header "><strong>NEC</strong></td>
+                    <td><input id="nec" name="nec" type="text" class="fecha form-control"  maxlength="15" length='15'/></td>
+                    <td class="sonata-ba-list-field-header "><strong>Primer Apellido:*</strong></td>
+                    <td><input id="primer_apellido" name="primer_apellido" class="nombres form-control" type="text"  maxlength="25"/></td>
+                    <td class="sonata-ba-list-field-header "><strong>Segundo Apellido:</td>
+                    <td><input id="segundo_apellido" name="segundo_apellido" class="nombres form-control" type="text"  maxlength="25"/></td>
+                </tr>
+                <tr>
+                    <td class="sonata-ba-list-field-header "><strong>Primer Nombre: *</strong></td>
+                    <td><input id="primer_nombre" name="primer_nombre" type="text" class="nombres form-control"  maxlength="25"/></td>
+                    <td class="sonata-ba-list-field-header "><strong>Segundo Nombre:</strong></td>
+                    <td><input id="segundo_nombre" name="segundo_nombre" type="text" class="nombres form-control"  maxlength="25"/></td>
+                    <td class="sonata-ba-list-field-header "><strong>Tercer Nombre:</strong></td>
+                    <td><input id="tercer_nombre" name="tercer_nombre" type="text" class="nombres form-control"  maxlength="25"/></td>
+                </tr>
+                <tr>
+                    <td class="sonata-ba-list-field-header "><strong>Fecha Nacimiento:</strong></td>
+                    <td><input id="fecha_nacimiento" name="fecha_nacimiento" type="text" class="fecha form-control bootstrap-datepicker now" /></td>
+                    <td class="sonata-ba-list-field-header"><strong>Nombre de la Madre:</strong></td>
+                    <td colspan="3"><input id="nombre_madre" name="nombre_madre" class="nombresLargos form-control" type="text" maxlength="80" /></td>
+                </tr>
+                <tr>
+                    <td class="sonata-ba-list-field-header "><strong>DUI: </strong></td>
+                    <td><input id="dui" name="dui" type="text" class="fecha form-control" /></td>
+                    <td class="sonata-ba-list-field-header "><strong>Conocido por:</strong></td>
+                    <td colspan="3">
+                        {% if procedencia is defined %}
+                            <input id="procedencia" name="procedencia" value="{{procedencia}}" type="hidden"/>
+                        {% else %}
+                            <input id="procedencia" name="procedencia" value="c" type="hidden"/>
+                        {% endif %}
+                        {% if origenCita is defined %}
+                            <input id="origenCita" name="origenCita" value="{{origenCita}}" type="hidden"/>
+                        {% endif %}
+                        <input id="conocido_por" name="conocido_por" type="text"  class="nombresLargos form-control"  maxlength="20" />
+                    </td>
+                </tr>
+                {% if procedencia is defined  and procedencia == 'citas' %}
+                    <tr>
+                        <td class="sonata-ba-list-field-header "><strong>Establecimiento de Referencia: </strong></td>
+                        <td>
+                            <input type="hidden" id="idEstablecimientoReferencia" name="idEstablecimientoReferencia" style="width:203px !important;"></input>
+                        </td>
+                        <td class="sonata-ba-list-field-header "><strong>N&uacute;mero de Expediente de Referencia:</strong></td>
+                        <td colspan="3">
+                            <input id="expedienteReferencia" name="expedienteReferencia" type="text"  class="fecha form-control"  maxlength="10" />
+                        </td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <td colspan="6" class="no-bottom-border">
+                        <div class="pull-right">
+                            {% if procedencia is defined  and procedencia == 'citas' %}
+                                <a id="capturar" class="btn btn-info" href="{{ path('admin_minsal_siaps_mntpaciente_pacientecitas') }}">
+                            {% else %}
+                                <a id="capturar" class="btn btn-info" href="{{ admin.generateUrl('create') }}">
+                            {% endif %}
+                                <span class="glyphicon glyphicon-plus"></span>
+                                Capturar Datos
+                            </a>
+
+                            <button id="buscar" class="btn btn-primary" type="submit">
+                                <span class="glyphicon glyphicon-search"></span>
+                                Buscar
+                            </button>
+
+                            <a id="buscarGlobal" class="btn btn-primary" href="">
+                                <span class="glyphicon glyphicon-search"></span>
+                                Buscar Global
+                            </a>
+                            <a id="limpiar" class="btn btn-primary" href="">
+                                <span class="glyphicon glyphicon-trash"></span>
+                                Limpiar
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    <div id="resultadoBusqueda" style="min-height:150px;"></div>
+    <br><br>
+{% endblock -%}

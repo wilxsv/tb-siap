@@ -1,0 +1,116 @@
+{% extends 'SonataAdminBundle:CRUD:edit.html.twig' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/js/dynatree/skin/ui.dynatree.css') }}" type="text/css" media="all" />
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntEmpleadoAdmin/edit.css') }}" type="text/css" media="all" />  
+{% endblock %}        
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('bundles/minsalsiaps/js/dynatree/jquery.dynatree.min.js') }}" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('select[id$="_especialidadesEstab"]').select2({
+                placeholder: 'Seleccione...',
+                width: '50%',
+                allowClear: true
+            });
+
+            $listado = $('ul[id$="_especialidadesMedico"]');
+            $listado.hide();
+            $capa_listado = $listado.parent().append('<div id="tree" style="width:50%;"></div>');
+            $("#tree").dynatree({
+                checkbox: true,
+                selectMode: 2,
+                initAjax: {
+                    url: Routing.generate('get_especialidades')
+                },
+                onClick: function (node, event) {
+                    // We should not toggle, if target was "checkbox", because this
+                    // would result in double-toggle (i.e. no toggle)
+                    if (node.getEventTargetType(event) != 'expander')
+                        if (node.getEventTargetType(event) == "title") {
+                            node.toggleSelect();
+                            if (node.isSelected())
+                                $(':checkbox[id$="_especialidadesMedico_' + node.data.key + '"]').attr('checked', true);
+                            else
+                                $(':checkbox[id$="_especialidadesMedico_' + node.data.key + '"]').attr('checked', false);
+                        }
+                        else {
+                            if (node.isSelected())
+                                $(':checkbox[id$="_especialidadesMedico_' + node.data.key + '"]').attr('checked', false);
+                            else
+                                $(':checkbox[id$="_especialidadesMedico_' + node.data.key + '"]').attr('checked', true);
+                        }
+                },
+                onPostInit: function (isReloading, isError) {
+                    $('ul[id$="_especialidadesMedico"] input:checked').each(function (i, nodo) {
+                        $("#tree").dynatree("getTree").selectKey($(nodo).val());
+                    });
+                }
+            });
+        {%for modalidad in modalidades%}
+            {% if modalidad.getIdAreaModEstab().getIdModalidadEstab().getIdModalidad().getId()==1%}
+                    $('input[id$="_idAreaModEstab_0"]').iCheck('check');
+            {% elseif modalidad.getIdAreaModEstab().getIdModalidadEstab().getIdModalidad().getId()==2%}
+                    $('input[id$="_idAreaModEstab_1"]').iCheck('check');
+            {%endif%}
+        {% endfor%}
+
+                switch ($('select[id$="_idTipoEmpleado"]').select2('val')) {
+                    case '4':
+                        $('div[id$="_especialidadesEstab"]').show();
+                        $('div[id$="_especialidadesMedico"]').show();
+                        $('div[id$="_idAreaModEstab"]').hide();
+                        break;
+                    case '2':
+                    case '5':
+                    case '10':
+                        $('div[id$="_especialidadesEstab"]').hide();
+                        $('div[id$="_especialidadesMedico"]').hide();
+                        $('div[id$="_idAreaModEstab"]').show();
+                        break;
+                    default:
+                        $('div[id$="_especialidadesEstab"]').hide();
+                        $('div[id$="_especialidadesMedico"]').hide();
+                        $('div[id$="_idAreaModEstab"]').hide();
+                        break;
+                }
+
+                $('select[id$="_idTipoEmpleado"]').change(function () {
+                    $('select[id$="_especialidadesEstab"]').select2('val', '');
+                    $('input[id$="_idAreaModEstab_0"]').iCheck('uncheck');
+                    $('input[id$="_idAreaModEstab_1"]').iCheck('uncheck');
+
+                    switch ($(this).val()) {
+                        case '4':
+                            $('div[id$="_especialidadesEstab"]').show();
+                            $('div[id$="_especialidadesMedico"]').show();
+                            $('div[id$="_idAreaModEstab"]').hide();
+                            break;
+                        case '2':
+                        case '5':
+                        case '10':
+                            $('div[id$="_especialidadesEstab"]').hide();
+                            $('div[id$="_especialidadesMedico"]').hide();
+                            $('div[id$="_idAreaModEstab"]').show();
+                            break;
+                        default:
+                            $('div[id$="_especialidadesEstab"]').hide();
+                            $('div[id$="_especialidadesMedico"]').hide();
+                            $('div[id$="_idAreaModEstab"]').hide();
+                            break;
+                    }
+                });
+
+                $('input.limpiar').blur(function () {
+                    $(this).val(limpiar_nombres($(this).val()));
+                });
+
+
+
+            });
+
+    </script>
+    <script src="{{ asset('bundles/minsalsiaps/js/CRUD/base_edit.js') }}" type="text/javascript"></script>
+{% endblock %}

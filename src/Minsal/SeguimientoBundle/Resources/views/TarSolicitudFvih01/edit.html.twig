@@ -1,0 +1,122 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+{% set url_parameters = { '_external': 'true', '_modulo': 'seguimiento_clinico', 'tipoPacPertenencia': 'local' } %}
+{% block sonata_header %}
+    {% if expediente is defined %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+        function habilitarGuardar() {
+            $('#form_save').attr("disabled",false);
+        }
+
+        function setVerificarSumeve(status) {
+            $('#form_verificarSumeve').val(status);
+        }
+
+        function seleccionarIdp(idp) {
+
+            $('#form_save').attr("disabled",false);
+            //$('#idp').value=idp;
+            document.getElementById("form_idp").value = idp;
+            // window.location.reload();
+        }
+            jQuery(document).ready(function ($) {
+                $("#form_check").removeAttr("style");
+                if( $('#form_verificarSumeve').val() == 'true' ){
+                    $("#form_save").attr("disabled",true);
+                }
+
+                $('#form_check').on("click", function () {
+                    var parameters= {{ url_parameters|json_encode|raw }};
+                    var winParams = [];
+                    var path = Routing.generate('verify_datos_pacientes_sumeve',{'idpac':{{ expediente.getIdpaciente().getId() }}});
+
+                    winParams['method'] = "get";
+                    winParams['action'] = path;
+                    winParams['target'] = "Remision de Paciente";
+                    winParams['parameters'] = parameters;
+
+                    openPostPopUpWindows(winParams);
+                });
+
+
+                {% if sexualidad is not null %}
+                    /* Sexualidad */
+                    $('select[id^="form_i361_"]').select2('val', {{ sexualidad.getIdOrientacionSexual().getId() }} );
+                    $('select[id^="form_i361_"]').select2("readonly", true);
+                    $('select[id^="form_i362_"]').select2('val', {{ sexualidad.getIdentidadSexual().getId() }} );
+                    $('select[id^="form_i362_"]').select2("readonly", true);
+
+                    if( {{ sexualidad.getIdentidadSexual().getId() }} == 6 ){
+                        $('input[id^=form_i363_][value=5]').iCheck('check');
+                    }
+                {% endif %}
+
+                {% if trabajoSexual is not null %}
+                    {% if trabajoSexual.getIdRespuestaBasica().getId() == 1 %}
+                        $('input[id^=form_i363_][value=4]').iCheck('check');
+                    {% endif %}
+                {% endif %}
+
+                {% if paciente.getIdCondicionPersona.getId() != 1 %}
+                    $('label[for="form_section160"]').hide();
+                    $('#divSection160').hide();
+                {% endif %}
+
+            });//fin document ready
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {# {{ form_start(form) }} #}
+    {% if expediente is not defined %}
+        <div class="container-fluid">
+            <div class="row">
+                <div class="pull-right">
+                    <button type="button" class="btn btn-info" onclick="window.history.back();"><i class="fa fa-fw fa-arrow-circle-left"></i> Regresar</button>
+                    <button type="button" class="btn btn-default" onclick="window.close();"><i class="fa fa-fw fa-times-circle"></i> &nbsp;Cerrar&nbsp;</button>
+                </div>
+            </div>
+        </div><br/>
+    {% endif %}
+    {% block sonata_tab_content %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-success">
+                    <div class="box-header">
+                        <h3 class="box-title form-title-success">
+                            Formulario para Solicitud y Confirmaci&oacute;n de VIH - FVIH01
+                        </h3>
+                    </div>
+                    <div class="box-body">
+                        {% if expediente is defined %}
+                            {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                            {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                        {% endif %}
+                        <div class="sonata-ba-collapsed-fields">
+                            {{ form(form) }}
+                            {# {{ form(form, { 'attr': { 'class': 'form-horizontal' } }) }} #}
+                            {# {{ form_row(form) }} #}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+
+    {# {{ form_end(form) }}
+    {{ form_rest(form) }} #}
+{% endblock %}

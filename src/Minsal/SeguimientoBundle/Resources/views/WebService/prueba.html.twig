@@ -1,0 +1,11 @@
+
+{% block content %}   
+    <table border="1" align="center">
+    <tr><th>Id</th><th>Nombre</th></tr> 
+    <tbody>
+    {% for re in result %}
+        <tr><td>{{ re.id }}</td><td>{{ re.nombre }}</td></tr>        
+    {% endfor %}
+    </tbody>
+    </table>
+{% endblock %}

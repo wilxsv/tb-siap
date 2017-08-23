@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabSubelementos" table="lab_subelementos">
+    <indexes>
+      <index name="IDX_CD09BA9F8794B5D6" columns="idedad"/>
+      <index name="IDX_CD09BA9FFFF6A732" columns="idsexo"/>
+      <index name="IDX_CD09BA9F75BB31F7" columns="idestablecimiento"/>
+      <index name="IDX_CD09BA9FFA9E131F" columns="idelemento"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="subelemento" type="string" column="subelemento" length="80" nullable="true"/>
+    <field name="observsubelem" type="string" column="observsubelem" length="250" nullable="true"/>
+    <field name="fechaini" type="date" column="fechaini" nullable="true"/>
+    <field name="fechafin" type="date" column="fechafin" nullable="true"/>
+    <field name="rangoinicio" type="float" column="rangoinicio" precision="10" scale="0" nullable="true"/>
+    <field name="rangofin" type="float" column="rangofin" precision="10" scale="0" nullable="true"/>
+    <field name="unidad" type="string" column="unidad" length="12" nullable="true"/>
+    <many-to-one field="idelemento" target-entity="LabElementos">
+      <join-columns>
+        <join-column name="idelemento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idestablecimiento" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="idestablecimiento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idsexo" target-entity="CtlSexo">
+      <join-columns>
+        <join-column name="idsexo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idedad" target-entity="CtlRangoEdad">
+      <join-columns>
+        <join-column name="idedad" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

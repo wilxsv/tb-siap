@@ -1,0 +1,49 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+        jQuery(document).ready(function($) {
+
+            var diag1 = $('input[id^="form_i376_s"]');
+            initDiagnosticoSearch(diag1,'Seleccione el Diagnostico Principal...');
+
+        });//fin document ready
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {# {{ form_start(form) }} #}
+
+    {% block sonata_tab_content %}
+    <div class="row">
+	   <div class="col-md-12">
+            <div class="box box-success">
+                <div class="box-header">
+                    <h4 class="box-title">
+                        Titulo de Ejemplo
+                    </h4>
+                </div>
+                <div class="box-body">
+                    <div class="sonata-ba-collapsed-fields">
+                        {{ form(form) }}
+                        {# {{ form(form, { 'attr': { 'class': 'form-horizontal' } }) }} #}
+                        {# {{ form_row(form) }} #}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {# {{ form_end(form) }}
+    {{ form_rest(form) }} #}
+{% endblock %}

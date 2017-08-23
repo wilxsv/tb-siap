@@ -1,0 +1,80 @@
+{# src/Minsal/SiapsBudle/Resource/view/MntExpedienteAdmin/listarexpedientes.html.twig
+Vista para el reporte de los expedientes creados por un determinido recurso del
+establecimiento #}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+{{parent()}}
+<link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+{{parent()}}
+<script type="text/javascript">
+jQuery(document).ready(function ($) {
+  $('#detallePaciente').on('click',function(event){
+    $('#resultado').empty();
+    $('#resultado').append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+    $('#resultado').load(Routing.generate("cargar_detalle_pacientes"));
+    event.preventDefault();
+  });
+});
+</script>
+{% endblock javascripts %}
+{% block sonata_admin_content -%}
+<div style="text-align: center;">
+  <form  id="expedientes_creados" method="post" >
+    <table class="table table-bordered ">
+      <tbody>
+        <tr>
+          <td colspan="4" id="titulo_parametro" class="sonata-ba-list-field-header"><strong>Opciones de Contenido</strong></td>
+        </tr>
+        <tr>
+          <td colspan="4"><strong>A continuación se presenta la cantidad de pacientes que pueden ser enviados a la
+            Farmacia Especialializada. Los criterios que se toman en cuentan son los siguientes
+          </strong>
+          <ul>
+            <li>El paciente debe ser mayor de 18 años</li>
+            <li>Al paciente se le han recetado por lo menos uno de los <strong> 45 Medicamentos que pertenecen a la Farmacia Especializada </strong> y se encuentran bajo
+              las especialidades de: Medicina Interna, Endocrinología, Cardiología, Nefrología, Neurología.</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </form>
+  <div
+  <div class="row">
+    <div class="col-md-5 center-block">
+      <table class="table table-bordered table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Total de pacientes</th>
+            <th>Con Dui</th>
+            <th>Con Carnet Residente</th>
+            <th>Sin DUI o Carne de residente</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for paciente in pacientes %}
+          <tr>
+            <td >{{ paciente['con_dui']+paciente['carnet_residente']+paciente['sin_nada'] }}</td>
+            <td >{{ paciente['con_dui'] }}</td>
+            <td >{{ paciente['carnet_residente'] }}</td>
+            <td >{{ paciente['sin_nada']}}
+              <a id="detallePaciente" href=#><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span>
+                <span class="glyphicon-class">Ver Detalle</span></a>
+              </td>
+            </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-10 col-md-offset-2">
+        <div id="resultado"></div>
+      </div>
+    </div>
+  </div>
+{% endblock -%}

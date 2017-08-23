@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://siap.establecimiento/app.php/soap" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" name="servicio5" targetNamespace="urn:servicio5">
+
+    <types>
+      <xsd:schema targetNamespace="urn:servicio5">
+    <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+    <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/"/>
+      </xsd:schema>
+    </types>
+
+    <portType name="servicio5PortType">
+    <operation name="obtenerEspecialidades" >
+        <input message="tns:obtenerEspecialidadesRequest"/>
+        <output message="tns:obtenerEspecialidadesResponse"/>
+    </operation>
+    <operation name="obtenerEspecialidad" >
+        <input message="tns:obtenerEspecialidadRequest"/>
+        <output message="tns:obtenerEspecialidadResponse"/>
+    </operation>
+    <operation name="guardarReferencia" >
+        <input message="tns:guardarReferenciaRequest"/>
+        <output message="tns:guardarReferenciaResponse"/>
+    </operation>
+     <operation name="guardarDatosReferencia" >
+        <input message="tns:guardarDatosReferenciaRequest"/>
+        <output message="tns:guardarDatosReferenciaResponse"/>
+    </operation>
+    </portType>
+
+  <binding name="servicio5Binding" type="tns:servicio5PortType">
+    <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+    <operation name="obtenerEspecialidades">
+      <soap:operation soapAction="urn:servicio5#obtenerEspecialidades"/>
+      <input>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </input>
+      <output>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+      </output>
+    </operation>
+
+    <operation name="obtenerEspecialidad">
+      <soap:operation soapAction="urn:servicio5#obtenerEspecialidad"/>
+      <input>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </input>
+      <output>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+      </output>
+    </operation>
+
+    <operation name="guardarReferencia">
+      <soap:operation soapAction="urn:servicio5#guardarReferencia"/>
+      <input>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </input>
+      <output>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+      </output>
+    </operation>
+
+    <operation name="guardarDatosReferencia">
+      <soap:operation soapAction="urn:servicio5#guardarDatosReferencia"/>
+      <input>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </input>
+      <output>
+        <soap:body use="literal" namespace="urn:servicio5" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+      </output>
+    </operation>
+
+  </binding>
+
+  <service name="servicio5">
+    <port name="servicio5Port" binding="tns:servicio5Binding">
+      <soap:address location="http://siap.establecimiento/app_dev.php/soap/seguimientowebservice"/>
+    </port>
+  </service>
+
+  <message name="obtenerEspecialidadesRequest">
+    <part name="establecimiento" type="xsd:string"/>
+  </message>
+  <message name="obtenerEspecialidadesResponse">
+    <part name="return" type="xsd:string"/>
+  </message>
+   <message name="obtenerEspecialidadRequest">
+    <part name="establecimiento" type="xsd:string"/>
+  </message>
+  <message name="obtenerEspecialidadResponse">
+    <part name="return" type="xsd:string"/>
+  </message>
+  <message name="guardarReferenciaRequest">
+    <part name="xml" type="xsd:string"/>
+  </message>
+  <message name="guardarReferenciaResponse">
+    <part name="return" type="xsd:string"/>
+  </message>
+  <message name="guardarDatosReferenciaRequest">
+    <part name="xml" type="xsd:string"/>
+    <part name="xml2" type="xsd:string"/>
+  </message>
+  <message name="guardarDatosReferenciaResponse">
+    <part name="return" type="xsd:string"/>
+  </message>
+</definitions>

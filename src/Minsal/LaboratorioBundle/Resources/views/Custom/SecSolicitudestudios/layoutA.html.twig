@@ -1,0 +1,24 @@
+<table class="table">
+    <thead>
+        <tr>
+            <th>Resultado</th>
+            <th>Unidades</th>
+            <th>Rangos Normales</th>
+            <th>Observacion</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                {% if examen.resultadoFinal.id_posible_resultado is not null or examen.resultadoFinal.id_posible_resultado != '' %}
+                    {{ examen.resultadoFinal.nombre_posible_resultado }}
+                {% else %}
+                    {{ examen.resultadoFinal.resultado }}
+                {% endif %}
+            </td>
+            <td>{{ examen.resultadoFinal.unidad }}</td>
+            <td>{{ examen.resultadoFinal.rango_inicio }}-{{ examen.resultadoFinal.rango_fin }}</td>
+            <td>{{ examen.resultadoFinal.observacion }}</td>
+        </tr>
+    </tbody>
+</table>

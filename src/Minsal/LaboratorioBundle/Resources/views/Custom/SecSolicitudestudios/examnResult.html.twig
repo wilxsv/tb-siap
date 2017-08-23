@@ -1,0 +1,207 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/minsallaboratorio/css/laboratorio.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block sonata_header %}
+    {% if params.external == 'false' %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block sonata_page_content_nav %}
+    {% if params.external == 'false' %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $('#expand-compress-btn').on('click', function(){
+                var eClass = $(this).find('span').attr('class');
+                if(eClass === 'fa fa-expand') {
+                    $('div[id^="collapse-exam-"]').collapse('show');
+                    $(this).children('span').removeClass('fa fa-expand');
+                    $(this).children('span').addClass('fa fa-compress');
+                } else {
+                    $('div[id^="collapse-exam-"]').collapse('hide');
+                    $(this).children('span').removeClass('fa fa-compress');
+                    $(this).children('span').addClass('fa fa-expand');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    {% if params.external == 'true' %}
+        <div style="padding-bottom: 20px;" class="row">
+            <div class="col-md-12">
+                <div class="pull-right">
+                    <button type="button" class="btn btn-info" onclick="window.history.back();"><i class="fa fa-fw fa-arrow-circle-left"></i> Regresar</button>
+                    <button type="button" class="btn btn-default" onclick="window.close();"><i class="fa fa-fw fa-times-circle"></i> &nbsp;Cerrar&nbsp;</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-success">
+                    <div class="box-header">
+                        <h3 class="box-title full-width text-center" style="color: #00A65A;font-weight: bold;">
+                            Datos Generales de la Solicitud
+                            <div class="pull-right" data-toggle="collapse" data-target="#sol-info" aria-expanded="false" aria-controls="sol-info"><span class="fa fa-minus" style="padding-right:15px;" data-toggle="tooltip" data-placement="top" title="Expandir/Contraer"></span></div>
+                        </h3>
+                    </div>
+                    <div class="box-body collapse in" id="sol-info">
+                        <table class="table table-hover no-border" id="datosGenerales">
+                            <tbody>
+                                <tr>
+                                    <td>Establecimiento: </td>
+                                    <td>{{ params.datosGenerales.nombre_establecimiento }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Procedencia: </td>
+                                    <td>{{ params.datosGenerales.procedencia}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Origen: </td>
+                                    <td>{{ params.datosGenerales.servicio }}</td>
+                                </tr>
+                                <tr>
+                                    <td>M&eacute;dico: </td>
+                                    <td>{{ params.datosGenerales.nombre_empleado }}</td>
+                                </tr>
+                                <tr>
+                                    <td>No. Expediente: </td>
+                                    <td>{{ params.datosGenerales.numero_expediente }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Nombre Paciente: </td>
+                                    <td>{{ params.datosGenerales.nombre_paciente }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Fecha de Solicitud: </td>
+                                    <td>{{ params.datosGenerales.fecha_solicitud }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!--div class="box-footer"></div-->
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="box box-warning">
+                    <div class="box-header">
+                        <h3 class="box-title full-width text-center" style="color: #F39C12; font-weight: bold;">Pruebas Rechazadas</h3>
+                    </div>
+                    <div class="box-body">
+                        <table class="table table-condensed table-hover">
+                            <thead class="th-background">
+                                <tr>
+                                    <th>Nombre del Examen</th>
+                                    <th>Estado</th>
+                                    <th>Motivo de Rechazo</th>
+                                </tr>
+                            </thead>
+                            <tbody class="tb-background">
+                                {% if params.result.RM|length > 0 %}
+                                    {% for examen in params.result.RM %}
+                                        <tr>
+                                            <td>{{ examen.nombre }}</td>
+                                            <td>{{ examen.nombre_estado_rechazo }}</td>
+                                            <td>{{ examen.nombre_observacion_rechazo }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td>No existen examenes para mostrar...</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!--div class="box-footer"></div-->
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="box box-primary">
+                    <div class="box-header">
+                        <h2 class="box-title full-width text-center" style="color: #3C8DBC;font-weight: bold;">Resultados de Examens de Laboratorio. {% if params.result.RC|length > 0 %}<div class="pull-right mouse-pointer" id="expand-compress-btn" data-toggle="tooltip" data-placement="top" title="Expandir/Contraer resultados"><span class="fa fa-expand" style="padding-right:15px;"></span></div>{% endif %}</h2>
+                    </div>
+                    <div class="box-body">
+                        <div class="panel-group collapsed" id="accordion" role="tablist" aria-multiselectable="true">
+                            {% if params.result.RC|length > 0 %}
+                                {% for area in params.result.RC %}
+                                    {% if area.plantillas['A'] is defined %}
+                                        {% set length = area.plantillas['A']['examenes']|length %}
+                                    {% else %}
+                                        {% set length = 0 %}
+                                    {% endif %}
+                                    {% set count = {'A': 1 } %}
+
+                                    {% set count = count|merge({'B': length + 1 }) %}
+
+                                    {% if area.plantillas['B'] is defined %}
+                                        {% set lengthCurrent = area.plantillas['B']['examenes']|length %}
+                                    {% else %}
+                                        {% set lengthCurrent = 0 %}
+                                    {% endif %}
+                                    {% set length = length + lengthCurrent %}
+
+                                    {% set count = count|merge({'C': length + 1 }) %}
+                                    {% if area.plantillas['C'] is defined %}
+                                        {% set lengthCurrent = area.plantillas['C']['examenes']|length %}
+                                    {% else %}
+                                        {% set lengthCurrent = 0 %}
+                                    {% endif %}
+                                    {% set length = length + lengthCurrent %}
+
+                                    {% set count = count|merge({'D': length + 1 }) %}
+                                    {% if area.plantillas['D'] is defined %}
+                                        {% set lengthCurrent = area.plantillas['D']['examenes']|length %}
+                                    {% else %}
+                                        {% set lengthCurrent = 0 %}
+                                    {% endif %}
+                                    {% set length = length + lengthCurrent %}
+
+                                    {% set count = count|merge({'E': length + 1 }) %}
+
+                                    <div class="panel panel-primary">
+                                        <div class="panel-heading mouse-pointer" role="tab" id="heading-{{ area.codigo }}" data-toggle="collapse" data-target="#area-{{ area.codigo }}" aria-expanded="false" aria-controls="area-{{ area.codigo }}">
+                                            <h4 class="panel-title">
+                                                {{area.nombre}}
+                                            </h4>
+                                        </div>
+                                        <div id="area-{{ area.codigo }}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading-area-{{ area.codigo }}">
+                                            <div class="panel-body">
+                                                <div class="table-responsive">
+                                                    {#Incluir plantilla D si se vuelve a habilitar#}
+                                                    {% set arrayPlantillas = ['A','B','C','E'] %}
+                                                    {% for pType in arrayPlantillas %}
+                                                        {% if area.plantillas[pType] is defined %}
+                                                            {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/bodyLayout.html.twig' with {'pType': pType} %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info alert-dismissable">
+                                    <span class="fa fa-info"></span>
+                                    <b>Los examenes no han sido procesados aun...</b>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,57 @@
+<div class="table-responsive" style="overflow-x: auto;">
+    {% if lab_section is defined and lab_section == true %}
+        <table class="table-header" style="font-size: 12px;">
+            <tbody>
+                <tr>
+                    <th><strong>No. de Expediente:</strong></th>
+                    <td colspan="2"><span style="font-size: 16px;">{{expediente.numero}}</span></td>
+                    <th><strong>Paciente:</strong></th>
+                    <td colspan="2"><span>{{ expediente.getIdPaciente().primerApellido|default('') }} {{ expediente.getIdPaciente().segundoApellido|default('') }} {{ expediente.getIdPaciente().apellidoCasada|default('') }}, {{ expediente.getIdPaciente().primerNombre|default('') }} {{ expediente.getIdPaciente().segundoNombre|default('') }} {{ expediente.getIdPaciente().tercerNombre|default('') }}</span></td>
+                </tr>
+                <tr>
+                    <th><strong>Sexo:</strong></th>
+                    <td><span>{{ expediente.getIdPaciente().getIdSexo().getNombre() }}</span></td>
+                    <th><span>Fecha de Nacimiento:</span></th>
+                    <td><span>{{ expediente.getIdPaciente().getFechaNacimiento()|date("d/m/Y") }}</span></td>
+                    <th><span>Edad:</span></th>
+                    <td><span>{{ edad }}</span></td>
+                </tr>
+                <tr>
+                    <th><strong>Procedencia:</strong></th>
+                    <td colspan="2"><span>{{ params.datosGenerales.procedencia }}</span></td>
+                    <th><span>Origen:</span></th>
+                    <td colspan="2"><span>{{ params.datosGenerales.servicio }}</span></td>
+                </tr>
+                <tr>
+                    <th><span>Médico:</span></th>
+                    <td colspan="2"><span>{{ params.datosGenerales.nombre_empleado }}</span></td>
+                    <th><strong>Fecha Solicitud:</strong></th>
+                    <td colspan="2"><span>{{ params.datosGenerales.fecha_solicitud }}</span></td>
+                </tr>
+            </tbody>
+        </table>
+    {% else %}
+        <table class="table-bordered table-condensed">
+            <tbody>
+                <tr class="sonata-ba-view-container">
+                    <th >Nombre:</th>
+                    <td> {{expediente.getIdPaciente().primerApellido}} {{expediente.getIdPaciente().segundoApellido}} {{expediente.getIdPaciente().apellidoCasada}}, {{expediente.getIdPaciente().primerNombre}} {{expediente.getIdPaciente().segundoNombre}} {{expediente.getIdPaciente().tercerNombre}}   </td>
+                    <th>Número Expediente:</th>
+                    <td style="font-size: 16px;"><span>{{expediente.numero}}</span></td>
+                </tr>
+                <tr class="sonata-ba-view-container">
+                    <th>Edad:</th>
+                    <td ><span>{{edad}}</span></td>
+                    <th>Sexo: </th>
+                    <td ><span>{{expediente.getIdPaciente().idSexo}}</span></td>
+                </tr>
+                <tr class="sonata-ba-view-container">
+                    <th>Conocido por:</th>
+                    <td ><span>{{expediente.getIdPaciente().getConocidoPor()}}</span></td>
+                    <th>Doc. Identidad: </th>
+                    <td ><span>{{expediente.getIdPaciente().getIdDocPaciente()}}:{{expediente.getIdPaciente().getNumeroDocIdePaciente()? : '-'}}</span></td>
+                </tr>
+            </tbody>
+        </table>
+    {% endif %}
+</div>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecAntecedentesLaboralLugar" table="sec_antecedentes_laboral_lugar">
+    <indexes>
+      <index name="IDX_C08649018941C3E2" columns="id_antecedentes_laboral"/>
+      <index name="IDX_C08649016325E299" columns="id_departamento"/>
+      <index name="IDX_C0864901D166B38A" columns="id_tipo_lugar_trabajo"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="nombre" type="text" column="nombre" nullable="false"/>
+    <field name="fechaInicio" type="date" column="fecha_inicio" nullable="true"/>
+    <field name="fechaFin" type="date" column="fecha_fin" nullable="true"/>
+    <many-to-one field="idTipoLugarTrabajo" target-entity="CtlTipoLugarTrabajo">
+      <join-columns>
+        <join-column name="id_tipo_lugar_trabajo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idDepartamento" target-entity="CtlDepartamento">
+      <join-columns>
+        <join-column name="id_departamento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idAntecedentesLaboral" target-entity="SecAntecedentesLaboral">
+      <join-columns>
+        <join-column name="id_antecedentes_laboral" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,477 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block sonata_breadcrumb %}
+{% endblock sonata_breadcrumb %}
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function ($) {
+            /* Inicializar Selectores */
+            var formActionsDiv     = $('#formActionsDiv');
+            var formButtonsDiv     = $('#formButtonsDiv');
+            var fecha              = $('input[id$="_fecha"]');
+            var numExpNomPac       = $('#numExpNomPac');
+            var idEmpleado         = $('select[id$="_idEmpleado"]');
+            var idAtenAreaModEstab = $('select[id$="_idAtenAreaModEstab"]');
+            var idCitaDia          = $('input[id$="_idCitaDia"]');
+            var idHistoriaClinica  = $('input[id$="_idHistoriaClinica"]');
+            var superAdmin         = '{% if app.user.hasRole("ROLE_SUPER_ADMIN") %}true{% else %}false{% endif %}';
+            var waitDiv            = $('#waitDiv');
+            var buttonTitle        = '';
+            var uniqId             = $('input[id$="__token"]').attr('id').replace('__token','');
+            var selectHistoryBtn   = $('a[href*="uniqid='+uniqId+'"]');
+            var selectHistoryLink  = selectHistoryBtn.attr('href');
+            var idSeguimientoHistoriaClinica  = $('input[id$="_idSeguimientoHistoriaClinica"]');
+
+            selectHistoryBtn.attr('disabled','disabled');
+
+            /* Inicializar select2 para busqueda de Pacientes por Numero de Exp. o Nombre */
+            numExpNomPac.select2({
+                allowClear: true,
+                placeholder: 'Seleccionar Expediente...',
+                minimumInputLength: 1,
+                dropdownAutoWidth: true,
+                ajax: {
+                    url: Routing.generate('citasexpedientepaciente'),
+                    dataType: 'json',
+                    quietMillis: 1000,
+                    data: function(term, page) {
+                        return {
+                            clue: term, //search term
+                            page_limit: 10, // page size
+                            page: page, // page number
+                        };
+                    },
+                    results: function(data, page) {
+                        var more = (page * 10) < data.data2;
+                        return {results: data.data1, more: more};
+                    }
+                }
+            }).on('change',function(e){
+                initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%'} );
+                //if( fecha.val() && fecha.val().indexOf("_") == -1 && numExpNomPac.select2('val') && idEmpleado.select2('val') && idAtenAreaModEstab.select2('val') ){
+                if( fecha.val() && fecha.val().indexOf("_") == -1 && numExpNomPac.select2('val') && idAtenAreaModEstab.select2('val') ){
+                    findMatchDate();
+                }
+                else{
+                    cancelHistory();
+                }
+
+                if( numExpNomPac.select2('val') ){
+                    idAtenAreaModEstab.select2( 'readonly', false );
+                    {% if app.user.hasRole('ROLE_SONATA_ADMIN_FARMRECETAS_COMPLEMENTALL') == false and app.user.hasRole("ROLE_SUPER_ADMIN") == false %}
+                        setEspecialidadesEmpleado( {{ app.user.getIdEmpleado().getId() }} );
+                    {% else %}
+                        setEspecialidadesExpediente( numExpNomPac.select2('val') );
+                    {% endif %}
+                }else{
+                    idAtenAreaModEstab.select2( 'readonly', true );
+                }
+            });
+
+            /** Acciones de comportamiento para select de Medico y Especialidad **/
+            {% if (app.user.getIdEmpleado.getIdTipoEmpleado is not defined or app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo is not sameas("MED")) %}
+
+                /*initializeSelect2(idEmpleado, true, false, { placeholder: 'Seleccionar Medico...', allowClear: true, width: '100%' } );
+                initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%' } );
+                idAtenAreaModEstab.select2( 'readonly', true );
+
+
+                idEmpleado.on('change', function(e) {
+                    initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%'} );
+
+                    if ( idEmpleado.select2('val') ) {
+                        idAtenAreaModEstab.select2( 'readonly', false );
+                        setEspecialidadesEmpleado( idEmpleado.select2('val') );
+                    }
+                    else{
+                        idAtenAreaModEstab.select2( 'readonly', true );
+                        cancelHistory();
+                    }
+                });*/
+
+            {% else %}
+                /*idEmpleado.select2( 'val', {{ app.user.getIdEmpleado.getId }} );
+                idEmpleado.select2( 'readonly', true );*/
+
+                {% if app.user.hasRole('ROLE_SONATA_ADMIN_FARMRECETAS_COMPLEMENTALL') == false %}
+                    /*initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%'} );
+                    setEspecialidadesEmpleado( idEmpleado.select2('val') );*/
+                {% else %}
+                    /*initializeSelect2(idAtenAreaModEstab, true, false, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%'} );*/
+                {% endif %}
+
+            {% endif %}
+
+            initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%'} );
+            idAtenAreaModEstab.select2( 'readonly', true );
+
+            idAtenAreaModEstab.on('change', function(e){
+                //if( fecha.val() && fecha.val().indexOf("_") == -1 && numExpNomPac.select2('val') && idEmpleado.select2('val') && idAtenAreaModEstab.select2('val') ){
+                if( fecha.val() && fecha.val().indexOf("_") == -1 && numExpNomPac.select2('val') && idAtenAreaModEstab.select2('val') ){
+                    findMatchDate();
+                }
+                else{
+                    cancelHistory();
+                }
+            });
+
+            function setEspecialidadesEmpleado(id) {
+                $.ajax({
+                    url: Routing.generate('citasgetmedicoespecialidadestab') + '?idEmpleado=' + id,
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.result, function(indice, val) {
+                            if (superAdmin == 'true') {
+                                idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.nombre}));
+                            } else {
+                                if (val.idEstablecimiento == {% if app.user.getIdEmpleado %}{{ app.user.getIdEmpleado.getIdEstablecimiento.getId }}{% endif %}) {
+                                    idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.nombre }));
+                                }
+                            }
+                        });
+                    }
+                });
+            };
+
+            function setEspecialidadesExpediente(id){
+                $.ajax({
+                    url: Routing.generate('especialidades_historia',{'idPaciente': id}),
+                    async: false,
+                    type: "GET",
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.idEspecialidad, function(indice, val) {
+                            idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.nombre}));
+                        });
+                    }
+                });
+            }
+
+            function findMatchDate(){
+                cancelHistory();
+                waitDiv.append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+                $.ajax({
+                    //url: Routing.generate('datehistorycomplementmatch') + '?fecha=' + fecha.val() + '&idExpediente=' + numExpNomPac.select2('val') + '&idEmpleado=' + idEmpleado.select2('val') + '&idAtenAreaModEstab=' + idAtenAreaModEstab.select2('val') + '&typeSearch=farmrecetas-complement',
+                    url: Routing.generate('datehistorycomplementmatch') + '?fecha=' + fecha.val() + '&idExpediente=' + numExpNomPac.select2('val') + '&idEmpleado=' + {{ app.user.getIdEmpleado().getId() }} + '&idAtenAreaModEstab=' + idAtenAreaModEstab.select2('val') + '&typeSearch=farmrecetas-complement',
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        waitDiv.empty();
+                        waitDiv.append('\
+                            <div id="preInfo" class="container-fluid" style="margin-top: 10px;">\
+                                <div class="row">\
+                                    <div class="col-xs-12 col-md-6" id="nextDates"></div>\
+                                    <div class="col-xs-12 col-md-6" id="lastHistory"></div>\
+                                </div>\
+                            </div>'
+                        );
+                        $('#nextDates').append(data.nextdates);
+                        $('#lastHistory').append(data.lasthistories);
+
+                        if( data.continue ){
+                            if( data.continue.idEstado == 5 ){//Finalizada
+                                waitDiv.prepend('<br/><div class="alert alert-block alert-error"><h4><i class="fa fa-fw fa-exclamation"></i> Receta Repetitiva Complementaria Finalizada</h4>Ya existe una Receta Repetitiva Complementaria con los datos especificados para este mismo paciente, la cual ha finalizado. No puede realizar mas modificaciones.</div>');
+                            }
+                            else{
+                                waitDiv.prepend('<br/><div class="alert alert-block alert-info"><h4><i class="fa fa-fw fa-exclamation"></i> Receta Repetitiva Complementaria en Proceso</h4>Existe una Receta Repetitiva Complementaria en Proceso con los datos especificados. Puede proceder a realizar las modificaciones necesarias.</div>');
+                                idHistoriaClinica.val(data.continue.id);
+                                enableHistoryComplement();
+                            }
+                        }else{
+                            if( data.nextdatespecialty ){
+                                if( data.sameday ){
+                                    if( data.history.length > 0 ){
+                                        waitDiv.prepend('<br/><div class="alert alert-block alert-warning"><h4><i class="fa fa-fw fa-warning"></i> El paciente tiene una <b>Consulta Activa</b> en la Especialidad seleccionada.</b></h4>El paciente, tiene una <b>Consulta Activa</b> en la <b>Especialidad seleccionada</b> con el Dr/a. '+data.history[0].nombre_empleado+'. El estado de la consulta es: <b>'+data.history[0].estado_historia+'</b>.</div>');
+                                    }else{
+                                        waitDiv.prepend('<br/><div class="alert alert-block alert-warning"><h4><i class="fa fa-fw fa-warning"></i> <b>Cita pendiente</b> para este día en la Especialidad seleccionada.</b></h4>El paciente, tiene una <b>Cita Pendiente</b> para este día en la <b>Especialidad seleccionada</b> con el Dr/a. '+data.citas[data.idcitadiaindex].nombre_empleado+'. El paciente debe pasar a la consulta para obtener su medicamento. El estado de la cita es: <b>'+data.citas[data.idcitadiaindex].estado+'</b>.</div>');
+                                    }
+                                }else{
+                                    waitDiv.prepend('<br/><div class="alert alert-block alert-success"><h4><i class="fa fa-fw fa-medkit"></i> Receta Repetitiva Complementaria</h4> Para continuar con la prescripción, ingrese una <b>Observación/Justificación</b> y <b>seleccione</b> la <b>Historia Clínica a la que le da Seguimiento</b>.</div>');
+                                    enableHistoryComplement();
+                                }
+                            }
+                            else{
+                                waitDiv.prepend('<br/><div class="alert alert-block alert-error"><h4><i class="fa fa-fw fa-warning"></i> No hay Citas Próximas en la <b>Especialidad.</b></h4>El paciente, <b>no</b> posee Citas asignadas para los próximos días en la <b>Especialidad seleccionada</b>. Por esta razón, <b>no puede continuar</b> con esta acción. El paciente debe <b>solicitar una Cita</b> en la Especialidad deseada.</div>');
+                            }
+                        }
+                    }
+                });
+            }
+
+            function enableHistoryComplement(){
+                loadContainerDiv();
+                if( ! idHistoriaClinica.val() ){
+                    loadMotivo();
+                    loadSelectedHistory();
+                    addMainButton();
+                }else{
+                    enablePrescription(idHistoriaClinica.val());
+                }
+            }
+
+            function cancelHistory(){
+                waitDiv.empty();
+                idHistoriaClinica.val('');
+                $('input[id$="_idSeguimientoHistoriaClinica"]').val('');
+            }
+
+            function loadContainerDiv(){
+                waitDiv.append('\
+                    <div class="container-fluid" style="margin-top: 30px; border: solid 1px #3CBC7A; padding-bottom: 5px; padding-top: 10px; -webkit-border-radius: 8px; border-radius: 8px; -webkit-box-shadow: #CEEBFF 0px 0px 2px 2px;">\
+                        <div class="row">\
+                            <div class="col-xs-12 col-md-5" id="divConsultaPor"></div>\
+                            <div class="col-xs-12 col-md-4" id="divRecetario"></div>\
+                            <div class="col-xs-12 col-md-3" id="divMainButton"></div>\
+                        </div>\
+                        <div class="row">\
+                            <div class="col-xs-12 col-md-6"></div>\
+                            <div class="col-xs-12 col-md-3"></div>\
+                            <div class="col-xs-12 col-md-3"></div>\
+                        </div>\
+                    </div>'
+                );
+            }
+
+            function loadMotivo(){
+                $('#divConsultaPor').append('\
+                    <label id="labelConsultaPor" class="control-label">Observación/Justificación</label>\
+                    <textarea id="consultaPor" name="consultaPor" required="required" class="form-control"></textarea>'
+                );
+            }
+
+            function loadSelectedHistory(){
+                $('#divRecetario').empty().append('\
+                    <label id="labelSeguimientoConsulta" class="control-label"> Seguimiento de la Consulta</label><span id="unsetSpan" style="float: right; display: none;"><a onClick="unsetHistoriaSeguimiento();" class="mouse-pointer"><i class="fa fa-fw fa-eraser"></i> Cambiar</a></span>\
+                    <div id="divSeguimientoConsulta" class="alert alert-warning" role="alert">No ha seleccionado la Historia Clínica a la que le dará <b>Seguimiento</b>.\
+                    Para seleccionarla, verifique la lista de <b>Últimas Consultas</b> y de clic en la opción <b>"Seleccionar"</b>, si no la encuentra,\
+                    utilice la opción <b>"Ver Todas"</b>.</div>'
+                );
+            }
+
+            function addMainButton(){
+                $('#divMainButton').append('<br/><a id="mainButton" class="btn btn-info"><i class="fa fa-fw fa-check-square-o"></i> Continuar</a><br/>');
+                $('#mainButton').on('click', function(){
+                    if( $('#consultaPor').val() && $('input[id$="_idSeguimientoHistoriaClinica"]').val() ){
+                        var title = 'Continuar?';
+                        var dialogClass = 'dialog-info';
+                        var msg = 'Se creara una Receta Repetitiva Complementaria. ¿Desea continuar con esta acción?';
+                        var width = 500;
+
+                        var arrayBtns =
+                        [{
+                            text: 'Continuar', click: function() {
+                                $.ajax({
+                                    method: "POST",
+                                    url: '{{ url('admin_minsal_seguimiento_sechistorialclinico_create') }}',
+                                    async: false,
+                                    dataType: 'json',
+                                    data: { id_expediente: numExpNomPac.select2('val'), id_empleado: {{ app.user.getIdEmpleado().getId() }}, id_aten_area_mod_estab: idAtenAreaModEstab.select2('val'), rrc: 'true', id_cita: idCitaDia.val(), consultaPor: $('#consultaPor').val(), typeCreate: 'farmrecetas-complement', idSeguimientoHistoriaClinica: $('input[id$="_idSeguimientoHistoriaClinica"]').val() }
+                                })
+                                .done( function(data, textStatus, jqXHR, e) {
+                                    if( data.success ){
+                                        enablePrescription(data.id);
+                                        $('#dialog-message').dialog( "close" );
+                                        $('#mainButton').hide();
+                                        $('#labelConsultaPor').hide();
+                                        $('#consultaPor').hide();
+                                        $('#labelSeguimientoConsulta').hide();
+                                        $('#divSeguimientoConsulta').hide();
+                                        $('#unsetSpan').hide();
+                                        showDialogMsg('Creada Exitosamente.', 'Se ha creado la Receta Repetitiva Satisfactoriamente. Puede continuar con la prescripción de medicamentos.', 'dialog-success');
+                                    }
+                                    else{
+                                        $('#dialog-message').dialog( "close" );
+                                        showDialogMsg('Error', 'Se ha producido un error al crear la Receta Repetitiva, por favor intente nuevamente.', 'dialog-error');
+                                        console.log('Error: '+data.error);
+                                    }
+                                })
+                                .fail( function(data, jqXHR, textStatus, errorThrown){
+                                    $('#dialog-message').dialog( "close" );
+                                    showDialogMsg('Error', 'Se ha producido un error al crear la Receta Repetitiva, por favor intente nuevamente.', 'dialog-error');
+                                    console.log('Error: '+textStatus);
+                                });
+                            }
+                        },
+                        {
+                            text: 'Cancelar', click: function( event, ui) {
+                                jQuery( this ).dialog( "close" );
+                            }
+                        }];
+
+                        showDialogMsg(title, msg, dialogClass, '', arrayBtns, false, width);
+                    }
+                    else{
+                        if( ! $('#consultaPor').val() ){
+                            var focusItem = $('#consultaPor');
+                            var titleItem = 'Ingrese una Observación/Justificación';
+                            var msjItem   = 'Para Continuar, ingrese una <b>Observación/Justificación</b>.';
+                        }
+                        else{
+                            var focusItem = $('#seeAllHistory');
+                            var titleItem = 'Seleccione la Consulta a dar Seguimiento';
+                            var msjItem   = 'No ha seleccionado la <b>Historia Clínica</b> a la que le dará <b>Seguimiento</b>.';
+                        }
+
+                        var arrayBtns = [{
+                            text: 'Ok', click: function() {
+                                $( this ).dialog( "close" );
+                                focusItem.focus();
+                            }
+                        }];
+                        showDialogMsg(titleItem, msjItem, 'dialog-error', '', arrayBtns, false, 400);
+                    }
+                });
+            };
+
+            function enablePrescription(id){
+                $('#divRecetario').append('<a href="#" id="recetario" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Recetario de Consulta Externa">\
+                                                <li class="fa fa-clipboard"></li><span>Recetario<br/>Consulta Externa</span>\
+                                            </a>');
+                $("a#recetario").on("click", function () {
+                    var parameters = {_external: 'true', idEmpleado: {{ app.user.getIdEmpleado().getId() }}, idEspecialidad: idAtenAreaModEstab.select2('val'), idHistorialClinico: id};
+                    var winParams = [];
+
+                    winParams['method'] = "post";
+                    winParams['action'] = "{{ url('admin_minsal_farmacia_farmrecetas_assign_receta') }}";
+                    winParams['target'] = "Creacion de Receta";
+                    winParams['parameters'] = parameters;
+                    openPostPopUpWindows(winParams);
+                });
+                $('a[btn-selectable="true"]').hide();
+            }
+
+        });//fin document ready
+
+        function setHistoriaSeguimiento(id){
+            jQuery('input[id$="_idSeguimientoHistoriaClinica"]').val(id);
+            jQuery('#divSeguimientoConsulta').empty().attr('class', 'alert alert-success').append('\
+                <h5><span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span> Historia Clínica de Seguimiento Seleccionada.</h5>\
+            ');
+            $('a[btn-selectable="true"]').hide();
+            $('#unsetSpan').show();
+        };
+
+        function unsetHistoriaSeguimiento(){
+            jQuery('input[id$="_idSeguimientoHistoriaClinica"]').val('');
+            jQuery('#divSeguimientoConsulta').empty().attr('class', 'alert alert-warning').append('\
+                No ha seleccionado la Historia Clínica a la que le dará <b>Seguimiento</b>.\
+                Para seleccionarla, verifique la lista de <b>Últimas Consultas</b> y de clic en la opción <b>"Seleccionar"</b>, si no la encuentra,\
+                utilice la opción <b>"Ver Todas"</b>.\
+            ');
+            $('a[btn-selectable="true"]').show();
+            $('#unsetSpan').hide();
+        }
+
+    </script>
+{% endblock %}
+{% block form %}
+    {{ sonata_block_render_event('sonata.admin.edit.form.top', { 'admin': admin, 'object': object }) }}
+
+    {% set url = admin.id(object) is not null ? 'edit' : 'create' %}
+
+    {% if not admin.hasRoute(url)%}
+        <div>
+            {{ "form_not_available"|trans({}, "SonataAdminBundle") }}
+        </div>
+    {% else %}
+        <form
+            {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+            role="form"
+            action="{{ admin.generateUrl(url, {'id': admin.id(object), 'uniqid': admin.uniqid, 'subclass': app.request.get('subclass')}) }}" {{ form_enctype(form) }}
+            method="POST"
+            {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+            >
+            {% if form.vars.errors|length > 0 %}
+                <div class="sonata-ba-form-error">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            {% block sonata_pre_fieldsets %}
+                <div class="row">
+                {% endblock %}
+
+                {% block sonata_tab_content %}
+                    {% for name, form_group in admin.formgroups %}
+                        <div class="{{ form_group.class|default('col-md-12') }}">
+                            <div class="box box-primary">
+                                <div class="box-header">
+                                    <h3 class="box-title">Receta Repetitiva Complementaria</h3>
+                                </div>
+                                <div class="box-body">
+                                    <h5 class="box-title">
+                                        Por Favor Ingrese los siguientes Datos:
+                                    </h5>
+                                    <div class="sonata-ba-collapsed-fields">
+                                        <div class="container-fluid">
+                                            <div class="row">
+                                                <div class="col-xs-18 col-md-2">
+                                                    {{ form_row(form.fecha) }}
+                                                </div>
+                                                <div class="col-xs-12 col-md-5">
+                                                    <label id="labelNumExpNomPac" class="control-label">N° Expediente</label>
+                                                    <input type="text" id="numExpNomPac" name="numExpNomPac" required="required" class="form-control">
+                                                </div>
+                                                <div class="col-xs-12 col-md-5">
+                                                    {{ form_row(form.idAtenAreaModEstab) }}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-xs-18 col-md-6" id="originMotivo">
+
+                                                </div>
+                                                <div class="col-xs-12 col-md-2">
+
+                                                </div>
+                                                <div class="col-xs-12 col-md-2">
+
+                                                </div>
+                                                <div class="col-xs-12 col-md-2">
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% if form_group.description != false %}
+                                            <p>{{ form_group.description|raw }}</p>
+                                        {% endif %}
+
+                                        {% for field_name in form_group.fields %}
+                                            {% if admin.formfielddescriptions[field_name] is defined %}
+                                                {% if form[field_name] is defined %}
+                                                    {{ form_row(form[field_name])}}
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <div id="preInfo">
+                                    </div>
+                                    <div id="waitDiv">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endblock %}
+
+                {% block sonata_post_fieldsets %}
+                </div>
+            {% endblock %}
+
+            {{ form_rest(form) }}
+
+            {% block formactions %}
+                <div id="formActionsDiv" style="display: none;">
+                    <div id="formButtonsDiv" class="well well-small form-actions">
+
+                    </div>
+                </div>
+            {% endblock formactions %}
+        </form>
+    {% endif %}
+
+    {{ sonata_block_render_event('sonata.admin.edit.form.bottom', { 'admin': admin, 'object': object }) }}
+
+{% endblock %}

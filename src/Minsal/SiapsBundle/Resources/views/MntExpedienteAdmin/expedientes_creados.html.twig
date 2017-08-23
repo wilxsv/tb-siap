@@ -1,0 +1,131 @@
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['bSort']=false;
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['bFilter']=false;
+            opcionesTable['sDom']='<"top"flp>rt<"bottom"i>';
+            opcionesTable['aLengthMenu']= [[15,25, 50, 75, -1], [15,25, 50, 75, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+
+            //para exportar reportes
+                $('#exportar_hoja_calculo').click(function() {
+                        url = Routing.generate('_exportar_reporte',{'report_name':'expedientes_creados','report_format':'XLS','datos':$('#expedientes_creados').serialize()});
+                        window.open(url, '_blank');
+                        return false;
+                });
+
+                $('#exportar_pdf').click(function() {
+                    url = Routing.generate('_exportar_reporte',{'report_name':'expedientes_creados','report_format':'PDF','datos':$('#expedientes_creados').serialize()});
+                        window.open(url, '_blank');
+                        return false;
+                });
+
+                $('#resultado').waitMe('hide');
+
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+  <div class="col-md-offset-3 col-md-6">
+      <h4>Lista de Expedientes</h4>
+  </div>
+  <div class="col-md-3">
+      <form id='reporteExpedientesForm' >
+          <label>Exportar a:
+              <a id="exportar_hoja_calculo" class="img_export_inf" href=""><img src={{ asset('bundles/minsalsiaps/imagenes/calc_icon.png') }} /></a>
+              <a id="exportar_pdf" class="img_export_inf" href=""><img src={{ asset('bundles/minsalsiaps/imagenes/pdf_icon.png') }} /></a>
+          </label>
+      </form>
+  </div>
+</div>
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+
+            <th>Número de Expediente</th>
+            <th>Nombre Completo Paciente</th>
+            <th>Sexo</th>
+            <th>Fecha de Nacimiento</th>
+            {% if tipo=='eliminados' %}
+                <th>Eliminó Expediente</th>
+            {% else %}
+                <th>Nombre de la Madre</th>
+                <th>Creó Expediente</th>
+            {% endif %}
+            {% if tipo=='eliminados' %}
+                <th>Fecha de Eliminación</th>
+            {% else %}
+                <th>Fecha de Creación</th>
+            {% endif %}
+            {% if (app.user.hasRole('ROLE_USER_CONSULTAR')=='1' or app.user.hasRole('ROLE_SUPER_ADMIN')=='1') and tipo != 'eliminados'  %}
+                <th>Acciones</th>
+            {% endif %}
+            {% if tipo !='eliminados' %}
+                <th>Area Creación</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for paciente in pacientes %}
+            <tr>
+             <td >{{ paciente['numero'] }}</td>
+             <td>{{ paciente['nombre_paciente']}}</td>
+             <td>{{ paciente['sexo']}}</td>
+             <td>{{ paciente['fecha_nacimiento']| date('d/m/Y')}}</td>
+             {% if tipo=='eliminados' %}
+                <td>{{ paciente['actualizo_datos']}}</td>
+             {% else %}
+                 <td>{{ paciente['madre']}}</td>
+                 <td>{{ paciente['tomo_datos']}}</td>
+            {% endif %}
+            {% if tipo=='eliminados' %}
+               <td>{{ paciente['fecha_mod']| date('d/m/Y')}}</td>
+            {% else %}
+               <td>{{ paciente['fecha_creacion']| date('d/m/Y')}}</td>
+           {% endif %}
+             {% if (app.user.hasRole('ROLE_USER_CONSULTAR')=='1' or app.user.hasRole('ROLE_SUPER_ADMIN')=='1') and tipo != 'eliminados' %}
+             <td>
+                 <a target="_blank" href="{{ path('_report_paciente',{'report_name':'hoja_datos_paciente','report_format':'PDF', 'paciente':paciente['id_paciente']})}}" class="btn btn-info"><span class="fa fa-file-text"></span>Hoja Identificación</a>
+             </td>
+             {% endif %}
+             {% if tipo !='eliminados' %}
+                <td>{{ paciente['area_creacion']}}</td>
+             {% endif %}
+          </tr>
+        {% endfor %}
+        {% for paciente in pacientesCun %}
+            <tr>
+             <td >{{ paciente['numero'] }}</td>
+             <td>{{ paciente['nombre_paciente']}}</td>
+             <td>{{ paciente['sexo']}}</td>
+             <td>{{ paciente['fecha_nacimiento']| date('d/m/Y')}}</td>
+             {% if tipo=='eliminados' %}
+                <td>{{ paciente['actualizo_datos']}}</td>
+             {% else %}
+                 <td>{{ paciente['madre']}}</td>
+                 <td>{{ paciente['tomo_datos']}}</td>
+            {% endif %}
+            {% if tipo=='eliminados' %}
+               <td>{{ paciente['fecha_mod']| date('d/m/Y')}}</td>
+            {% else %}
+               <td>{{ paciente['fecha_creacion']| date('d/m/Y')}}</td>
+           {% endif %}
+             {% if (app.user.hasRole('ROLE_USER_CONSULTAR')=='1' or app.user.hasRole('ROLE_SUPER_ADMIN')=='1') and tipo != 'eliminados' %}
+             <td>
+                 <a target="_blank" href="{{ path('_report_paciente',{'report_name':'hoja_datos_paciente','report_format':'PDF', 'paciente':paciente['id_paciente']})}}" class="btn btn-info"><span class="fa fa-file-text"></span>Hoja Identificación</a>
+             </td>
+             {% endif %}
+             {% if tipo !='eliminados' %}
+                <td>{{ paciente['area_creacion']}}</td>
+             {% endif %}
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>

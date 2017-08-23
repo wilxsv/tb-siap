@@ -1,0 +1,96 @@
+{# src/MinsalCitasBundle/CitasMedicas/asignar.html.twig #}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% set idAreaModEstab = idAreaModEstab ? idAreaModEstab : '1' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+{% endblock%}
+
+{% block javascripts %}
+    {{parent()}}
+    <script type="text/javascript">
+    $(document).ready(function () {
+        var now = moment();
+        var idAreaModEstab = $('#idAreaModEstab');
+        var rangoFechas=$('#rango_fechas');
+
+        rangoFechas.val(now.format('DD/MM/YYYY')+' - '+now.format('DD/MM/YYYY'));
+
+        $('#buscar').on('click',function(e){
+            if(rangoFechas.val() !='' && idAreaModEstab.select2('val')!=''){
+                $('#resultado').waitMe({ text: 'Buscando...' });
+                $('#resultado').load(Routing.generate("cargar_produccion_citas_recurso",{'datos':$('#formBusqueda').serialize()}),
+                function( response, status, xhr ) {
+                    if(status=='success'){
+                        $('#resultado').waitMe('hide');
+                    }
+                });
+            }else{
+                var title='Error de Llenado';
+                var body="Debe de seleccionar el rango de fechas a buscar";
+                var clase='dialog-error';
+                var arrayBtns = [{text: 'Cerrar',
+                                        click: function( event, ui) {
+                                            jQuery( this ).dialog( "close" );
+                                        }}
+                                ];
+                showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+            }
+
+        });
+
+        {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+            idAreaModEstab.parent().parent().hide();
+            idAreaModEstab.select2('val','{{idAreaModEstab.getId()}}' );
+            idAreaModEstab.trigger('change');
+        {% endif %}
+
+
+
+
+    });
+    </script>
+{% endblock %}
+
+{% block list_table -%}
+
+<div class="container-fluid">
+    <div class="row">
+        <form id="formBusqueda" method="post" >
+            <div class="col-md-7 col-md-offset-2">
+                <h2 class="text-center">Produccion de citas por empleado</h2>
+                <img src="{{ asset('bundles/minsalsiaps/imagenes/estadistica.png') }}" alt="imagen_buscar" style="width: 100px; margin: 20px auto; display:block;" />
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 300px;">Área a la que pertenece la especialidad:</th>
+                            <td><select id="idAreaModEstab" name="idAreaModEstab" style="width:400px !important;">
+                                {% for area in areas %}
+                                <option value="{{ area.id }}">{{ area }}</option>
+                                {% endfor %}
+                            </select></td>
+                        </tr>
+                        <tr>
+                            <th>Rango de Fechas:<span class="glyphicon glyphicon-info-sign fd_help_msg" data-toggle="tooltip" data-placement="right" title="Rango de fecha en que fue otorgada la cita"></span></th>
+                            <td><input type="text" id="rango_fechas" name="rango_fechas" class="bootstrap-daterangepicker" data-mask="99/99/9999 - 99/99/9999" placeholder='dd/mm/yyyy - dd/mm/yyyy' style="width:200px"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <div class="col-md-7 col-md-offset-2">
+            <center>
+                <button id="buscar" style="width: 160px; margin-top: 5px;" class="btn btn-primary" ><i class="glyphicon glyphicon-zoom-in"></i><strong>&nbsp; Buscar</strong></button>
+                <a id="limpiar" style="width: 160px; margin-top: 5px;" class="btn btn-info" href="#"><i class="fa fa-trash-o"></i><strong>&nbsp; Limpiar</strong></a>
+            </center>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div id="resultado" class="col-md-10 center-block" style="min-height: 150px">
+        </div>
+    </div>
+</div>
+{% endblock -%}

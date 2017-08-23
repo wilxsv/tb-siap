@@ -1,0 +1,40 @@
+{% extends 'SonataAdminBundle:CRUD:list.html.twig' %}
+{% block javascripts %}
+{{ parent() }}
+<script src="{{ asset('bundles/minsalsiaps/js/maskedinput/jquery.maskedinput.js') }}" type="text/javascript"></script>
+
+<script type="text/javascript">
+$(document).ready(function () {
+    $('#filter_fechaNacimiento_value').mask('99/99/9999');
+
+
+});
+var modal_elements=[];
+var actual_id=0;
+function abrirModal(id){
+    var html='<div id="prueba"></div>';
+    actual_id=id;
+    return html;
+
+}
+
+function cargarShow(){
+    var path='{{url('admin_minsal_siaps_mntpacientereferido_mostrar', {'id': 'selectedId'})}}';
+    var url = path.replace("selectedId", actual_id);
+    html=$('#prueba').load(url);
+}
+function pushModalElement(newId, callFunction, id,afterLoadFunction) {
+    modal_elements.push({
+        id: newId,
+        func: callFunction,
+        header: 'Detalle del Paciente Referido',
+        footer: "",
+        closeBtnName: 'Cerrar',
+        afterLoadCallFunction: afterLoadFunction,
+        widthModal: '750px',
+        parameters: id
+    });
+}
+
+</script>
+{% endblock %}

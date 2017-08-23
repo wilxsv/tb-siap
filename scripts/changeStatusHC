@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# changeStatusHC
+# Scrpit para cambiar el estado de las Historias Clinicas a finalizado.
+#
+
+# Estableciendo ruta del directorio en donde se encuentra SIAPS
+siap_path="$(dirname "$PWD")"
+
+# Incluyendo la funcion que ayudara a realizar la lectura del archivo parameters.yml
+. $siap_path"/scripts/parse_yaml.sh"
+
+# Leyendo el archivo parameters.yml
+eval $(parse_yaml $siap_path"/app/config/parameters.yml" "config_")
+
+# Estableciendo las variables de la base de datos del archivo parameters.yml
+# a variables temporales
+host=$config_parameters__database_host
+dbname=$config_parameters__database_name
+dbuser=$config_parameters__database_user
+dbpass=$config_parameters__database_password
+
+# Estableciendo la contraseña de conexion con la base de datos.
+export PGPASSWORD=$dbpass
+psql -U $dbuser -h $host -c "UPDATE sec_historial_clinico SET id_estado_historia_clinica = 5 WHERE id_estado_historia_clinica=4;" $dbname > $siap_path"/app/logs/changeStatusHC-error.log"

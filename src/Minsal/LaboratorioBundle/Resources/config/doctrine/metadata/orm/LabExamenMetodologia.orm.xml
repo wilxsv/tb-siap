@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabExamenMetodologia" table="lab_examen_metodologia">
+    <indexes>
+      <index name="IDX_633AA87A195D811C" columns="id_conf_exa_estab"/>
+      <index name="IDX_633AA87A151BC3B" columns="id_metodologia"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="activo" type="boolean" column="activo" nullable="false"/>
+    <field name="fechaInicio" type="date" column="fecha_inicio" nullable="false"/>
+    <field name="fechaFin" type="date" column="fecha_fin" nullable="true"/>
+    <many-to-one field="idMetodologia" target-entity="LabMetodologia">
+      <join-columns>
+        <join-column name="id_metodologia" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idConfExaEstab" target-entity="LabConfExamenEstab">
+      <join-columns>
+        <join-column name="id_conf_exa_estab" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

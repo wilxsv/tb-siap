@@ -1,0 +1,261 @@
+{# src/Minsal/CitasBundle/Resource/view/Custom/agenda_dia.html.twig
+Vista que muestra los pacientes en una determinada fecha. Según el médico
+seleccionado o el que haya iniciado sesión.
+#}
+<script type="text/javascript">
+/*OBTIENE EL MPEDICO YA SEA QUE SE HAYA LOGUEADO EN EL SISTEMA
+* O SI ES ADMINISTRADR EL QUE HAYA SELECCIONADO
+* EN LA LISTA DESPLEGABLE*/
+    function getMedicData() {
+        var idEmpleado = "";
+        var nombreEmpleado = "";
+        var idEmpleadoEspecialidadEstab = "";
+
+        {% if availableEmpleadoEspecialidadList is defined and availableEmpleadoEspecialidadList == true %}
+            if($('#idEmpleado').select2('data') != null) {
+                idEmpleado     = $('#idEmpleado').select2('data').id;
+                nombreEmpleado = $('#idEmpleado').select2('data').text;
+            }
+
+            if($('#idEmpleadoEspecialidadEstab').select2('data') != null) {
+                idEmpleadoEspecialidadEstab = $('#idEmpleadoEspecialidadEstab').select2('data').id;
+            }
+        {% else %}
+            {% if codigoEmpleado is sameas("MED") %}
+                idEmpleado     = '{{ app.user.getIdEmpleado.getId }}';
+                nombreEmpleado = '{{ app.user.getIdEmpleado.getNombreempleado }}';
+                idEmpleadoEspecialidadEstab = '{{ app.session.get("_idEmpEspecialidadEstab") }}';
+            {% elseif params.external is defined and params.external == true %}
+                idEmpleado     = '{{ params.mntEmpleado.getId() }}';
+                nombreEmpleado = '{{ params.mntEmpleado.getNombreempleado() }}';
+                idEmpleadoEspecialidadEstab = '{{ params.mntAtenAreaModEstab.getId() }}';
+            {% else %}
+                if($('#idEmpleado').select2('data') != null) {
+                    idEmpleado     = $('#idEmpleado').select2('data').id;
+                    nombreEmpleado = $('#idEmpleado').select2('data').text;
+                }
+
+                if($('#idEmpleadoEspecialidadEstab').select2('data') != null) {
+                    idEmpleadoEspecialidadEstab = $('#idEmpleadoEspecialidadEstab').select2('data').id;
+                }
+            {% endif %}
+        {% endif %}
+
+        return {'idEmpleado': idEmpleado, 'nombreEmpleado': nombreEmpleado, 'idEmpleadoEspecialidadEstab': idEmpleadoEspecialidadEstab};
+    }
+
+
+    /**************************************************************************
+    * FUNCION QUE GENERA LA AGENDA MEDICA, CON LOS PACIENTES DE PRIMERA VEZ, *
+    * SUBSECUENTES O AGREGADOS SEGÚN SEA EL CASO.                            *
+    * PARAMETERS: Contiene la url para obtener los pacientes y la fecha a    *
+    * efectuar la evaluación
+    *************************************************************************/
+    function buildDetailAgendaMedica(parameters) {
+        var content         = "";
+        var detalle         = [];
+        var primera_vez     = "";
+        var subsecuentes    = "";
+        var agregados       = "";
+        var medicData       = getMedicData();
+        var count           = 0;
+        var max_agregados   = 0;
+        var act_agregados   = 0;
+        var bloqueLleno     = '';
+        var warningMessage  = '';
+        var clearWarningMsg = false;
+        var expTemporalMsg  = "No se puede dar seguimiento al paciente, hasta que actualicen sus datos de expediente en el área de documentos médicos.";
+
+        {% if availableCitaCreate is defined and availableCitaCreate == true %}
+            /*
+             *  Verificando si se sobrepaso el limite de sobrecupo para el dia actual
+             */
+            if( '{{ app.request.attributes.get('_route') }}' === 'admin_minsal_citas_citcitasdia_list' ) {
+                $.ajax({
+                    url:  Routing.generate("citascomprobardisponibilidad"),
+                    async: false,
+                    dataType: 'JSON',
+                    data: {
+                        idEmpleado:   medicData.idEmpleado,
+                        especialidad: medicData.idEmpleadoEspecialidadEstab,
+                        date:         clickDay,
+                        idRangohora:  parameters['field'].select2('val'),
+                        idTipoCita:   parameters['idTipoCita'].select2('val')
+                    },
+                    success: function(data) {
+                        max_agregados = data.data1.max_citas_agregadas;
+                        act_agregados = data.data2;
+                        bloqueLleno   = data.data3;
+
+                    }
+                });
+
+                if(bloqueLleno === 'true') {
+                    warningMessage =
+                        '<div class="alert alert-warning" role="alert">'+
+                            '<i class="fa fa-warning"></i> <h4><strong>Advertencia</strong></h4>'+
+                            '<ul>'
+                    ;
+
+                    if(act_agregados >= max_agregados) {
+                        var now        = moment();
+                        var clickedDay = moment(clickDay);
+
+                        if( now.format('YYYY-MM-DD') === clickedDay.format('YYYY-MM-DD') ) {
+                            warningMessage +=
+                                    '<li>El límite de cupos para <strong>Para pacientes Agregados del Médico ha sido alcanzado</strong>. Si desea agendar el '+
+                                    'paciente y el <strong>cupo de Pacientes de Primera vez o Subsecuentes</strong> se encuentra lleno la cita será asignada '+
+                                    'dentro del bloque de pacientes agregados sobrepasando el límite asignado.<br />'+
+                                    'Si desea continuar con la creación de la cita haga click en botón <strong>"Crear Cita"</strong>, de lo contrario '+
+                                    'seleccione otro horario u otra fecha para crear la cita.</li>'
+                            ;
+                        } else {
+                            clearWarningMsg = true;
+                        }
+                    } else {
+                        var nombreTipoCita = parseInt( parameters['idTipoCita'].select2('val') ) === 1 ? 'de Primera Vez' : 'Subsecuentes';
+                        warningMessage += '<li>El límite de cupos para <strong>Pacientes '+nombreTipoCita+' ya ha sido alcanzado</strong>, la cita que se cree a partir de este momento será sobrecupo (Agregados).</li>';
+                    }
+
+                    warningMessage += '</ul></div>';
+
+                    if(clearWarningMsg) {
+                        warningMessage = '';
+                    }
+                }
+            }
+        {% endif %}
+        jQuery.ajax({
+            url: parameters['url'],
+            async: false,
+            dataType: 'json',
+            success: function(data) {
+                detalle['primera_vez'] = data.data1;
+                detalle['subsecuentes'] = data.data2;
+                detalle['agregados'] = data.data3;
+            }
+        });
+
+        if (detalle['primera_vez'].length == 0) {
+            primera_vez = '<tr><td colspan="{% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}5{% else %}6{% endif %}"><span class="disabled-label">No hay resultados para mostrar...</span></td></tr>';
+        } else {
+            jQuery.each(detalle['primera_vez'], function(key, value) {
+                count += 1;
+                primera_vez = primera_vez + '\
+                    <tr>'+
+                        '<td>' + count + '</td>'+
+                        {% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}
+                            '<td><a ' + ( value.numeroTemporal ? ('onClick="showDialogMsg(\'Expediente Temporal\',\'' + expTemporalMsg + '\',\'dialog-error\');" href="#"') : 'href="{{ url('admin_minsal_seguimiento_sechistorialclinico_create')}}?id_expediente='+value.idExpediente+'&id_empleado='+medicData.idEmpleado+'&id_aten_area_mod_estab='+medicData.idEmpleadoEspecialidadEstab+'&id_cita='+value.idCita+'"' ) + '>' + value.codExpediente + '</a></td>'+
+                        {% else %}
+                            '<td>' + value.codExpediente + '</td>'+
+                        {% endif %}
+                        '<td>' + value.numeroDocumentoIdentidadPaciente+ '</td>'+
+                        '<td>' + value.nombrePaciente+ '</td>'+
+                        '<td>' + value.nombreEstado+ '</td>'+
+                        {% if app.request.attributes.get('_route') is not sameas('admin_minsal_citas_citcitasdia_agenda_dia') and app.request.attributes.get('_route') is not sameas ('consulta_recibida') %}
+                            '<td><a href="{{ url('citasgetcomprobante') }}?id='+value.idCita+'" target="_blank" class="btn btn-info"><span class="fa fa-print"> Imprimir</span></a></td>' +
+                        {% endif %}
+                    '</tr>';
+            });
+        }
+
+        if (detalle['subsecuentes'].length == 0) {
+            subsecuentes = '<tr><td colspan="{% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}5{% else %}6{% endif %}"><span class="disabled-label">No hay resultados para mostrar...</span></td></tr>';
+        } else {
+            count = 0;
+            jQuery.each(detalle['subsecuentes'], function(key, value) {
+                count += 1;
+                subsecuentes = subsecuentes + '\
+                    <tr>'+
+                        '<td>' + count + '</td>'+
+                        {% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}
+                            '<td><a ' + ( value.numeroTemporal ? ('onClick="showDialogMsg(\'Expediente Temporal\',\'' + expTemporalMsg + '\',\'dialog-error\');" href="#"') : 'href="{{ url('admin_minsal_seguimiento_sechistorialclinico_create')}}?id_expediente='+value.idExpediente+'&id_empleado='+medicData.idEmpleado+'&id_aten_area_mod_estab='+medicData.idEmpleadoEspecialidadEstab+'&id_cita='+value.idCita+'"' ) + '>' + value.codExpediente + '</a></td>'+
+                        {% else %}
+                            '<td>' + value.codExpediente + '</td>'+
+                        {% endif %}
+                        '<td>' + value.numeroDocumentoIdentidadPaciente+ '</td>'+
+                        '<td>' + value.nombrePaciente+ '</td>'+
+                        '<td>' + value.nombreEstado+ '</td>'+
+                        {% if app.request.attributes.get('_route') is not sameas('admin_minsal_citas_citcitasdia_agenda_dia') and app.request.attributes.get('_route') is not sameas ('consulta_recibida') %}
+                            '<td><a href="{{ url('citasgetcomprobante') }}?id='+value.idCita+'" target="_blank" class="btn btn-info"><span class="fa fa-print"> Imprimir</span></a></td>' +
+                        {% endif %}
+                    '</tr>';
+            });
+        }
+
+        if (detalle['agregados'].length == 0) {
+            agregados = '<tr><td colspan="{% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}5{% else %}6{% endif %}"><span class="disabled-label">No hay resultados para mostrar...</span></td></tr>';
+        } else {
+            {% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' or app.request.attributes.get('_route')=='consulta_recibida' %}
+                {% set citCitasDia = true %}{% else %}{% set citCitasDia = false %}
+            {% endif %}
+            count = 0;
+            jQuery.each(detalle['agregados'], function(key, value) {
+                count += 1;
+                agregados = agregados + '\
+                    <tr>'+
+                        '<td>' + count + '</td>'+
+                        {% if citCitasDia %}
+                            '<td><a ' + ( value.numeroTemporal ? ('onClick="showDialogMsg(\'Expediente Temporal\',\'' + expTemporalMsg + '\',\'dialog-error\');" href="#"') : 'href="{{ url('admin_minsal_seguimiento_sechistorialclinico_create')}}?id_expediente='+value.idExpediente+'&id_empleado='+medicData.idEmpleado+'&id_aten_area_mod_estab='+medicData.idEmpleadoEspecialidadEstab+'&id_cita='+value.idCita+'"' ) + '>' + value.codExpediente + '</a></td>'+
+                        {% else %}
+                            '<td>' + value.codExpediente + '</td>'+
+                        {% endif %}
+                        '<td>' + value.numeroDocumentoIdentidadPaciente+ '</td>'+
+                        '<td>' + value.nombrePaciente+ '</td>'+
+                        '<td>' + value.nombreTipoCita+' - '+(value.idEstado === 6 ? 'Programada' : value.nombreEstado)+ '</td>'+
+                        {% if citCitasDia is sameas(false) %}
+                            '<td><a href="{{ url('citasgetcomprobante') }}?id='+value.idCita+'" target="_blank" class="btn btn-info"><span class="fa fa-print"> Imprimir</span></a></td>' +
+                        {% endif %}
+                    '</tr>';;
+            });
+        }
+
+        content = '<div class="panel panel-primary">\
+                        <div class="panel-heading">Pacientes primera vez</div>\
+                        <div class="panel-body" id="pb-primervez">\
+                            <div class="table-responsive">\
+                                <table class="table table-striped table-hover table-condensed">\
+                                    <thead>\
+                                        <tr><th>No.</th><th>Expediente</th><th>DUI</th><th>Nombre del paciente</th><th>Estado de la cita</th>{% if citCitasDia is sameas(false) %}<th>Comprobante</th>{% endif %}</tr>\
+                                    </thead>\
+                                    <tbody>\
+                                        ' + primera_vez + '\
+                                    </tbody>\
+                                </table>\
+                            </div>\
+                        </div>\
+                    </div>\
+                    <div class="panel panel-success">\
+                        <div class="panel-heading">Pacientes subsecuentes</div>\
+                        <div class="panel-body" id="pb-subsecuentes">\
+                            <div class="table-responsive">\
+                                <table class="table table-striped table-hover table-condensed">\
+                                    <thead>\
+                                        <tr><th>No.</th><th>Expediente</th><th>DUI</th><th>Nombre del paciente</th><th>Estado de la cita</th>{% if citCitasDia is sameas(false) %}<th>Comprobante</th>{% endif %}</tr>\
+                                    </thead>\
+                                    <tbody>\
+                                        ' + subsecuentes + '\
+                                    </tbody>\
+                                </table>\
+                            </div>\
+                        </div>\
+                    </div>\
+                    <div class="panel panel-info">\
+                        <div class="panel-heading">Pacientes agregados</div>\
+                        <div class="panel-body" id="pb-agregados">\
+                            <div class="table-responsive">\
+                                <table class="table table-striped table-hover table-condensed">\
+                                    <thead>\
+                                        <tr><th>No.</th><th>Expediente</th><th>DUI</th><th>Nombre del paciente</th><th>Estado de la cita</th>{% if citCitasDia is sameas(false) %}<th>Comprobante</th>{% endif %}</tr>\
+                                    </thead>\
+                                    <tbody>\
+                                        ' + agregados + '\
+                                    </tbody>\
+                                </table>\
+                            </div>\
+                        </div>\
+                    </div>';
+
+        return { warningMessage: warningMessage, content: content };
+    }
+</script>

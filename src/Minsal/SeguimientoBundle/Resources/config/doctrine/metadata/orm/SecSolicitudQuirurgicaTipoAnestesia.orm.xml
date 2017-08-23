@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecSolicitudQuirurgicaTipoAnestesia" table="sec_solicitud_quirurgica_tipo_anestesia">
+    <indexes>
+      <index name="IDX_9E7ACD6848709FC9" columns="id_solicitud_quirurgica"/>
+      <index name="IDX_9E7ACD683BD73BB2" columns="id_tipo_anestesia"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <many-to-one field="idTipoAnestesia" target-entity="CtlTipoAnestesia">
+      <join-columns>
+        <join-column name="id_tipo_anestesia" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idSolicitudQuirurgica" target-entity="SecSolicitudQuirurgica">
+      <join-columns>
+        <join-column name="id_solicitud_quirurgica" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

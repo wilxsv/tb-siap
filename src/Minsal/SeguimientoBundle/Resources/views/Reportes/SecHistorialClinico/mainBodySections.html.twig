@@ -1,0 +1,125 @@
+{% for section in savedData %} {# Por cada Seccion dentro de Saved Data #}
+    {% set colspan='2' %}
+    {% set highlight = false %}
+    {% if section.name != 'Signos Vitales'%}
+        {% if section.name not in sectionsAvoid %}
+            {% if section.name in sectionsHighlight %} {% set highlight = true %} {% endif %}
+            <div class="panel panel-info" style="{% if  highlight %} border: 2px solid #757575;{% endif %}">
+                <div class="panel-heading" style="{% if  highlight %} background-color: #C0C0C0;{% endif %}"><b>{{ section.name }}</b> {# Se imprime el nombre de la Seccion #}</div>
+                <div class="table-responsive" style="overflow-x: auto; {% if  highlight %} border-top: 2px solid #757575;{% endif %}">
+                    <table class="{% if impresion != true %} table table-hover {% endif %} table-bordered" >
+                        <tbody>
+                            {% if section.isCollection %} {# Si la Seccion es un Collection #}
+                                {% if section.collection is defined and section.collection|length > 0 %}
+                                    {% for row in section.collection %} {# Por cada row dentro de la Coleccion #}
+                                        <tr class="sonata-ba-view-container">
+                                            {% for item, data in row %} {# Por cada Item,Data dentro del row #}
+                                                <td style="background-color: #F0F0F0; font-weight: bold;">{{ data.name }}</td>
+                                                <td>{{ data.value }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td><p class="text-muted">No hay registros para mostrar.</p></td></tr>
+                                {% endif %}
+                            {% else %}
+                                {% if section.items is defined and section.items|length > 0 %}
+                                    {% for item, data in section.items %} {# Por cada Item,Data dentro de los Items #}
+                                        {% if colspan == '2' %}
+                                            <tr class="sonata-ba-view-container">
+                                        {% endif %}
+                                        {% if data.multiple is defined %}  {# Si la Data es multiple (proviene de checkboxes) #}
+                                            <th style="min-width: 250px;">{{ data.multiple.name }}</th>
+                                            <td>
+                                                {% if (data.multiple.hideTitle) %}
+                                                    {% if (data.multiple.value)|length>0 %}
+                                                        {% set answer='Sí' %}
+                                                    {% else %}
+                                                        {% set answer='No' %}
+                                                    {% endif %}
+
+                                                    {{ answer  }}
+                                                {% else %}
+                                                    <ul>
+                                                        {% for subData in data.multiple.value %}{# Por cada SubData dentro del Valor Mul.#}
+                                                            <li>{{ subData }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endif %}
+                                            </td>
+                                        {% else %} {# Sino solo imprimir el name y el value #}
+                                            {% if data.hideTitle %}
+                                                {% if data.itemObject.getIdFormItem().getIdTipoObjeto().getId() == 3 %}
+                                                    {% set colspan='1' %}
+                                                    <th colspan="{{colspan}}" style="min-width: 250px;">{{ data.name }}</th>
+                                                {% else %}
+                                                    <td colspan="{{colspan}}" style="min-width: 250px; {% if colspan == 2 %}background-color: #e8e8e8; font-size: 12px;{% endif %}">{{ data.value }}</td>
+                                                    {% set colspan='2' %}
+                                                    <!-- <td><span>{{ data.value }}</span></td> -->
+                                                {% endif %}
+                                            {% else %}
+                                                {% if colspan == '1' %}
+                                                        <td colspan="{{colspan}}" style="min-width: 250px;" class="offset-color-gray"></td>
+                                                    </tr>
+                                                    <tr class="sonata-ba-view-container">
+                                                    {% set colspan='2' %}
+                                                {% endif %}
+                                                    <th style="min-width: 250px; {% if  highlight %} background-color: #d5d5d5; font-weight: bold; font-size: 12px;{% endif %}">{{ data.name }}</th>
+                                                    <td style="{% if  highlight %} background-color: #d5d5d5; font-weight: bold; font-size: 12px;{% endif %}"><span>{{ data.value }}</span></td>
+                                            {% endif %}
+                                        {% endif %}
+                                        {% if colspan == '2' %}
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <tr><td><p class="text-muted">No hay registros para mostrar.</p></td></tr>
+                                {% endif %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="panel panel-info">
+            <div class="panel-heading"><b >{{ section.name }}</b> {# Se imprime el nombre de la Seccion #}</div>
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table-bordered" >
+                    <tbody>
+                        {% set i=1 %}
+                        {% for item, data in section.items %} {# Por cada Item,Data dentro de los Items #}
+                            {% if i==1 %}
+                                <tr class="sonata-ba-view-container">
+                            {% endif %}
+                                <th colspan="2">{{ data.name }}</th>
+                                <td><span>{{ data.value }}</span></td>
+                            {% if i==3 %}
+                                </tr>
+                            {% endif %}
+                            {% set i=i+1 %}
+                            {% if i>3 %}
+                                {% set i=1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if i!=1 %}
+                            {% if i<3 %}
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                        <tr class="sonata-ba-view-container">
+                            <th colspan="2">IMC:</th>
+                            <td><span>{{imc['valor']}}</span>
+                            {% if imc['clasificacion'] is null %}
+                                <td colspan="6"></td>
+                            {% else %}
+                                <th colspan="2">Clasificación:</th>
+                                <td>{{imc['clasificacion'] }}</td>
+                            {% endif %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+{% endfor %}

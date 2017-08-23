@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            table {
+                border: 1px dashed #000;
+                font-size:11px;
+                border-collapse: separate;
+                border-spacing: 1px 0px;
+                height:460px;
+            }
+            .td-enca {
+                text-align:center;
+                font-size:10px;
+            }
+            label{
+                font-weight: bold;
+            }
+            td {
+               padding-left: 2px;
+            }
+            .td-medicamento{
+                font-size:  11px;
+            }
+            .td-medicamento-detalle{
+                font-size:  11px;
+            }
+            </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    </head>
+    <body onload="subst()">
+    {% set i = 1 %}
+    {% set twoxpage = 1 %}
+    {% set aux = '' %}
+    {% for cuantamedicina in objReceta %}
+
+    {% if aux != cuantamedicina.med.getIdmedicina %}
+        {% set aux = cuantamedicina.med.getIdmedicina %}
+        {% set i = 1 %}
+    {% endif %}
+
+    <table width="50%"  style="float: left;" border='0'>
+        <tr>
+            <td class ="td-enca" colspan="4">
+            <b>
+                <br/>
+                {{ '#'~cuantamedicina.med.getIdreceta().numeroreceta }}
+                {{ cuantamedicina.med.getIdreceta().getIdestado()|trim is sameas('R') ? 'RECETA DEL DIA' : '<<'~'RECETA REPETITIVA'~'>>' }}
+                {{ i~'/'~cuantamedicina.cuantos }}<br/>
+                {{idhistorialclinico.getIdEstablecimiento.nombre}}
+                {{idhistorialclinico.getIdEstablecimiento.getIdMunicipio.nombre}}
+                <br/>Receta de Dispensaci&oacute;n a Paciente Consulta Externa<br/>
+                Medicamento se despachara: {{ cuantamedicina.med.getIdEstablecimientoDespacha() }}
+            </b>
+            </td>
+
+        </tr>
+        <tr>
+            <td colspan="4" style="font-size: 16px;text-align:right;" colspan="2"><label>No Expediente: </label><b>{{expediente.numero}}</b></td>
+        <tr>
+            <td colspan="3" style="font-size: 9px;border:solid 1px" colspan="2"><label>Fecha Entrega: </label><b>{{cuantamedicina.med.getIdreceta().getFecha()|localizeddate('full', 'none', 'es_SV')|title}} </b></td>
+            <td colspan="1" style="font-size: 9px"><label>Horario: </label><b>{{cuantamedicina.med.getIdreceta().getIdRangohora()|raw}}</b></td>
+        </tr>
+        <tr>
+            <td><label>Paciente:</label> </td>
+            <td colspan="3"> {{expediente.getIdPaciente().primerApellido}} {{expediente.getIdPaciente().segundoApellido}} {{expediente.getIdPaciente().apellidoCasada}}, {{expediente.getIdPaciente().primerNombre}} {{expediente.getIdPaciente().segundoNombre}} {{expediente.getIdPaciente().tercerNombre}}   </td>
+        </tr>
+        <tr>
+            <td colspan="2"><label>Procedencia: </label>{{expediente.getIdPaciente().areaGeograficaDomicilio}}
+            <td colspan="2"><label>Edad: </label>{{edad}}</td>
+        </tr>
+        <tr>
+            <td colspan="2"><label>Sexo: </label>{{expediente.getIdPaciente().idSexo}}</td>
+            <td colspan="2"><label>Fecha consulta: </label>{{idhistorialclinico.fechaconsulta|date('d-m-Y')}}</td>
+        </tr>
+        <tr >
+            <td class="td-medicamento" colspan="4"><label>Medicamento: </label>{{ cuantamedicina.med.getIdmedicina().nombre}}, {{cuantamedicina.med.getIdmedicina().concentracion}}, {{cuantamedicina.med.getIdmedicina().formafarmaceutica}}</td>
+        </tr>
+        <tr>
+            <td class="td-medicamento" colspan="4"><label>Dosis: </label>{{ cuantamedicina.med.dosis }}</td>
+        </tr>
+        <tr>
+            <td style="font-size: 16px;" class="td-medicamento" colspan="4"><label>Cantidad: </label>{{ cuantamedicina.med.totalMedicamento }}</td>
+        </tr>
+        <tr>
+            {% set codeqr =  idhistorialclinico.getIdEmpleado.nombreempleado~'\n J.V.P.M  No. '~ (idhistorialclinico.getIdEmpleado.numeroJuntaVigilancia is not null ? idhistorialclinico.getIdEmpleado.numeroJuntaVigilancia : '-') ~'\n'~ idhistorialclinico.idAtenAreaModEstab.getNombreConsulta()%}
+            <td><img src="{{ qrcode_data_uri(''~codeqr, size=500, padding=10) }}" height = '60px'/></td>
+            <td colspan="2"><br/><br/><br/><label>{{ idhistorialclinico.getIdEmpleado.nombreempleado|title }}</label></td>
+            <td><label><br/><br/><br/>{{ idhistorialclinico.idAtenAreaModEstab.getNombreConsulta() }}</label></td>
+        </tr>
+        <tr>
+            <td colspan="4" style="font-size:9px;">
+                Nota: Farmacia dispensara en base a la dosis, hasta un maximo de 30 días.
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: center"><br/><br/><label>_________________<br/>Cantidad Despachada</label> </td>
+            <td colspan="2" style="text-align: center"><br/><label>__________________<br/>Auxiliar de Farmacia</label> </td>
+            <td style="text-align: center"><br/><label>_________________<br/>Sello de despacho</label> </td>
+        </tr>
+    </table>
+
+    {% set i = i+1 %}
+    {% set twoxpage = twoxpage+1 %}
+
+    {% if twoxpage >4 %}
+        <br>
+         <p style="page-break-after: always;"></p>
+        {% set twoxpage = 1 %}
+    {% endif %}
+    {% endfor %}
+    </body>
+</html>

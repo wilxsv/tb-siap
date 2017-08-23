@@ -1,0 +1,8 @@
+{% extends 'SonataAdminBundle:CRUD:base_list_field.html.twig' %}
+{% block field%}
+    <ul>
+        {% for i, anestesia in object.getTipoAnestesia() %}
+            <li>{{ anestesia.getIdTipoAnestesia().getNombre() }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

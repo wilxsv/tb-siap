@@ -1,0 +1,34 @@
+<div class="row" style="font-size: 17px;padding-top: 20px;padding-bottom: 20px;">
+    <div class="col-md-12 col-sm-12">
+        Observaci&oacute;n: <strong>{{ examen.resultadoFinal.observacion }}</strong>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Prueba</th>
+            <th>Resultado</th>
+            <th>Unidades</th>
+            <th>Rango</th>
+            <th>Control Diario</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for procedimiento in examen.procedimientos %}
+            <tr>
+                <td>{{ procedimiento.nombre }}</td>
+                <td>
+                    {% if procedimiento.id_posible_resultado is not null or procedimiento.id_posible_resultado != '' %}
+                        {{ procedimiento.nombre_posible_resultado }}
+                    {% else %}
+                        {{ procedimiento.resultado }}
+                    {% endif %}
+                </td>
+                <td>{{ procedimiento.unidad }}</td>
+                <td>{{ procedimiento.rango_inicio ~ procedimiento.rango_fin }}</td>
+                <td>{{ procedimiento.control_diario }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

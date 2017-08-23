@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="FarmRangohora" table="farm_rangohora">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="horaIni" type="time" column="hora_ini" nullable="false"/>
+    <field name="horaFin" type="time" column="hora_fin" nullable="false"/>
+    <field name="modulo" type="string" column="modulo" length="60" nullable="false"/>
+    <field name="limite" type="integer" column="limite" nullable="true"/>
+    <field name="idusuarioreg" type="integer" column="idusuarioreg" nullable="false"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="false"/>
+    <field name="meridianoini" type="string" column="meridianoini" nullable="false"/>
+    <field name="meridianofin" type="string" column="meridianofin" nullable="false"/>
+    <field name="idEstablecimiento" type="integer" column="id_establecimiento" nullable="false"/>
+    <field name="limitedeldia" type="integer" column="limitedeldia" nullable="true"/>
+    <field name="limiterepetitiva" type="integer" column="limiterepetitiva" nullable="true"/>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,294 @@
+
+<script type="text/javascript">
+
+    jQuery(document).ready(function ($) {
+        var typingTimer;                //timer identifier
+        var doneTypingInterval = 500;   //time in ms, 0.5 second for example
+
+        //on keyup, start the countdown
+        $("input#buscar").keyup(function () {
+            typingTimer = setTimeout(doneTyping, doneTypingInterval);
+        });
+
+        //on keydown, clear the countdown
+        $("input#buscar").keydown(function () {
+            clearTimeout(typingTimer);
+        });
+
+        function doneTyping() {
+            var value = $("input#buscar").val();
+            var idEsp = $('input#hEspecialidadId').val();
+            var tabla;
+
+            jQuery(document).ready(function ($) {
+                $.ajax({
+                    type: "GET",
+                    dataType: 'json',
+                    async: false,
+                    url: Routing.generate('filtrar'),
+                    data: {criterio: value, especialida: $('input#hEspecialidadId').val(), idModalida: $("#cmbModalida").val()},
+                    success: function (data)
+                    {
+                        // eval(div).html(data);
+                        tabla = '<table class="  dataTable table-hover display " width="100%" style="width: 100%;">';
+                        tabla += '<thead><tr>';
+                        tabla += '<th style="width: 12px;" ></th>';
+                        tabla += '<th style="width: 280px;" ></th>';
+                        tabla += '<th width="7%"  align="center"><h6">Cant. Disponible</h6></th>\
+                                        <th  style="width: 242px;"  ALIGN="right"></th>\
+                                        </tr>\
+                                        </thead>';
+
+                        if (data.data === false)
+                        {
+                            tabla += '<tr><td colspan="4"><div class="alert alert-info" role="alert" ><span style="font-size:18px;"><strong> <i class="fa fa-info-circle fa-lg"></i> </strong> Busqueda sin resultado.</span></div></td></tr>';
+                        }
+                        else {
+                            $.each(data.data, function (indice, val) {
+
+                                var capacidadFormated = parseInt(val.capacidad);
+                                tabla += '<tr class="odd" >';
+                                tabla += '<td class=" " align="center"><div class="icon"><i class="fa fa-user-md fa-4x"></i></div></td>';
+                                if (data.idEsp == 0) {
+                                    tabla += '<td class=" " valign="bottom">' + val.nombre_empleado + '(' + val.servicio + ')';
+                                }
+                                else {
+                                    tabla += '<td class=" " valign="bottom">' + val.nombre_empleado;
+                                }
+                                if (val.total_citas === '0')
+                                {
+
+                                    tabla += '&nbsp&nbsp<span class="badge bg-green"  style="float: right;">&nbsp' + capacidadFormated + '</span>';
+
+                                }
+                                else if (val.total_citas !== 0)
+                                {
+
+                                    if (((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.25))
+                                    {
+                                        tabla += '&nbsp&nbsp<span class="badge bg-green"  style="float: right;">&nbsp' + val.total_citas + '/' + capacidadFormated + '</span>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.25) && ((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.5))
+                                    {
+                                        tabla += '<span class="badge bg-blue"  style="float: right;">&nbsp' + val.total_citas + '/' + capacidadFormated + '</span>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.5) && ((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.75))
+                                    {
+                                        tabla += '<span class="badge bg-orange"  style="float: right;">&nbsp' + val.total_citas + '/' + capacidadFormated + '</span>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.75))
+                                    {
+                                        tabla += '<span class="badge bg-red"  style="float: right;">&nbsp' + val.total_citas + '/' + capacidadFormated + '</span>';
+                                    }
+                                }
+                                tabla += '<div class="progress progress-xs progress-striped active ">';
+                                if (val.total_citas === '0')
+                                {
+                                    tabla += '<div class="progress-bar progress-bar-green" style="width: 0%; "></div> ';
+                                }
+                                else if (val.total_citas !== 0)
+                                {
+                                    if (((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.25))
+                                    {
+                                        tabla += '<div class="progress-bar progress-bar-green" style="width:' + (val.total_citas / capacidadFormated) * 100 + '%">  </div>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.25) && ((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.5))
+                                    {
+                                        tabla += '<div class="progress-bar progress-bar-blue" style="width:' + ((val.total_citas / capacidadFormated) * 100) + '%">  </div>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.5) && ((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.75))
+                                    {
+                                        tabla += '<div class="progress-bar progress-bar-warning" style="width:' + (val.total_citas / capacidadFormated) * 100 + '%">   </div>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.75))
+                                    {
+                                        tabla += '<div class="progress-bar progress-bar-danger" style="width:' + (val.total_citas / capacidadFormated) * 100 + '%">   </div>';
+                                    }
+                                }
+                                tabla += '<td class=" "  align="center">';
+                                if (val.total_citas === 0)
+                                {
+
+                                    tabla += '<span class="badge bg-green" align="right">&nbsp' + (capacidadFormated - val.total_citas) + '</span>';
+                                }
+                                else if ((capacidadFormated - val.total_citas) > 0)
+                                {
+
+                                    if (((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.25))
+                                    {
+
+                                        tabla += '<span class="badge bg-green" align="right">&nbsp ' + (capacidadFormated - val.total_citas) + '</span>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.25) && ((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.5))
+                                    {
+                                        tabla += '<span class="badge bg-blue" align="right">&nbsp ' + (capacidadFormated - val.total_citas) + '</span>';
+                                    }
+
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.5) && ((val.total_citas / capacidadFormated) * capacidadFormated) <= (capacidadFormated * 0.75))
+                                    {
+                                        tabla += '<span class="badge bg-orange" align="right">&nbsp ' + (capacidadFormated - val.total_citas) + '</span>';
+                                    }
+                                    else if (((val.total_citas / capacidadFormated) * capacidadFormated) > (capacidadFormated * 0.75))
+                                    {
+                                        tabla += '<span class="badge bg-red" align="right">&nbsp ' + (capacidadFormated - val.total_citas) + '</span>';
+                                    }
+                                    else if (capacidadFormated - val.total_citas <= 0)
+                                    {
+                                        tabla += '<span class="badge bg-red" align="right">&nbsp 0</span>';
+                                    }
+
+                                }
+                                tabla += '</td>';
+                                tabla += '</td><td class=" " ALIGN="right"><a class="btn btn-success btn-sm" id="enviar" onClick="asignar(' + val.id_empleado + ',' + val.id_servicio + ',\'' + val.servicio + '\')" >';
+                                tabla += '<i class="fa fa-plus-circle"></i> Asignar Cupo</a>';
+                                tabla += '<a class="btn btn-default btn-sm" id="enviar" onClick="detalle(' + val.id_empleado + ',' + val.id_servicio + ',\'' + val.servicio + '\')">';
+                                tabla += '<i class="fa fa-tasks"></i> Detalle</a>';
+                                tabla += '<a class="btn btn-info btn-sm" id="det" onClick="agendaMedica(' + val.id_empleado + ')">';
+                                tabla += '<i class="fa fa-calendar"></i> Agenda Medica</a>';
+                                tabla += '</td></tr>';
+
+                            });
+                        }
+                        tabla += '</tbody></table> ';
+
+                        // $('#rBusquedas').append(tabla);
+                        if (idEsp === 0)
+                        {
+                            $('#HBusquedas').html(tabla);
+                        }
+                        else {
+                            $('#rBusquedas').html(tabla);
+                        }
+                        //     $('#home').append(tabla);
+                    }
+                });
+            });
+        }
+
+    });
+
+</script>
+
+{%if medicos is empty %}
+{%else%}     
+    <div style="float: right;margin: 9px 0px 0px -15px;width:200px;">
+
+        <input type="text" class="txtBuscar form-control" id="buscar" placeholder="Médico">
+    </div>
+    <div id="rBusquedas" style="height:335px; overflow: auto;position:absolute;top:53px;
+                                                          right:0px;left:0px;">
+        <table class="  dataTable table-hover " width="100%" style="margin: 0px 0 0px -5px;">
+            <thead>
+                <tr >
+                    <th width="12%" ></th>
+                    <th   width="40%" ></th>
+                    <th  width="5%"  align="center"><h6">Cant. Disponible</h6></th>
+            <th     width="43%" align="right"></th>
+            </tr>
+            </thead>   
+            <tbody role="alert" aria-live="polite" aria-relevant="all"  >
+
+                {% for medico in medicos%}
+                    <tr class="odd" >
+                        <td class=" " align="center"> 
+                            <div class="icon" >
+                                <i class="fa fa-user-md fa-4x "></i>
+                            </div>
+                        </td>
+                        <td class=" " >
+                            {%if (idEspe==0) %}
+                                {{medico.nombre_empleado~' ('~medico.servicio~')'}}&nbsp
+                            {%else%}{{medico.nombre_empleado}}&nbsp
+                            {%endif%}
+
+                            {%if (medico.total_citas==0) %}
+                                <div class="progress-bar progress-bar-green" style="width: 0%">   </div>  
+                                <span class="badge bg-green"  style="float: right;">{{medico.capacidad}}</span>
+
+                            {%elseif (medico.total_citas!=0)%}
+
+                                {%if (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.25))%}
+                                    <span class="badge bg-green"  style="float: right;">{{medico.total_citas}}/{{medico.capacidad}}</span>
+
+                                {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.25)) and (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.5))%}
+                                    <span class="badge bg-blue"  style="float: right;">{{medico.total_citas}}/{{medico.capacidad}}</span>
+
+                                {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.5)) and (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.75))%}
+                                    <span class="badge bg-orange"  style="float: right;">{{medico.total_citas}}/{{medico.capacidad}}</span>
+                                {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.75))%}
+                                    <span class="badge bg-red"  style="float: right;">{{medico.total_citas}}/{{medico.capacidad}}</span>
+
+                                {%endif%}   
+
+                            {%endif%} 
+
+                            <div class="progress progress-xs progress-striped active ">
+
+                                {%if (medico.total_citas=='0') %}
+                                    <div class="progress-bar progress-bar-green" style="width: 0%">   </div>  
+
+                                {%elseif (medico.total_citas!=0)%}
+
+                                    {%if (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.25))%}
+                                        <div class="progress-bar progress-bar-green" style="width:{{((medico.total_citas/medico.capacidad)*100)}}%">   </div>  
+
+                                    {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.25)) and (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.5))%}
+                                        <div class="progress-bar progress-bar-blue" style="width:{{((medico.total_citas/medico.capacidad)*100)}}%">   </div>  
+
+                                    {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.5)) and (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.75)) %}
+                                        <div class="progress-bar progress-bar-warning" style="width:{{((medico.total_citas/medico.capacidad)*100)}}%">   </div>  
+                                    {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.75))%}
+                                        <div class="progress-bar progress-bar-danger" style="width:{{((medico.total_citas/medico.capacidad)*100)}}%">   </div>  
+
+                                    {%endif%}   
+
+                                {%endif%} 
+                            </div>
+                        </td>
+                        <td class=" "  align="center">
+                            {# Cupos disponibles#}
+
+                            {%if (medico.total_citas=='0') %}
+                                <span class="badge bg-green" align="right">{{medico.capacidad-medico.total_citas}}</span>
+
+                            {%elseif ((medico.capacidad-medico.total_citas)>0)%}
+
+                                {%if (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.25))%}
+                                    <span class="badge bg-green" align="right">{{medico.capacidad-medico.total_citas}}</span>
+
+                                {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.25)) and (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.5))%}
+                                    <span class="badge bg-blue" align="right">{{medico.capacidad-medico.total_citas}}</span>
+
+                                {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.5)) and (((medico.total_citas/medico.capacidad)*medico.capacidad)<=(medico.capacidad*0.75))%}
+                                    <span class="badge bg-orange" align="right">{{medico.capacidad-medico.total_citas}}</span>
+                                {%elseif (((medico.total_citas/medico.capacidad)*medico.capacidad)>(medico.capacidad*0.75))%}
+                                    <span class="badge bg-red" align="right">{{medico.capacidad-medico.total_citas}}</span>
+
+                                {%endif%}   
+
+                            {%elseif (medico.capacidad-medico.total_citas<=0)%}   
+                                <span class="badge bg-red" align="right">0</span>    
+                            {%endif%} 
+                        </td>
+                        <td class=" " align="right">	
+                            <a class="btn btn-success btn-sm" id="enviar" onClick="asignar('{{medico.id_empleado}}', '{{medico.id_servicio}}', '{{medico.servicio}}')" >
+                                <i class="fa fa-plus-circle"></i> Asignar Cupo</a>
+
+                            <a class="btn btn-default btn-sm" id="envia" onClick="detalle('{{medico.id_empleado}}', '{{medico.id_servicio}}', '{{medico.servicio}}')">
+                                <i class="fa fa-tasks"></i> Detalle</a>
+                            <a class="btn btn-info btn-sm"  onClick="agendaMedica('{{medico.id_empleado}}')">
+                                <i class="fa fa-calendar"></i> Agenda Medica</a>
+                        </td>
+                    </tr>
+                {%endfor%}
+            </tbody>
+        </table> 
+    </div>
+{%endif%} 
+
+
+
+
+
+
+

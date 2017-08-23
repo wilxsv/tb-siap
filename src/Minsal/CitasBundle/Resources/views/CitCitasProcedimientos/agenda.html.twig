@@ -1,0 +1,901 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{# Definicion de variables globales #}
+{% set codigoEmpleado = app.user.getIdEmpleado.getIdTipoEmpleado is defined ? app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo|upper : 'N/A' %}
+{% set superAdmin = app.user.hasRole('ROLE_SUPER_ADMIN') %}
+
+{% block sonata_header %}
+    {% if params.external == false %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block actions %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalcitas/css/CitasBundle.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% include 'MinsalCitasBundle:CitCitasProcedimientos:detalle_agenda.html.twig' %}
+    <script type="text/javascript">
+        var modal_elements = [];
+        var cit_info = [];
+        var clickDay;
+
+        function pushModalElement(newId, callFunction, parameters_func) {
+            modalElmentFound = 0;
+            if (modal_elements.length != 0) {
+                for (var i in modal_elements) {
+                    if (modal_elements[i].id == newId) {
+                        modalElmentFound = modalElmentFound + 1;
+                    }
+                }
+            }
+
+            if (modalElmentFound == 0) {
+                var foot = "";
+
+                modal_elements.push({
+                    id:         newId,
+                    func:       callFunction,
+                    header:     'Agenda M&eacute;dica',
+                    footer:     foot,
+                    widthModal: '80%',
+                    maxWidth:   '950px',
+                    parameters: parameters_func
+                });
+            }
+        }
+
+        function updateMonthIformationCit() {
+            var calendarDate = $('#calendar-holder').fullCalendar('getDate');
+            calendarDate.setHours(0, 0, 0, 0);
+            var procData = getAgendaProcedimientoData();
+
+            jQuery.ajax({
+                url: Routing.generate('get_citas_dia_procedimiento') + '?idAreaModEstab=' + procData.idAreaModEstab + '&idProcedimientoEstab=' + procData.idProcedimiento + '&calendarDate=' + calendarDate,
+                async: false,
+                dataType: 'json',
+                success: function(data) {
+                    cit_info[0] = data.consolidado;
+                    cit_info[1] = data.eventos;
+                    cit_info[2] = data.distribucion;
+                }
+            });
+        }
+
+        function getIndexOfK(arr, date) {
+            var date = moment(date);
+            for (var i = 0; i < arr.length; i++) {
+                var array_date = moment(arr[i].date, 'YYYY/MM/DD');
+                if ( date.format('DD/MM/YYYY') === array_date.format('DD/MM/YYYY') ) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+    </script>
+    <script type="text/javascript">
+        function agendaMedica(parameters) {
+            var options = {weekday: "long", year: "numeric", month: "long", day: "numeric"};
+            var procData = getAgendaProcedimientoData();
+            var header =
+                '<div id="cm-modal">'+
+                    '<center>'+
+                        '<div class="custom-modal-header">'+
+                            '<form id="cita_submit_form" action="{{ admin.generateUrl("create") }}" method="POST">'+
+                                '<div class="row">'+
+                                    '<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center" style="margin: 10px 0px;">'+
+                                        parameters['date'].toLocaleString("es-SV", options).replace(' 00:00:00 CST', '') +
+                                    '</div>'+
+                                '</div>'+
+                                '<div class="row">'+
+                                    '<div class="row-height">'+
+                                        '<div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 col-md-height col-lg-height col-md-bottom col-lg-bottom" id="horario-atencion">'+
+                                        '</div>'+
+                                        '<div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 col-md-height col-lg-height col-md-bottom col-lg-bottom" id="id-medico-block">'+
+                                        '</div>'+
+                                    '</div>'+
+                                '</div>'+
+                                '<input type="hidden" id="idProcedimientoEstablecimiento" name="idProcedimientoEstablecimiento" value="' + procData.idProcedimientoEstablecimiento + '" />'+
+                                '<input type="hidden" id="external" name="external" value="{{ params.external }}" />'+
+                                '<input type="hidden" id="date" name="date" value="' + clickDay + '" />'+
+                            '</form>'+
+                        '</div>'+
+                    '</center>'+
+                '<div>';
+
+            if ($('#cm-modal'.length != 0)) {
+                $('#cm-modal').remove();
+            }
+
+            $('#myModalLabel').after(header);
+            $('#myModalLabel').css({'color': '#0088cc', 'font-weight': 'bold'});
+            $('#myModalLabel').css('text-align', 'center');
+            $('div.modal-body').css('background-color', '#f7f7f9');
+            $('div.modal-footer').css('background-color', '#ffffff');
+
+            html = "";
+            console.log(parameters.posee_dist);
+            switch (parameters['type']) {
+                case 1:
+                    html = '<div class="alert alert-block alert-info">\
+                                <h4>D&iacute;a No Disponible</h4>\
+                                El m&eacute;dico no posee un horario de atenci&oacute;n de pacientes para la fecha seleccionadad, motivo por el cual <b>no es posible asignar citas</b>...\
+                            </div>';
+                    break;
+                case 2:
+                    html = '<div class="alert alert-block alert-info">\
+                                <h4>D&iacute;a Bloqueado</h4>\
+                                <b>no es posible asignar citas</b>...\
+                            </div>';
+                    html = parameters.posee_dist ? html + buildAgendaMedica(parameters) : html;
+                    break;
+                case 3:
+                    html = '<div class="alert alert-block alert-warning">\
+                                <h4>Dia Inhabilitado</h4>\
+                                Dia inhabilitado por las Fiestas, <b>no es posible asignar citas</b>...\
+                            </div>';
+                    html = parameters.posee_dist ? html + buildAgendaMedica(parameters) : html;
+                    break;
+                case 4:
+                    html = '<div class="alert alert-info">\
+                                <b>Algunos horarios de atenci&oacute;n no estan disponibles debido a que han sido bloqueados por el m&eacute;dico</b>...\
+                            </div>';
+                    html = html + buildAgendaMedica(parameters);
+                    break;
+                case 5:
+                    html = buildAgendaMedica(parameters);
+                    break;
+                case 6:
+                    html = '<div class="alert alert-block alert-info">\
+                                <h4>Dia Inhabilitado</h4>\
+                                El dia seleccionado es anterior a la fecha actual, motivo por el cual <b>no es posible asignar citas</b>...\
+                            </div>';
+                    html = parameters.posee_dist ? html + buildAgendaMedica(parameters) : html;
+                    break;
+            }
+            return html;
+        }
+
+
+        function buildAgendaMedica(parameters) {
+            var result = {};
+            var procData = getAgendaProcedimientoData();
+            var clickedDay = moment(parameters['date']);
+
+            $("#horario-atencion").empty();
+            $("#horario-atencion").append('Horario de Atencion de Pacientes<br /><select id="idRangoHora" name="idRangoHora"></select>');
+            $("#num_exp_nom_paciente").empty();
+            $("#tipo_cita").empty();
+
+            $idRangoHora = $('#idRangoHora');
+            $idRangoHora.select2({
+                allowClear: false,
+                width: '100%'
+            });
+
+            $idEmpleado = $('input.idEmpleado');
+            $labelEmpleado = $('label.idEmpleado');
+
+            var countHorario = 0;
+            jQuery.ajax({
+                url: Routing.generate('citashorarioProcedimiento') + '?idAreaModEstab=' + procData.idAreaModEstab + '&idProcedimientoEstab=' + procData.idProcedimiento + '&fecha=' + clickedDay.format('DD/MM/YYYY'),
+                async: false,
+                dataType: 'json',
+                success: function(data) {
+                    countHorario = 0;
+                    $.each(data, function(indice, val) {
+                        $idRangoHora.append($('<option>', { value: val.id, text: val.rangoHora + ( val.distribucion.distribucionProcedimiento.idTipoDistribucion ? ' - ' + val.distribucion.distribucionProcedimiento.nombreTipoDistribucion : '') }));
+                        $('#id-medico-block').append('<div id="responsable-horario-'+val.id+'" class="hidden">Médico<br /><label class="idMedico" style="color: #666666;">'+( val.distribucion.idEmpleado ? val.distribucion.nombreEmpleado : 'Sin médico asociado')+'</label><input type="hidden" class="idMedico" value="'+( val.distribucion.idEmpleado ? val.distribucion.idEmpleado : '0')+'" /></div>');
+                        countHorario++;
+                    });
+                }
+            });
+
+            if(countHorario > 0) {
+                $idRangoHora.select2('val', $('#' + $idRangoHora.attr('id') + ' option').eq(0).val());
+
+                $('#responsable-horario-'+$idRangoHora.select2('val')).removeClass('hidden');
+
+                parameters['idHorario'] = $idRangoHora;
+                parameters['idMedico']  = $('div[id^="responsable-horario-"]').not('[class="hidden"]').find('input.idMedico');
+                parameters['url']       = Routing.generate('get_citas_procedimiento_detallehora') + '?idAreaModEstab='+procData.idAreaModEstab+'&idProcedimientoEstab=' + procData.idProcedimiento + '&fecha=' + parameters['mDate'].format('YYYY/MM/DD') + '&idRangoHora=' + parameters['idHorario'].select2('val')+'&idEmpleado='+parameters['idMedico'].val();
+
+                result = buildDetailAgendaMedica(parameters);
+
+                if(Object.keys(result).length === 0 || result.content === '') {
+                    result.content = '<div class="alert alert-block alert-error">\
+                                                                <h4>Error al construir la agenda m&eacute;dica</h4>\
+                                                                Lo sentimos un error al construir el detalle de la agenda m&eacute;dica, por favor intentelo nuevamente, si el problema persiste contacte con el administrador del sistema...\
+                                                        </div>';
+                }
+
+                return '</div><div class="panel-primary-custom"><div class="agendamd-content">'+result.content+'</div></div>';
+            }
+            // else {
+            //     $idRangoHora.select2('enable', false);
+            //
+            //     return '<div id="warning-message"></div>'+
+            //             '<div id="info-message">'+
+            //             '<div class="alert alert-danger" role="alert">'+
+            //                 '<i class="fa fa-times"></i>'+
+            //                 '<h3>Horarios no disponibles</h3>'+
+            //                 'Lo sentimos no puede citar ningún paciente para el día seleccionado, debido a que no se encontró ningún horario disponible y esto puede ser debido a las siguientes razones:'+
+            //                 '<ul>'+
+            //                     '<li>Hay un error en la configuración de horarios utilizados en la distribución del médico.</li>'+
+            //                     '<li>No existe al menos una distribución acitva para el médico, todas sus distribuciones se encuentran cerradas o no han sido configuradas.</li>'+
+            //                 '</ul>'+
+            //                 'Por favor contacte con el administrador.'+
+            //                 {% if app.user.hasRole('ROLE_MINSAL_CITAS_ADMIN_CIT_CITAS_PROCEDIMIENTOS_LIST') or admin.isGranted('ROLE_MINSAL_CITAS_ADMIN_CIT_CITAS_PROCEDIMIENTOS_LIST') %}
+            //                     '<br/ ><br/ > <strong>Si desea ver las citas asigandas para el día seleccionado puede hacer click en el siguiente enlace: <a href="{{ url('admin_minsal_citas_citcitasprocedimientos_consulta') }}?rangoFechas='+parameters['mDate'].format('DD/MM/YYYY')+' - '+parameters['mDate'].format('DD/MM/YYYY')+'&idAreaModEstab='+procData.idAreaModEstab+'&idProcedimientoEstablecimiento='+procData.idProcedimiento+'" target="_blank"><i class="fa fa-search"></i> Ver citas...</a></strong>'+
+            //                 {% endif %}
+            //             '</div>'+
+            //         '</div>'+
+            //         '<div class="panel-primary-custom">'+
+            //             '<div class="agendamd-content"></div>'+
+            //         '</div>';
+            // }
+        }
+
+        jQuery(document).ready(function($) {
+            if( $('body #idRangoHora').select2('val') !== '' ) {
+                // if($("#idRangoHora option:selected").attr('data-cerrado') === 'true') {
+                //     $('body #cita_submit').addClass('hidden');
+                // }
+            } else {
+                $('body #idRangoHora').select2('enable', false);
+            }
+
+            $("body").on('change', "#idRangoHora", function(e) {
+                $idRangoHora   = $(this);
+                $idEmpleado    = $('inputidEmpleado').parent().not('[class="hidden"]');
+                $labelEmpleado = $('label.idEmpleado');
+
+                $('div[id^="responsable-horario-"]').not('[class="hidden"]').addClass('hidden');
+                $('#responsable-horario-'+$idRangoHora.select2('val')).removeClass('hidden');
+
+                var ag_content = {};
+                var parameters = [];
+                var now = moment().set({ 'hour': 0, 'minute': 0, 'second': 0, 'millisecond': 0 });
+                var clickedDay = moment(clickDay).set({ 'hour': 0, 'minute': 0, 'second': 0, 'millisecond': 0 });
+
+                parameters['idHorario'] = $idRangoHora;
+                parameters['idMedico']  = $('div[id^="responsable-horario-"]').not('[class="hidden"]').find('input.idMedico');
+                parameters['date']      = clickDay;
+                parameters['mDate']     = moment(clickDay);
+                procData = getAgendaProcedimientoData();
+
+                $('div#info-message').empty();
+                $('div.agendamd-content').empty();
+                $('div.agendamd-content').append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Buscando...</div></center>');
+
+                if( $("body #idRangoHora option:selected").attr('data-cerrado') === 'true' && clickedDay.diff(now) >= 0 ) {
+                    $('#horario-cerrado-mensaje').append(
+                        '<div class="alert alert-error" role="alert">'+
+                            '<h3><strong>Horario Cerrado</strong></h3>'+
+                            'Lo sentimos no es posible crear citas para el horario seleccionado debido a que el horario se encuentra cerrado. <strong>Para poder citar el paciente debe de seleccionar otro dia u horario</strong>.'+
+                        '</div>'
+                    );
+
+                    $('body #cita_submit').addClass('hidden');
+                } else {
+                    $('body #cita_submit').removeClass('hidden');
+                }
+
+                if($idRangoHora.select2('val') !== '') {
+                    setTimeout(function() {
+                        parameters['url'] = Routing.generate('get_citas_procedimiento_detallehora') + '?idAreaModEstab='+procData.idAreaModEstab+'&idProcedimientoEstab=' + procData.idProcedimiento + '&fecha=' + parameters['mDate'].format('YYYY/MM/DD') + '&idRangoHora=' + parameters['idHorario'].select2('val')+'&idEmpleado='+parameters['idMedico'].val();
+                        ag_content = buildDetailAgendaMedica(parameters);
+
+                        if(Object.keys(ag_content).length === 0 || ag_content.content === '') {
+                            ag_content.content = '<div class="alert alert-block alert-error">\
+                                        <h4>Error al construir la agenda m&eacute;dica</h4>\
+                                        Lo sentimos, hubo un error al construir el detalle de la agenda m&eacute;dica, por favor intentelo nuevamente, si el problema persiste contacte con el administrador del sistema...\
+                                    </div>';
+                        }
+
+                        $('div.agendamd-content').empty();
+                        $('div.agendamd-content').append(ag_content.content);
+                    }, 500);
+                } else {
+                    $('div.agendamd-content').empty();
+                    $('div.agendamd-content').append('<div class="alert alert-info" role="alert"><h5>El procedimiento sin horarios</h5> El detalle de la agenda no se puede mostrar debido a que no se han detectado horarios para el procedimiento seleccinado</div>');
+                }
+            });
+
+            $('#calendar-holder').fullCalendar({
+                header: {
+                    left: 'prev, next,today',
+                    center: 'title',
+                    right: 'prevYear, nextYear'
+                },
+                lazyFetching: true,
+                timeFormat: {
+                    // for agendaWeek and agendaDay
+                    agenda: 'h:mmt', // 5:00 - 6:30
+
+                    // for all other views
+                    '': 'h:mmt'            // 7p
+                },
+                buttonText: {
+                    prev: 'Mes Anterior',
+                    next: 'Mes Siguiente',
+                    prevYear: 'Año Anterior',
+                    nextYear: 'Año Siguiente',
+                    today: 'Hoy'
+                },
+                buttonIcons: {
+                    prev: 'left-single-arrow',
+                    next: 'right-single-arrow',
+                    prevYear: 'left-double-arrow',
+                    nextYear: 'right-double-arrow'
+                },
+                {% if query.get("month") is defined and query.get("month") != "" and query.get("month") is not null %}
+                    month: {{ query.get("month") }},
+                {% endif %}
+                {% if query.get("year") is defined and query.get("year") != "" and query.get("year") is not null %}
+                    year: {{ query.get("year") }},
+                {% endif %}
+                dayRender: function(date, cell) {
+                    var medicUser = '{% if app.user.getIdEmpleado.getIdTipoEmpleado is not defined or app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo is not sameas("MED") %}false{% else %}true{% endif %}';
+                    var renderCalendar = false;
+
+                    if (medicUser == 'false') {
+                        if ($('#idEmpleado').select2('data') && $('#idProcedimientoEstablecimiento').select2('data')) {
+                            renderCalendar = true;
+                        }
+                    } else {
+                        renderCalendar = true;
+                    }
+
+                    if (renderCalendar) {
+                        var today = new Date();
+                        date.setHours(0, 0, 0, 0);
+                        var mDate = moment(date);
+                        var mToday = moment();
+                        today.setHours(0, 0, 0, 0);
+                        var calendarDate = $('#calendar-holder').fullCalendar('getDate');
+                        calendarDate = new Date(calendarDate);
+                        var lowerLimit = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
+                        var upperLimit = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0);
+                        var cell_date  = date.getFullYear()+ '-' + ((parseInt(date.getMonth())+1) < 10 ? '0' + (parseInt(date.getMonth())+1) : '' + (parseInt(date.getMonth())+1)) + '-' + (date.getDate()  < 10 ? '0' + date.getDate()  : '' + date.getDate());
+                        var ordinarios;
+                        var subsecuentes;
+                        var agregados;
+                        var total_citas;
+                        var atendidos;
+                        var total_cupos;
+                        var type;
+                        var dateKey = mDate.format('YYYY/MM/DD');
+
+                        if (cit_info != false && date >= lowerLimit && date <= upperLimit) {
+                            index0 = getIndexOfK(cit_info[0], date);
+                            index1 = cit_info[1][dateKey] !== undefined ? 1 : -1;
+                            index2 = getIndexOfK(cit_info[2], date);
+
+                            if(index0 > -1 && index1 > -1 && index2 > -1) {
+                                total_citas = cit_info[0][index0].total_citas;
+                                atendidos   = cit_info[0][index0].atendidos;
+                                ordinarios  = cit_info[0][index0].ordinarios;
+                                agregados   = cit_info[0][index0].agregados;
+                                total_cupos = cit_info[0][index0].total_cupos;
+                                index1      = dateKey;
+
+                                if (date >= lowerLimit && date < today) {
+                                    if(cit_info[2][index2]['distribucion'] > 0) {
+                                        if(cit_info[1][index1]['bloqueoTotalDia'] === true) {
+                                            if(cit_info[1][index1]['idTipoEventoDia'] === 1) {
+                                                type = 3;
+                                            } else {
+                                                type = 6;
+                                            }
+                                        } else {
+                                            type = 6;
+                                        }
+                                    } else {
+                                        if(cit_info[1][index1]['bloqueoTotalDia'] === true) {
+                                            if(cit_info[1][index1]['idTipoEventoDia'] === 1) {
+                                                type = 3;
+                                            } else {
+                                                type = 2;
+                                            }
+                                        } else {
+                                            type = 1;
+                                        }
+                                    }
+
+                                    // createCellContent(cell, [{
+                                    //         'type': type,
+                                    //         'total_citas': total_citas,
+                                    //         'atendidos': atendidos,
+                                    //         'cell_date': cell_date,
+                                    //         'date': date,
+                                    //         'index': index,
+                                    //         'before': true
+                                    //     }]
+                                    // );
+                                }
+
+                                if( ( date > today && date >= lowerLimit && date <= upperLimit ) || ( mDate.format('YYYY/MM/DD') === mToday.format('YYYY/MM/DD') ) ) {
+
+                                    if(cit_info[2][index2]['distribucion'] > 0) {
+                                        if(cit_info[1][index1]['bloqueoTotalDia'] === true || cit_info[1][index1]['bloqueoParcialDia'] === true) {
+                                            if(cit_info[1][index1]['bloqueoTotalDia'] === true) {
+                                                if(cit_info[1][index1]['idTipoEventoDia'] == 1) {
+                                                    type = 3;
+                                                } else {
+                                                    type = 2;
+                                                }
+                                            } else {
+                                                type = 4;
+                                            }
+                                        } else {
+                                            type = 5;
+                                        }
+                                    } else {
+                                        if(cit_info[1][index1]['bloqueoTotalDia'] === true) {
+                                            if(cit_info[1][index1]['idTipoEventoDia'] === 1 ) {
+                                                type = 3;
+                                            } else {
+                                                type = 2;
+                                            }
+                                        } else {
+                                            type = 1;
+                                        }
+                                    }
+
+                                    // createCellContent(cell, [{
+                                    //         'type': type,
+                                    //         'ordinarios': ordinarios,
+                                    //         'total_citas': total_citas,
+                                    //         'agregados': agregados,
+                                    //         'cell_date': cell_date,
+                                    //         'date': date,
+                                    //         'mDate': moment(date),
+                                    //         'index': index,
+                                    //         'before': false
+                                    //     }]
+                                    // );
+                                }
+
+                                createCellContent(cell, [{
+                                        'type'       : type,
+                                        'ordinarios' : ordinarios,
+                                        'agregados'  : agregados,
+                                        'total_citas': total_citas,
+                                        'atendidos'  : atendidos,
+                                        'total_cupos': total_cupos,
+                                        'cell_date'  : cell_date,
+                                        'date'       : date,
+                                        'mDate'      : moment(date),
+                                        'posee_dist' : ( cit_info[2][index2]['distribucion'] > 0 ),
+                                        'before'     : false
+                                    }]
+                                );
+                            }
+                        }
+                    }
+
+                    if (cell.find("div.fc-custom-content-tb").length == 0) {
+                        cell.append('<div class="fc-custom-content-tb"></div>');
+                    }
+                },
+                dayClick: function(date, allDay, jsEvent, view) {
+                    clickDay = date;
+                },
+                monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+                monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado'],
+                hiddenDays: [0, 6],
+                dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sab'],
+                eventSources: [
+                    {
+                            url: Routing.generate('fullcalendar_loader'),
+                        type: 'POST',
+                        // A way to add custom filters to your event listeners
+                        data: {
+                        },
+                        error: function() {
+                            //alert('There was an error while fetching Google Calendar!');
+                        }
+                    }
+                ]
+            });
+
+            /********************************************************************************************************
+             * Creación del contenido de la celda (día) del calendario dependiendo del tipo de condicion que cumpla,*
+             * los cuales se describen a continuacion:                                                              *
+             * 1: Dia No Disponible- Debido a que el medico no posee una distribucion de horarios para esa fecha    *
+             * 2: Dia Bloqueado    - El medico no posee distribucion y posee un evento de tipo personal para dicha  *
+             *                       fecha                                                                          *
+             * 3: Dia Festivo      - Dia inhabilitado debido a fiestas a nivel nacional aplica a todos los empleados*
+             * 4: Bloqueo Parcial  - Si el medico tiene un evento personal y ha bloqueado ciertos horarios de aten- *
+             *                       cion de pacientes, puede asignarse cita pero solo en los horarios disponibles. *
+             * 5: Dia Habilitado   - Puese ser asignada la cita.                                                    *
+             * 6: Dia Inhabilitado - No es posible asignar citas por que la fecha es anterior a la fecha actual.    *
+             ********************************************************************************************************/
+            function createCellContent(cell, parameters) {
+                var now = moment();
+
+                switch (parameters[0].type) {
+                    case 1:
+                        if (parameters[0].before) {
+                            cell.css("background-color", "#E8F2FF");
+                        } else {
+                            cell.css("background-color", "#DCFCE9");
+                        }
+                        cell.append('<a href="#myModal" id="citDay-' + parameters[0].cell_date + '_modal" custom-modal="true" role="button" data-toggle="modal">\
+                                                            <div class="fc-custom-content-tb">\
+                                                                    <div class="fc-custom-content">\
+                                                                            <div class="disabled-day">DIA NO DISPONIBLE</div>\
+                                                                    </div>\
+                                                            </div>\
+                                                    </a>');
+                        break;
+                    case 2:
+                        if (parameters[0].before) {
+                            cell.css("background-color", "#E8F2FF");
+                        } else {
+                            cell.css("background-color", "#FFE7E7");
+                        }
+                        cell.append('<a href="#myModal" id="citDay-' + parameters[0].cell_date + '_modal" custom-modal="true" role="button" data-toggle="modal">\
+                                                            <div class="fc-custom-content-tb">\
+                                                                    <div class="fc-custom-content">\
+                                                                            <div class="locked-day">DIA BLOQUEADO</div>\
+                                                                    </div>\
+                                                            </div>\
+                                                    </a>');
+                        break;
+                    case 3:
+                        cell.css("background-color", "#FFF1E1");
+                        cell.append('<a href="#myModal" id="citDay-' + parameters[0].cell_date + '_modal" custom-modal="true" role="button" data-toggle="modal">\
+                                                            <div class="fc-custom-content-tb">\
+                                                                    <div class="fc-custom-content">\
+                                                                            <div class="festive-day">DIA FESTIVO</div>\
+                                                                    </div>\
+                                                            </div>\
+                                                    </a>');
+                        break;
+                    case 4:
+                        cell.css("background-color", "#DCFCE9");
+                        cell.append('<a href="#myModal" id="citDay-' + parameters[0].cell_date + '_modal" custom-modal="true" role="button" data-toggle="modal">\
+                                                        <div class="fc-custom-content-tb">\
+                                                                <div class="fc-custom-content">\
+                                                                    <div class="locked-day">BLOQUEO PARCIAL</div><br />\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled">Ordinarios:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled">' + parameters[0].ordinarios + '</div>\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled fc-cuscont-border">Agregados:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled fc-cuscont-border">' + parameters[0].agregados + '</div>\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled">Total Citados:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled">' + parameters[0].total_citas + '</div>\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled">Cupos Disponibles:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled">' + (parameters[0].total_cupos-parameters[0].ordinarios) + '</div>\
+                                                            </div>\
+                                                            </div>\
+                                                    </a>');
+                        break;
+                    case 5:
+                        cell.css("background-color", "#DCFCE9");
+                        cell.append('<a href="#myModal" id="citDay-' + parameters[0].cell_date + '_modal" custom-modal="true" role="button" data-toggle="modal">\
+                                                        <div class="fc-custom-content-tb">\
+                                                                <div class="fc-custom-content">\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled">Ordinarios:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled">' + parameters[0].ordinarios + '</div>\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled fc-cuscont-border">Agregados:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled fc-cuscont-border">' + parameters[0].agregados + '</div>\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled">Total Citados:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled">' + parameters[0].total_citas + '</div>\
+                                                                        <div class="fc-cuscont-left fc-cuscont-enabled">Cupos Disponibles:</div>\
+                                                                        <div class="fc-cuscont-right fc-cuscont-enabled">' + (parameters[0].total_cupos-parameters[0].ordinarios) + '</div>\
+                                                            </div>\
+                                                            </div>\
+                                                    </a>');
+                        break;
+                    case 6:
+                        cell.css("background-color", "#E8F2FF");
+                        cell.append('<a href="#myModal" id="citDay-' + parameters[0].cell_date + '_modal" custom-modal="true" role="button" data-toggle="modal">\
+                                                            <div class="fc-custom-content-tb">\
+                                                                    <div class="fc-custom-content">\
+                                                                            <div class="fc-cuscont-left fc-cuscont-disabled fc-cuscont-border">Citados:</div>\
+                                                                            <div class="fc-cuscont-right fc-cuscont-disabled fc-cuscont-border">' + parameters[0].total_citas + '</div>\
+                                                                            <div class="fc-cuscont-left fc-cuscont-disabled fc-cuscont-border">Atendidos:</div>\
+                                                                            <div class="fc-cuscont-right fc-cuscont-disabled fc-cuscont-border">' + parameters[0].atendidos + '</div>\
+                                                                    </div>\
+                                                            </div>\
+                                                    </a>');
+                        break;
+                }
+
+                if( now.format('YYYY/MM/DD') === parameters[0]['mDate'].format('YYYY/MM/DD') ) {
+                    cell.css("background-color", "#FEFFDB");
+                }
+
+                pushModalElement('citDay-' + parameters[0].cell_date + '_modal', 'agendaMedica', parameters[0]);
+            }
+        });
+    </script>
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+                $idAreaModEstab = $('#idAreaModEstab');
+                $idProcedimientoEstablecimiento = $('#idProcedimientoEstablecimiento');
+
+                var procData   = getAgendaProcedimientoData();
+                var superAdmin = '{% if superAdmin %}true{% else %}false{% endif %}';
+                var select2Options = {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                }
+
+                select2Options['placeholder'] = 'Seleccionar Procedimiento...';
+                initializeSelect2($idProcedimientoEstablecimiento, true, true, select2Options);
+
+                if($idAreaModEstab.length > 0) {
+                    select2Options['placeholder'] = 'Seleccionar Área...';
+                    initializeSelect2($idAreaModEstab, true, false, select2Options);
+
+                    $idAreaModEstab.on('change', function(e) {
+                        getAreaModEstab($(this).select2('val'));
+                    });
+                } else {
+                    getAreaModEstab(procData.idAreaModEstab);
+                }
+
+                $idProcedimientoEstablecimiento.on('change', function(e) {
+                    if (e.val) {
+                        updateMonthIformationCit();
+                    }
+
+                    updateCalendar();
+                });
+
+            {% if query|length > 0 %}
+                {% set setIdAreaModEstab  = query.get("idAreaModEstab") is defined ? query.get("idAreaModEstab") : '' %}
+                {% set setIdProcedimiento = query.get("idProcedimiento") is defined ? query.get("idProcedimiento") : '' %}
+                {% if setIdAreaModEstab != '' %}
+                    if($('#idAreaModEstab').select2('data') != null) {
+                        $idAreaModEstab.select2('val', '{{ setIdAreaModEstab }}');
+                        areaModEstabChange('{{ setIdAreaModEstab }}');
+                {% endif %}
+
+                {% if setIdProcedimiento != '' %}
+                    $idProcedimientoEstablecimiento.select2('val', '{{ setIdProcedimiento }}');
+                    updateMonthIformationCit();
+                {% endif %}
+            {% endif %}
+
+            function getAreaModEstab(idAreaModEstab) {
+                select2Options['placeholder'] = 'Seleccionar Procedimiento...';
+                initializeSelect2($idProcedimientoEstablecimiento, true, true, select2Options);
+                if(idAreaModEstab) {
+                    $.ajax({
+                        url: Routing.generate("obtener_procedimientos_distribucion_area", { 'idAreaModEstab': idAreaModEstab } ),
+                        async: false,
+                        dataType: 'json',
+                        success: function (data) {
+                            $.each(data.resultados, function (indice, val) {
+                                $idProcedimientoEstablecimiento.append($('<option>', {value: val.id, text: val.text}));
+                            });
+                        }
+                    });
+                }
+            }
+
+                updateCalendar();
+
+                //removiendo css
+                $('#calendar-holder .fc-week .fc-day.fc-first div:first-child').css('min-height', '');
+
+                // Update the calendar when previous button is pressed
+                $('#calendar-holder .fc-button-prev').on('click', function() {
+                    updateMonthIformationCit();
+                    updateCalendar();
+                });
+
+                // Update the calendar when next button is pressed
+                $('#calendar-holder .fc-button-next').on('click', function() {
+                    updateMonthIformationCit();
+                    updateCalendar();
+                });
+
+                // Update the calendar when the today button is pressed
+                $('#calendar-holder .fc-button-today').on('click', function() {
+                    updateMonthIformationCit();
+                    updateCalendar();
+                });
+
+                $('#calendar-holder .fc-button-prevYear').on('click', function() {
+                    updateMonthIformationCit();
+                    updateCalendar();
+                });
+
+                // Update the calendar when next button is pressed
+                $('#calendar-holder .fc-button-nextYear').on('click', function() {
+                    updateMonthIformationCit();
+                    updateCalendar();
+                });
+
+
+                function updateCalendar() {
+                    modal_elements = [];
+                    renderCalendar();
+                    var calendarDate = $('#calendar-holder').fullCalendar('getDate');
+                    calendarDate.setHours(0, 0, 0, 0);
+
+                    var currentDate = new Date();
+                    currentDate.setHours(0, 0, 0, 0);
+
+                    // Disable prev button for the past
+                    if (currentDate.getFullYear() == calendarDate.getFullYear() && currentDate.getMonth() == calendarDate.getMonth()) {
+                        disablePrevMonthButton();
+                    } else {
+                        enablePrevMonthButton();
+                    }
+
+                    // Disable next button for 2 years from today
+                    if (currentDate.getFullYear() + 2 == calendarDate.getFullYear() && currentDate.getMonth() == calendarDate.getMonth()) {
+                        disableNextMonthButton();
+                    } else {
+                        enableNextMonthButton();
+                    }
+
+                    var limit = new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), currentDate.getDate());
+                    if (currentDate.getFullYear() == calendarDate.getFullYear() && currentDate.getMonth() == calendarDate.getMonth()) {
+                        disablePrevYearButton();
+                        enableNextYearButton();
+                    } else if (currentDate.getFullYear() + 1 == calendarDate.getFullYear() && currentDate.getMonth() == calendarDate.getMonth()) {
+                        enablePrevYearButton();
+                        enableNextYearButton();
+                    } else if (calendarDate < limit) {
+                        disablePrevYearButton();
+                        enableNextYearButton();
+                    } else {
+                        disableNextYearButton();
+                        enablePrevYearButton();
+                    }
+                }
+
+                function enablePrevMonthButton() {
+                    $("#calendar-holder .fc-button-prev").removeClass('fc-state-disabled');
+                }
+
+                function disablePrevMonthButton() {
+                    $("#calendar-holder .fc-button-prev").addClass('fc-state-disabled');
+                }
+
+                function enableNextMonthButton() {
+                    $("#calendar-holder .fc-button-next").removeClass('fc-state-disabled');
+                }
+
+                function disableNextMonthButton() {
+                    $("#calendar-holder .fc-button-next").addClass('fc-state-disabled');
+                }
+
+                function enablePrevYearButton() {
+                    $("#calendar-holder .fc-button-prevYear").removeClass('fc-state-disabled');
+                }
+
+                function disablePrevYearButton() {
+                    $("#calendar-holder .fc-button-prevYear").addClass('fc-state-disabled');
+                }
+
+                function enableNextYearButton() {
+                    $("#calendar-holder .fc-button-nextYear").removeClass('fc-state-disabled');
+                }
+
+                function disableNextYearButton() {
+                    $("#calendar-holder .fc-button-nextYear").addClass('fc-state-disabled');
+                }
+
+                $(window).on('resize', function() {
+                    renderCalendar();
+                });
+
+                function renderCalendar() {
+                    $('#calendar-holder').fullCalendar('render');
+                    $('#calendar-holder .fc-week .fc-day.fc-first div:first-child').css('min-height', '');
+                    $('#calendar-holder .fc-week .fc-day.fc-first div.fc-custom-content-tb').css('min-height', '');
+                }
+            });
+    </script>
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $('span.fc-button-prev').prepend('<span class="glyphicon glyphicon-chevron-left"></span> ')
+            $('span.fc-button-next').append(' <span class="glyphicon glyphicon-chevron-right"></span>')
+
+            $('span.fc-button-prevYear').prepend('<span class="glyphicon glyphicon-chevron-left"></span><span class="glyphicon glyphicon-chevron-left"></span> ')
+            $('span.fc-button-nextYear').append(' <span class="glyphicon glyphicon-chevron-right"></span><span class="glyphicon glyphicon-chevron-right"></span>')
+        });
+    </script>
+    {% if params.external is defined and params.external == true %}
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                $('#close-button').on('click', function() {
+                    window.close();
+                });
+
+                {% if query.get("createdElement") is defined and query.get("createdElement") !="" and query.get("createdElement") is not null %}
+                    window.addEventListener("beforeunload", function (e) {
+                        if (window.opener != null && !window.opener.closed) {
+                            try {
+                                window.opener.updateIdCita({{ query.get("createdElement") }}, {{ params.tipo }});
+                            } catch (err) {
+                                console.error(err.description || err) //or console.log or however you debug
+                            }
+                        }
+                    });
+                {% endif %}
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block notice %}
+    {% for notice_level in ['success','error','info', 'warning'] %}
+        {% set session_var = 'sonata_flash_' ~ notice_level %}
+        {% for flash in app.session.flashbag.get(session_var) %}
+            <div class="alert {{ 'alert-' ~ notice_level }}">
+                <center>{{ flash|trans([], 'SonataAdminBundle')|raw }}</center>
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}
+
+{% block content %}
+
+    {% if not admin.hasRoute(action) %}
+        <div>{{ "form_not_available"|trans({}, "SonataAdminBundle") }}</div>
+    {% else %}
+        {% block sonata_page_content_nav %}
+        {% endblock %}
+        {% if params.external is defined and params.external == true %}
+            <div class="col-md-12 text-left" style="margin-bottom: 20px; color: #367fa9; padding-left:45px;">
+                <button id="close-button" class="btn btn-default pull-right"><span class="fa fa-times-circle-o"></span> {% if query.get("createdElement") is defined and query.get("createdElement") !="" and query.get("createdElement") is not null %}Cerrar{% else %}Cancelar{% endif %}</button>
+            </div>
+        {% endif %}
+        <div class="col-md-3">
+            <div class="col-md-12" style="margin-bottom: 20px;">
+                {% if params.mntAreaModEstab|length > 1 %}
+                    <label class="col-md-12 label-filters">Area del Procedimiento:</label>
+                    <select id="idAreaModEstab">
+                        {% for areaModEstab in params.mntAreaModEstab %}
+                            <option value="{{ areaModEstab.id }}">{{ areaModEstab.nombreModalidad ~ ' - ' ~ areaModEstab.nombreAreaAtencion ~ ( areaModEstab.idServicioExterno ? ' - ' ~ areaModEstab.nombreServicioExterno : '' ) }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+                <label class="col-md-12 label-filters">Procedimiento:</label>
+                <select id="idProcedimientoEstablecimiento"></select>
+            </div>
+            <div class="col-md-12" style="padding-top: 20px; border-top:1px solid #DDDDDD;">
+                <div class="accordion" id="accordion2" style="background-color:white;">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+                                <div style="font-size: 15px;font-weight:bold;">Codigo de Colores</div>
+                            </a>
+                        </div>
+                        <div id="collapseOne" class="accordion-body collapse in">
+                            <div class="accordion-inner">
+                                <div style="text-align:left;">
+                                    <table>
+                                        <tr><td style="background-color:#E8F2FF;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Dia anterior a la fecha actual</td></tr>
+                                        <tr><td style="background-color:#FEFFDB;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Fecha Actual</td></tr>
+                                        <tr><td style="background-color:#DCFCE9;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Dia posterior a la fecha actual</td></tr>
+                                        <tr><td style="background-color:#FFF1E1;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Dia festivo</td></tr>
+                                        <tr><td style="background-color:#FFE7E7;width:16px;height:36px;"></td><td style="padding-left:10px;">Dia bloqueado</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">{% include 'ADesignsCalendarBundle::calendar.html.twig' %}</div>
+    {% endif %}
+{% endblock %}

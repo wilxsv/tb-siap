@@ -1,0 +1,180 @@
+{# Definicion de variables#}
+{% set url_parameters = { '_external': 'true', '_modulo': 'seguimiento_clinico', 'tipoPacPertenencia': 'local' } %}
+
+
+{% if parameters.idEmpleado is defined and parameters.idEmpleado is not sameas("") %}
+    {% set url_parameters = url_parameters|merge({ 'idEmpleado': parameters.idEmpleado }) %}
+{% endif %}
+
+{% if parameters.idEspecialidad is defined and parameters.idEspecialidad is not sameas("") %}
+    {% set url_parameters = url_parameters|merge({ 'idEspecialidad': parameters.idEspecialidad }) %}
+{% endif %}
+
+{% if parameters.idHistorialClinico is defined and parameters.idHistorialClinico is not sameas("") %}
+    {% set url_parameters = url_parameters|merge({ 'idHistorialClinico': parameters.idHistorialClinico }) %}
+{% endif %}
+{# Fin de la definicion de variables#}
+<script type="text/javascript">
+    jQuery(document).ready(function ($) {
+        var idEspecialidadConsulta = $('select[id$="_idEspecialidad"]');
+
+        initSelect2(idEspecialidadConsulta, false, true, {% if idEspecialidad|length > 0 %}'Seleccione Especialidad...'{% else %}'El Paciente aun no posee Historias Clinicas'{% endif %}, true);
+
+        $('#antecedente').on('click', function() {
+            if (idEspecialidadConsulta.val()) {
+                var postDataIdPaciente = {{ expediente.getIdPaciente().getId() }};
+                var postDataAreaModEstab = idEspecialidadConsulta.val();
+
+                $.ajax({
+                    url: Routing.generate('sec_antecedentes_leer') + '/' + postDataIdPaciente + '/' + postDataAreaModEstab,
+                    type: "POST",
+                    dataType: 'json',
+                    success: function (msg) {
+                        if (msg.idantecedente == 0) {
+                            showDialogMsg('Informacion','Este paciente aun no tiene antecedentes');
+                        } else {
+                            var parameters = {{ url_parameters|json_encode|raw }};
+                            var winParams = [];
+
+                            if (msg.idantecedente){
+                                parameters['id'] = msg.idantecedente;
+                                winParams['method'] = "post";
+                                //winParams['action'] = "{# url('admin_minsal_seguimiento_secantecedentes_show',{'id':idantecedente}) #}";
+                                winParams['action'] = Routing.generate('sec_antecedentes_show',{'id':msg.idantecedente, 'idatenareamodestab':postDataAreaModEstab});
+                                winParams['target'] = "Antecedente de Paciente";
+                                winParams['parameters'] = parameters;
+                                openPostPopUpWindows(winParams);
+                            }
+                        }
+
+                    }
+                });
+            } else {
+                showDialogMsg('Seleccione Especialidad!','Seleccione la Especialidad','dialog-error', 'Cerrar');
+            }
+        });
+    });
+
+
+    jQuery(document).ready(function($) {
+        var especialidadConsulta = $('select[id$="_idEspecialidad"]');
+        var idExpediente = {{ expediente.getId() }} ;
+
+        $('#verHistorialClinico').on('click', function() {
+            if( especialidadConsulta.select2('val') ){
+                var parameters = {{ url_parameters|json_encode|raw }};
+                var winParams  = [];
+
+                parameters['idExpedienteHclinica'] = idExpediente;
+                parameters['idEspecialidadHclinica']  = especialidadConsulta.select2('val');
+                parameters['external']  = 'true';
+
+                var filter = { filter : {
+                                       idAtenAreaModEstab : { type : null, value : especialidadConsulta.select2('val') },
+                                       idExpediente       : { type : null, value : idExpediente }
+                                     }
+                           };
+
+                //  jQuery.param(filter) <-----Simula la aplicacion de filtros por un usuario
+                //  alert(jQuery.param(filter));
+                //  var filterArray = (jQuery.param(filter)).split('&');
+                //  for ( var filterx in filterArray ){
+                //      alert((filterArray[filterx]).split('=')[0]);
+                //      alert((filterArray[filterx]).split('=')[1]);
+                //      parameters[ (filterArray[filterx]).split('=')[0] ] = (filterArray[filterx]).split('=')[1];
+                //  }
+
+                winParams['method'] = "post";
+                //winParams['action'] = "{{ url('admin_minsal_seguimiento_sechistorialclinico_historias_clinicas_pre_show') }}";
+                winParams['action'] = "{{ url('admin_minsal_seguimiento_sechistorialclinico_list') }}";
+                //winParams['action'] = Routing.generate('admin_minsal_seguimiento_sechistorialclinico_historias_clinicas_pre_show');
+                winParams['target'] = "Historias Clinicas del Paciente";
+                winParams['parameters'] = parameters;
+                openPostPopUpWindows(winParams);
+            } else {
+                showDialogMsg('Seleccione Especialidad!','<span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Seleccione la Especialidad deseada para consultar el Historial Clinico del Paciente.','dialog-error', 'Cerrar');
+            }
+        });
+
+        $('#verHistorialLaboratorio').on('click', function() {
+            var parameters = {{ url_parameters|json_encode|raw }};
+
+            if( especialidadConsulta.select2('val') ){
+                parameters['idEspecialidadHclinica'] = especialidadConsulta.select2('val');
+            }
+
+            parameters['useProxy'] = 'true';
+            parameters['idExpediente'] = '{{ expediente.getId() }}';
+
+            var winParams = [];
+
+            winParams['method'] = "post";
+            winParams['action'] = "{{ url('admin_minsal_laboratorio_secsolicitudestudios_list') }}";
+            winParams['target'] = "Historial de Solicitud de Estudio de Laboratorio Clinico";
+            winParams['parameters'] = parameters;
+
+            openPostPopUpWindows(winParams);
+        });
+    });
+
+    /**  Funcion que inicializa los select a Select2  **/
+    function initSelect2(element, removeChildren, prepend, placeholder, allowClear) {
+        if (removeChildren) {
+            element.children().remove();
+        }
+
+        if (prepend) {
+            element.prepend('<option/>').val(function () {
+                return $('[selected]', this).val();
+            });
+        }
+
+        element.select2({
+            placeholder: placeholder,
+            allowClear: allowClear
+        });
+    };
+</script>
+
+<table class="vista_paciente" border="0" width="100%">
+    <tr class="titulo_vista">
+        <td colspan="4"><b>Consultar Historial Clinico de Paciente</b></td>
+    </tr>
+    <tr>
+        <td><label>Seleccione Especialidad:</label> </td>
+        <td><div align="center">
+                {% if idEspecialidad is defined %}
+                    <select id="_idEspecialidad" class="full-width">
+                        {% for espec in idEspecialidad %}
+                            <option value="{{ espec.id }}">{{ espec.getNombreConsulta() }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+            </div>
+        </td>
+        <td colspan="2">
+            <div class="row" style="margin-left: 0; margin-right: 0;">
+                <div class="col-md-3" style="margin-top: 5px;" align="center">
+                    <a href="#" id="antecedente" class="btn btn-app btn-group" style="min-height: 72px;" data-toggle="tooltip" data-placement="top" title="Ver Antecedentes M&eacute;dicos del Paciente">
+                        <i class="fa fa-file-text"></i>Ver Antecedentes
+                    </a>
+                </div>
+                <div class="col-md-3" style="margin-top: 5px;" align="center">
+                    <a href="#" id="verHistorialClinico" class="btn btn-app btn-group" style="min-height: 72px;" data-toggle="tooltip" data-placement="top" title="Ver Historias Cl&iacute;nicas del Paciente">
+                        <i class="fa fa-archive"></i>Ver Historial Cl&iacute;nico
+                    </a>
+                </div>
+                <div class="col-md-3" style="margin-top: 5px;" align="center">
+                    <a href="#" id="verFichaFamiliar" class="btn btn-app btn-group" style="min-height: 72px;" data-toggle="tooltip" data-placement="top" title="Ver Ficha Familiar Asociada al Paciente">
+                        <i class="fa fa-users"></i>Ver Ficha Familiar
+                    </a>
+                </div>
+                <div class="col-md-3" style="margin-top: 5px;" align="center">
+                    <a href="#" id="verHistorialLaboratorio" class="btn btn-app btn-group" style="min-height: 72px;" data-toggle="tooltip" data-placement="top" title="Ver Historial de &Eacute;xamenes de Laboratorio del Paciente">
+                        <i class="fa fa-flask"></i>Historial <br/>de Laboratorio
+                    </a>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>

@@ -1,0 +1,42 @@
+# This file is auto-generated during the composer install
+parameters:
+    database_driver: pdo_pgsql
+    database_host: localhost
+    database_port: '5432'
+    database_name: tb
+    database_user: dtic
+    database_password: dtic
+    mailer_transport: smtp
+    mailer_host: localhost
+    mailer_user: null
+    mailer_password: null
+    jasper_username: jasperuser
+    jasper_password: jasperpassword
+    jasper_url: 'http://localhost:8080/jasperserver/services/repository?wsdl'
+    module1_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=1'
+    module2_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=2'
+    module3_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=3'
+    module4_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=4'
+    module5_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=5'
+    module6_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=6'
+    module7_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=7'
+    module8_url: 'http://localhost/siaptb/web/app_dev.php/admin/login?_moduleSelection=8'
+    total_modules: 8
+    hide_modules: '7,8'
+    signed_modules: '3,6,7'
+    print_ticket:
+        - 2
+    numero_receta_imprimir: 4
+    servicio_generar_cita:
+         - 8
+         - 9
+    global_host: dominio.global
+    ws_method: ip
+    locale: es_SV
+    secret: df1ca40cfc425c4f34e654696720435a044b9ca9
+    session_max_idle_time: 7200
+    solicitud_lab_print_single: true
+    validate_ingreso_hospitalario: true
+    api_idle_time: 60
+    user_automatizado: null
+    password_automatizado: null

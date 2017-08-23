@@ -1,0 +1,54 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+        jQuery(document).ready(function($) {
+
+            // Inicialiar bootstrapNumber en Tiempo Quirurgico Estimado
+            if ( ! $('#form_i587_s175').val() ){
+                $('#form_i587_s175').val("0");
+            }
+
+            $('#form_i587_s175').bootstrapNumber({
+                upClass: 'success',
+                downClass: 'danger',
+                center: true
+            });
+            $('#form_i587_s175').parent().css( { width: '150px'} );
+
+        });//fin document ready
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {% block sonata_tab_content %}
+    <div class="row">
+	   <div class="col-md-12">
+            <div class="box box-success">
+                <div class="box-header">
+                    <h4 class="box-title">
+                        Evaluación Anestésica Pre-Operatoria
+                    </h4>
+                </div>
+                <div class="box-body">
+                    {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                    {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                    <div class="sonata-ba-collapsed-fields">
+                        <br/>
+                        {{ form(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block sonata_header %}
+
+{% endblock sonata_header %}
+
+{% block actions %}
+
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+        {{ itemsActionJsB|raw }}
+            jQuery(document).ready(function ($) {
+        {% if cerrar is defined %}
+            {% if cerrar  %}
+                
+                            
+                             window.close();
+            {% endif %}
+
+        {% endif %}
+            });//fin document ready
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {{ form_start(form) }} 
+
+    {% block sonata_tab_content %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-success">
+                    <div class="box-header">
+                        <h4 class="box-title">
+                        </h4>
+                    </div>
+                    <div class="box-body">
+                        {% if expediente is defined %}
+                            {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                            {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                        {% endif %}
+                        <div class="sonata-ba-collapsed-fields">
+                            {# form_row(form.form_form_i366_s104)#}
+                            {{ form_row(form.form.section104)}}
+                            {{ form_row(form.form.i366_s104)}}
+                            {{ form_row(form.form.i367_s104)}}
+                            {{ form_row(form.form.section105)}}
+                            {{ form_row(form.form.i370_s105)}}
+                            {{ form_row(form.form.i371_s105)}}
+                            {{ form_row(form.form.section106)}}
+                            {{ form_row(form.form.i365_s106)}}
+
+
+                            {{form_rest(form)}}
+                            {# {{ form(form, { 'attr': { 'class': 'form-horizontal' } }) }} #}
+                            {# {{ form_row(form.i366_s104) }}#}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+
+    {{ form_end(form) }}
+    {#{{ form_rest(form) }} #}
+{% endblock %}

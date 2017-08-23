@@ -1,0 +1,89 @@
+{% extends 'SonataAdminBundle:CRUD:list.html.twig' %}
+
+{% block sonata_header %}
+    {% if params.external == 'false' %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block sonata_page_content_nav %}
+    {% if params.external == 'false' %}
+        {{ parent() }}
+    {% else %}
+        <!--<div id ="newdivfilter">
+            <button type="button" class="btn btn-info" id="viewfilters"><i class="fa fa-fw fa-arrow-circle-left"></i> Ver Filtros</button>
+            <button type="button" class="btn btn-info" id="hidefilters"><i class="fa fa-fw fa-arrow-circle-left"></i> Ocultar Filtros</button>
+        </div> !-->
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    {% if params.external is defined and params.external == 'true' %}
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                $( ".sonata-ba-list-field-header a" ).each(function() {
+                    $(this).attr('href', $(this).attr('href') + '&external={{ params.external }}&idHistorialClinico={{ params.idHistorialClinico }}');
+                });
+
+                $( ".sonata-filter-form a" ).each(function() {
+                    $(this).attr('href', $(this).attr('href') + '&external={{ params.external }}&idHistorialClinico={{ params.idHistorialClinico }}');
+                });
+
+                $( ".pagination a" ).each(function() {
+                    $(this).attr('href', $(this).attr('href') + '&external={{ params.external }}&idHistorialClinico={{ params.idHistorialClinico }}');
+                });
+
+                $( "form" ).prepend(
+                    '<input type="hidden" name="external" id="external" value="{{ params.external }}">' +
+                    '<input type="hidden" name="idHistorialClinico" id="idHistorialClinico" value="{{ params.idHistorialClinico }}">'
+                );
+            });
+        </script>
+
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+
+                $('div[class^="sonata-ba-filter"').hide();
+
+                //Todo lo que esta comentado es para la modificacion de los filtros que por el momento se han ocultado
+                //Tambien hay que descomentar los botones que se muestran las opciones de Ver y Ocultar Filtros
+                /* var divfiltros =  $('div[class^="sonata-ba-filter"');
+                divfiltros.appendTo($('#newdivfilter')).hide();//se acultan los filtros y se colocan en un nuevo div
+
+                $('#viewfilters').on('click',function(){
+                    divfiltros.show();
+                });
+
+                $('#hidefilters').on('click',function(){
+                    divfiltros.hide();
+                });
+
+
+                $('#filter_idestado_value').before('<select class="full_width" id="auxestadoreceta">'+
+                                                        '<option value=""></option>'+
+                                                        '<option value="F">Falsificada</option>'+
+                                                   '</select>').hide();
+                $('#auxestadoreceta').select2({
+                    allowClear: true,
+                    placeholder: "Seleccione estado"
+                });
+
+                $('#auxestadoreceta').on('change', function(){
+                   if( $(this).select2('val') ){
+                       $('#filter_idestado_value').val( $(this).select2('val') );
+                   }
+                   else{
+                       $('#filter_idestado_value').val('');
+                   }
+
+                });*/
+
+                $('div[class^="select2-container form-control per-page small"').hide();//se oculta la paginacion
+                $('label[class^="control-label"').hide();//el label de la paginacion
+
+            });
+        </script>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,4 @@
+services:
+    api.authenticator:
+        class: Application\ApiBundle\Service\ApiService
+        arguments: ["@service_container"]

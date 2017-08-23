@@ -1,0 +1,7 @@
+{# src/Minsal/LaboratorioBundle/Resources/views/CRUD/list__action_list.html.twig #}
+{% if admin.isGranted('VIEW', object) and admin.hasRoute('show') %}
+    <a href="{{ url('admin_minsal_laboratorio_secsolicitudestudios_show', {'id': object.getId(), 'idEstablecimiento': object.getIdEstablecimiento().getId(), 'external': (app.request.get('_external') ? app.request.get('_external') : app.session.get('lab_external') ? app.session.get('lab_external') : 'false') , 'idSolicitudEstudio': object.getId()}) }}" class="btn btn-sm btn-default view_link" title="{{ 'action_show'|trans({}, 'SonataAdminBundle') }}">
+        <i class="glyphicon glyphicon-zoom-in"></i>
+        {{ 'action_show'|trans({}, 'SonataAdminBundle') }}
+    </a>
+{% endif %}

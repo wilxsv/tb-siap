@@ -1,0 +1,56 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['bFilter']=false;
+            opcionesTable['bSort']=false;
+            opcionesTable['sDom']='<"top"flp>rt<"bottom"i>';
+            opcionesTable['aLengthMenu']= [[15,25, 50, 75, -1], [15,25, 50, 75, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+  <div class="col-md-offset-3 col-md-2">
+    <h3 class="text-center">Pacientes Ingresados</h3>
+  </div>
+</div>
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>Acciones</th>
+            <th>NEC</th>
+            <th>Apellidos</th>
+            <th>Nombres</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Tarjetas Entregadas</th>
+            <th>Servicio en que ingreso</th>
+            <th>Diagnóstico Presuntivo</th>
+            <th>Fecha de Ingreso</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set fechaActual = date() %}
+        {% for paciente in pacientes %}
+            <tr>
+              <td>
+                 <a href="{{ path('hoja_ingreso_egreso',{'report_name':'hojaIngresoEgreso', 'report_format': 'PDF', 'paciente': paciente['id'], 'ingreso': paciente['id_ingreso']})}}" target="_blank" class="btn btn-info"><span class="glyphicon glyphicon-book"></span> Hoja de Ingreso</a>
+                 <a href="{{ path('admin_minsal_seguimiento_secingreso_edit',{'id':paciente['id_ingreso']})}}" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Editar</a>
+                 {% if app.session.get("validate_ingreso_hospitalario")==false %}
+                    <a href="{{ path('admin_minsal_seguimiento_secingreso_delete',{'id':paciente['id_ingreso']})}}" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Borrar </a>
+                 {% endif %}
+              </td>
+              <td >{{ paciente['numero'] }}</td>
+              <td>{{ paciente['primer_apellido']~' '~paciente['segundo_apellido']~' '~paciente['apellido_casada'] }}</td>
+              <td>{{ paciente['primer_nombre']~' '~paciente['segundo_nombre']~' '~paciente['tercer_nombre'] }}</td>
+              <td>{{ paciente['fecha_nacimiento']|date('d/m/Y')}}</td>
+              <td>{{ paciente['tarjetas']}}</td>
+              <td>{{ paciente['ambiente']}}</td>
+              <td>{{ paciente['diagnostico']}}</td>
+              <td>{{ paciente['fecha_hora_ingreso']}}</td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>

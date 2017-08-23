@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecHistorialCitaDiaSubsec" table="sec_historial_cita_dia_subsec">
+    <indexes>
+      <index name="fki_historial_clinico_historial_cita_dia_subsec" columns="id_historial_clinico"/>
+      <index name="fki_ctl_tipo_cita_subsecuente" columns="id_cita_dia"/>
+      <index name="IDX_C3EF10E6AB505E07" columns="id_tipo_cita_subsecuente"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <many-to-one field="idTipoCitaSubsecuente" target-entity="CtlTipoCitaSubsecuente">
+      <join-columns>
+        <join-column name="id_tipo_cita_subsecuente" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idCitaDia" target-entity="CitCitasDia">
+      <join-columns>
+        <join-column name="id_cita_dia" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

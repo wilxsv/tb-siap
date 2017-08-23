@@ -1,0 +1,17 @@
+services:
+    seguimientowebservice:
+        class: Application\SoapBundle\Service\SeguimientoWebService
+        arguments: ["@service_container"]
+
+    soapClient:
+        class: Application\SoapBundle\Service\SoapClientService
+        arguments: [true, 1]
+        scope: prototype
+
+    laboratoriowebservice:
+        class: Application\SoapBundle\Service\LaboratorioWebService
+        arguments: ["@service_container"]
+
+    interfaceliswebservice:
+        class: Application\SoapBundle\Service\InterfaceLisWebService
+        arguments: ["@service_container"]

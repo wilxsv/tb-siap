@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="TarSecTar" table="tar_sec_tar">
+    <indexes>
+      <index name="IDX_105A39A6A7C7EF6A" columns="id_formulario"/>
+      <index name="IDX_105A39A631827296" columns="id_historial_clinico"/>
+      <index name="IDX_105A39A671EE8D58" columns="id_clasificacion_clinica"/>
+      <index name="IDX_105A39A6F6533EF7" columns="id_criterio_cambio"/>
+      <index name="IDX_105A39A6140653E8" columns="id_motivo_indicacion"/>
+      <index name="IDX_105A39A6F5D10954" columns="id_motivo_profilaxis"/>
+      <index name="IDX_105A39A613952486" columns="id_motivo_tar"/>
+      <index name="IDX_105A39A6197798D8" columns="id_tipo_egreso"/>
+      <index name="IDX_105A39A6AE2622F2" columns="id_tipo_paciente"/>
+      <index name="IDX_105A39A621DE3841" columns="id_tipo_poblacion"/>
+    </indexes>
+    <id name="id" type="bigint" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="esInicioArv" type="boolean" column="es_inicio_arv" nullable="false"/>
+    <field name="esProfilaxis" type="boolean" column="es_profilaxis" nullable="false"/>
+    <field name="fechaInicioArv" type="date" column="fecha_inicio_arv" nullable="true"/>
+    <field name="esProfilaxisIsoniacida" type="boolean" column="es_profilaxis_isoniacida" nullable="true"/>
+    <field name="esProfilaxisTmpSmz" type="boolean" column="es_profilaxis_tmp_smz" nullable="true"/>
+    <field name="esProfilaxisMaterna" type="boolean" column="es_profilaxis_materna" nullable="true"/>
+    <field name="estado" type="boolean" column="estado" nullable="true"/>
+    <many-to-one field="idMotivoTar" target-entity="TarMotivoTar">
+      <join-columns>
+        <join-column name="id_motivo_tar" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idTipoEgreso" target-entity="TarTipoEgreso">
+      <join-columns>
+        <join-column name="id_tipo_egreso" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idTipoPaciente" target-entity="TarTipoPaciente">
+      <join-columns>
+        <join-column name="id_tipo_paciente" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idTipoPoblacion" target-entity="TarTipoPoblacion">
+      <join-columns>
+        <join-column name="id_tipo_poblacion" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idMotivoProfilaxis" target-entity="TarMotivoProfilaxis">
+      <join-columns>
+        <join-column name="id_motivo_profilaxis" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idMotivoIndicacion" target-entity="TarMotivoIndicacion">
+      <join-columns>
+        <join-column name="id_motivo_indicacion" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idClasificacionClinica" target-entity="TarClasificacionClinica">
+      <join-columns>
+        <join-column name="id_clasificacion_clinica" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idCriterioCambio" target-entity="TarCriterioCambio">
+      <join-columns>
+        <join-column name="id_criterio_cambio" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idFormulario" target-entity="FrmFormulario">
+      <join-columns>
+        <join-column name="id_formulario" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,143 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        var modal_elements = [];
+        function pushModalElement(newId, callFunction, parameters_func) {
+            modal_elements.push({
+                id: newId,
+                func: callFunction,
+                header: 'Detalle de Pacientes Atendidos',
+                footer: '',
+                widthModal: '800px',
+                parameters: parameters_func
+            });
+        }
+        function agendaMedica(parameters) {
+              parameters['url']   = Routing.generate('citasdetallehora') + '?idEmpleado=' + parameters['id'] + '&idEmpleadoEspecialidadEstab=' + parameters['especialidad'] + '&date=' + parameters['fecha'];
+              result = buildDetailAgendaMedica(parameters);
+
+              if(Object.keys(result).length === 0 || result.content === '') {
+                  result.warningMessage = '';
+                  result.content = '<div class="alert alert-block alert-error">\
+                                                              <h4>Error al construir la agenda m&eacute;dica</h4>\
+                                                              Lo sentimos un error al construir el detalle de la agenda m&eacute;dica, por favor intentelo nuevamente, si el problema persiste contacte con el administrador del sistema...\
+                                                      </div>';
+              }
+
+              return '<div id="warning-message">'+result.warningMessage+'</div><div id="info-message"></div><div class="panel-primary-custom"><div class="agendamd-content">'+result.content+'</div></div>';
+          }
+    </script>
+{% endblock javascripts %}
+{% if citas | length > 0 %}
+<div class="row">
+    <div class="col-md-offset-1 col-md-9">
+        <div class="bs-callout bs-callout-info" id="callout-glyphicons-location">
+            <div class="row">
+                <div class="col-md-8">
+
+                    <h4> Consideraciones a tener en cuenta</h4>
+                    <p>
+                        A continuación se presenta la interpretación de las barras que apareceran en el informe:
+                        <div class="progress-group">
+                            <span class="progress-text">NOMBRE DEL MÉDICO</span>
+                            <span class="progress-number  pull-right ">Atendidos/Total Citados</span>
+                            <div class="progress progress-sm active">
+                                <div style="width:70%" class="progress-bar progress-bar-info progress-bar-striped">(Atendidos/Total Citados)*100 %</div>
+                            </div>
+                        </div>
+                    </p>
+                </div>
+                <div class="col-md-4">
+
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+                                <div style="font-size: 15px;font-weight:bold;">Código de Colores</div>
+                            </a>
+                        </div>
+                        <div id="collapseOne" class="accordion-body collapse in">
+                            <div class="accordion-inner">
+                                <div style="text-align:left;">
+                                    <table>
+                                        <tr><td style="background-color:#00a65a;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Porcentajes de consulta atendidas mayores a 80%</td></tr>
+                                        <tr><td style="background-color:#f39c12;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Porcentajes de consulta atendidas entre 50% y 80%</td></tr>
+                                        <tr><td style="background-color:#f56954;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Porcentajes de consulta atendidas menores a 50%</td></tr>
+
+
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        {% set citados = 0  %}
+        {% for detalle in citas %}
+        {% if detalle['total_citas']!= 0 %}
+          {% set calculo = (detalle['atendidos']/detalle['total_citas'])*100  %}
+        {% else %}
+          {% set calculo = -1 %}
+          {% set citados = citados + 1  %}
+        {% endif %}
+        {% if calculo != -1 %}
+
+        <div class="row">
+          <div class="col-md-offset-2 col-md-6">
+                  <div class="progress-group">
+                      <span class="progress-text">{{ detalle['empleado'].nombreempleado | upper }}</span>
+                      {% if calculo >= 80 %}
+                          <span class="progress-number  pull-right ">{{ detalle['atendidos'] }}/{{detalle['total_citas']}}</span>
+                          <div class="progress progress-sm active">
+                              <div style="width:{{ calculo }}%" class="progress-bar progress-bar-success progress-bar-striped">{{calculo | number_format}}%</div>
+                          </div>
+                      {% else %}
+                          {% if calculo >= 50 %}
+                              <span class="progress-number pull-right">{{ detalle['atendidos'] }}/{{detalle['total_citas']}}</span>
+                              <div class="progress progress-sm active">
+                                  <div style="width:{{ calculo }}%" class="progress-bar progress-bar-warning progress-bar-striped active">{{calculo | number_format}}%</div>
+                              </div>
+                          {% else %}
+                                <span class="progress-number  pull-right">{{ detalle['atendidos'] }}/{{detalle['total_citas']}}</span>
+                                <div class="progress progress-sm active">
+                                    <div style="width:{{ calculo }}%" class="progress-bar progress-bar-danger progress-bar-striped">{{calculo | number_format}}%</div>
+                                </div>
+                          {% endif %}
+                      {% endif %}
+              </div>
+          </div>
+          <div class="col-md-1">
+              <script type="text/javascript">
+
+              jQuery(document).ready(function ($) {
+                    var parametros=[];
+                    parametros['id']={{detalle['empleado'].id }};//split para mandar ir
+                    parametros['especialidad']=$('#idAtenAreaModEstab').select2('val');
+                    parametros['fecha']=moment($('#fecha_consulta').val(),'DD/MM/YYYY').format('YYYY-MM-DD');
+                    pushModalElement('detalle_{{ detalle['empleado'].id }}_modal', 'agendaMedica', parametros);
+              });
+              </script>
+              <a href="#myModal" id="detalle_{{ detalle['empleado'].id }}_modal" custom-modal="true" role="button" data-toggle="modal">
+              <div class="icon"><i class="glyphicon glyphicon-zoom-in fa-2x"></i><br/>Ver Detalle</div></a>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% if citados == citas |length %}
+        <div class="row">
+            <div class="col-md-offset-2 col-md-7">
+                <div class="alert alert-info" role="alert"> <h4 class="center">No hay pacientes citados para esta fecha en esta especialidad</h4></div>
+
+            </div>
+        {% endif %}
+{% else %}
+<div class="row">
+    <div class="col-md-offset-2 col-md-7">
+        <div class="alert alert-info" role="alert"> <h4 class="center">No hay pacientes citados para esta fecha en esta especialidad</h4></div>
+    </div>
+</div>
+
+{% endif %}
+{% set codigoEmpleado        = app.user.getIdEmpleado.getIdTipoEmpleado is defined ? app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo|upper : 'N/A' %}
+{% include 'MinsalCitasBundle:Custom:agenda_dia.html.twig' %}

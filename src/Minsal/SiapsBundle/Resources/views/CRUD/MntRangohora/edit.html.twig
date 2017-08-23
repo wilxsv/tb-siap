@@ -1,0 +1,64 @@
+{% extends 'SonataAdminBundle:CRUD:edit.html.twig' %}
+
+{% set action = admin.id(object) is not null ? 'edit' : 'create' %}
+{% set superAdmin = app.user.hasRole('ROLE_SUPER_ADMIN') %}
+{% set idEstablecimiento = app.user.getIdEstablecimiento() ? app.user.getIdEstablecimiento().getId() : ( app.user.getIdEmpleado() ? app.user.getIdEmpleado().getIdEstablecimiento().getId() : '' ) %}
+{% set actionDisabled = admin.parameters.actionDisabled %}
+
+{% block javascripts %}
+    {{parent()}}
+
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            /*
+             * Declaracion de Variables
+             */
+            {% if superAdmin is sameas(true) %}
+                $idEstablecimiento = $('#{{ admin.uniqid }}_idEstablecimiento');
+                $idModulo          = $('#{{ admin.uniqid }}_idModulo');
+            {% endif %}
+            $horaInicial = $('#{{ admin.uniqid }}_horaIni');
+            $horaFinal   = $('#{{ admin.uniqid }}_horaFin');
+
+            var idEstablecimiento = '{{ idEstablecimiento }}';
+
+            /*
+             * Inicialización de Elementos del Formulario.
+             */
+            var select2Options = {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    containerCss: {
+                        'width': '100%'
+                    }
+                };
+
+            {% if superAdmin is sameas(true) %}
+                select2Options['placeholder'] = 'Seleccionar Establecimiento...';
+                initializeSelect2($idEstablecimiento, true, false, select2Options);
+
+                select2Options['placeholder'] = 'Seleccionar Módulo...';
+                initializeSelect2($idModulo, true, false, select2Options);
+            {% endif %}
+
+            /*
+             * Lógica de Proceso.
+             */
+            {% if superAdmin is sameas(true) %}
+                if(idEstablecimiento === '') {
+                    $.ajax({
+                        url: Routing.generate("get_establecimiento_configurado"),
+                        async: false,
+                        dataType: 'json',
+                        success: function (data) {
+                            idEstablecimiento = data.id;
+                        }
+                    });
+                }
+
+                $idEstablecimiento.select2('val',idEstablecimiento);
+            {% endif %}
+
+        });
+    </script>
+{% endblock %}

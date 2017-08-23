@@ -1,0 +1,20 @@
+<!-- Seguimiento de consulta -->
+{% if secOtrasObservaciones %}
+{% if secOtrasObservaciones.planIngreso %}
+<div class="panel panel-info" id="seguimiento">
+    <div class="panel-heading"><b >Plan de Ingreso</b> {# Se imprime el nombre de la Seccion #}
+    </div>
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="{% if impresion != true %} table table-hover {% endif %} table-bordered">
+            <tbody>
+                <tr class="sonata-ba-view-container">
+                    <td>
+                        {{ secOtrasObservaciones.planIngreso | raw}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endif %}

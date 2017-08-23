@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntUserTourStep" table="mnt_user_tour_step">
+    <indexes>
+      <index name="IDX_232E556090650987" columns="id_user_tour"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="element" type="text" column="element" nullable="true"/>
+    <field name="placement" type="text" column="placement" nullable="true"/>
+    <field name="title" type="text" column="title" nullable="true"/>
+    <field name="content" type="text" column="content" nullable="true"/>
+    <field name="animation" type="text" column="animation" nullable="true"/>
+    <field name="container" type="text" column="container" nullable="true"/>
+    <field name="backdrop" type="text" column="backdrop" nullable="true"/>
+    <field name="backdropcontainer" type="text" column="backdropcontainer" nullable="true"/>
+    <field name="backdroppadding" type="text" column="backdroppadding" nullable="true"/>
+    <field name="orphan" type="text" column="orphan" nullable="true"/>
+    <field name="duration" type="text" column="duration" nullable="true"/>
+    <field name="order" type="integer" column="order" nullable="true"/>
+    <field name="template" type="text" column="template" nullable="true"/>
+    <many-to-one field="idUserTour" target-entity="MntUserTour">
+      <join-columns>
+        <join-column name="id_user_tour" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

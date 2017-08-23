@@ -1,0 +1,105 @@
+$("a#imprimir-recetas").on("click", function () {
+    var tipo = "";
+    var parameters = {{ url_parameters|json_encode|raw }};
+    var winParams = [];
+
+    winParams['method'] = "post";
+    winParams['action'] = "{{ url('admin_minsal_farmacia_farmrecetas_imprimir_receta') }}";
+    winParams['target'] = "Impresion de Receta";
+    winParams['parameters'] = parameters;
+    openPostPopUpWindows(winParams);
+});
+
+$("#imprimir-referencia-interconsulta").on("click", function () {
+    {% if refid is defined and refid is not null%}
+    var parameters = {{ url_parameters|json_encode|raw }};
+    var winParams = [];
+    var path = "{{ url('admin_minsal_seguimiento_secremisionpaciente_referencia_reporte') }}";
+    winParams['method'] = "post";
+    winParams['action'] = path;
+    winParams['target'] = "Remision de Paciente";
+    winParams['parameters'] = parameters;
+    openPostPopUpWindows(winParams);
+    {% endif %}
+});
+
+$("#imprimir-historia-clincia").on("click", function () {
+    var parameters = {{ url_parameters|json_encode|raw }};
+    var winParams = [];
+    var path = "{{ url('admin_minsal_seguimiento_sechistorialclinico_imprimir_historia_clinica', { id: object.getId() }) }}";
+    winParams['method'] = "post";
+    winParams['action'] = path;
+    winParams['target'] = "Remision de Paciente";
+    winParams['parameters'] = parameters;
+    openPostPopUpWindows(winParams);
+});
+
+<table class="vista_paciente padding-table" border="0" width="100%">
+    <tr class="titulo_vista">
+        <td colspan="4"><li class="fa fa-print"></li> Impresiones</td>
+    </tr>
+    <tr>
+        <td colspan="4">
+            <div class="row" style="margin-left: 0; margin-right: 0;">
+                <div class="col-md-12"><span><b>Comprobantes de Cita:</b></span></div>
+            </div>
+            <div class="row" style="margin-left: 0; margin-right: 0;">
+                <div class="col-md-4" align="center">
+                    <a href="#" id="comprobante-cita-control" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Comprobante de Cita de Control" target="_blank">
+                        <div class="multiple-icons">
+                            <li class="fa fa-calendar"></li>
+                            <li class="fa fa-stethoscope"></li>
+                        </div>Cita de Control
+                    </a>
+                </div>
+                <div class="col-md-4" align="center">
+                    <a href="#" id="comprobante-cita-seguimiento" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Comprobante de Cita de Seguimiento" target="_blank">
+                        <div class="multiple-icons">
+                            <li class="fa fa-calendar"></li>
+                            <li class="fa fa-clipboard"></li>
+                        </div>Cita de Seguimiento
+                    </a>
+                </div>
+                <div class="col-md-4" align="center">
+                    <a href="#" id="comprobante-cita-procedimiento" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Comprobante de Cita de Procedimiento" target="_blank">
+                        <div class="multiple-icons">
+                            <li class="fa fa-calendar"></li>
+                            <li class="fa fa-list-alt"></li>
+                        </div>Cita de Procedimiento
+                    </a>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="4">
+            <div class="row" style="margin-left: 0; margin-right: 0;">
+                <div class="col-md-12"><span><b>De la Historia Clinica:</b></span></div>
+            </div>
+            <div class="row" style="margin-left: 0; margin-right: 0;">
+                <div class="col-md-3" align="center">
+                    <a href="#" id="imprimir-recetas" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Recetas">
+                        <li class="fa fa-medkit"></li>Recetas
+                    </a>
+                </div>
+                <div class="col-md-3" align="center">
+                    <a href="#" id="imprimir-solicitud-estudios" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Solicitud Estudios">
+                        <li class="fa fa-file-text-o"></li>&nbsp;&nbsp;Solicitud de&nbsp;&nbsp;&nbsp;<br/> Estudios
+                    </a>
+                </div>
+                <div class="col-md-3" align="center">
+                    <a href="#" id="imprimir-referencia-interconsulta" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Referencias o Interconsultas">
+                        <li class="fa fa-user-md"></li>Referencias<br/>o Interconsultas
+                    </a>
+                </div>
+                <div class="col-md-3" align="center">
+                    <a href="#" id="imprimir-historia-clincia" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Historia Clinica">
+                        <!-- <li class="fa fa-user-md"></li> -->
+                        <span class="glyphicon glyphicon-file" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;&nbsp;Historia&nbsp;&nbsp;&nbsp;&nbsp;<br/>Clinica
+                    </a>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+<br/>

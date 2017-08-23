@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="citasPorDia" language="groovy" pageWidth="612" pageHeight="792" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="00d7716b-8dff-4237-aae0-73616e1792c8">
+	<property name="ireport.zoom" value="1.2100000000000002"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="fechaInicial" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="fechaFinal" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="id_procedimiento_establecimiento" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[2]]></defaultValueExpression>
+	</parameter>
+	<parameter name="restriccion_especialidad" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{id_procedimiento_establecimiento} !=0 ? " AND t04.id="+$P{id_procedimiento_establecimiento}:""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT 	CONCAT_WS(' ',t05.codigo,'-',t05.nombre_comun) as nombre_procedimiento,
+	coalesce(initcap(t07.nombreempleado),'No Hay Empleado Asignado') as nombreempleado,
+	TO_CHAR(t01.fecha,'DD/MM/YYYY') AS fecha,
+	TO_CHAR(t01.fechahorareg,'DD/MM/YYYY') AS fecha_otorgamiento,
+	t06.numero as numero_expediente,
+	REGEXP_REPLACE(REGEXP_REPLACE(initcap(CONCAT_WS(' ', t08.primer_apellido, t08.segundo_apellido, t08.apellido_casada,',',t08.primer_nombre, t08.segundo_nombre, t08.tercer_nombre)),'( ){2,}', ' ','g'),' ,',',') AS nombre_paciente,
+	CONCAT(TO_CHAR(t03.hora_ini, 'HH12:MI:SS AM'),' - ',TO_CHAR(t03.hora_fin, 'HH12:MI:SS AM')) AS rango_hora,
+	CASE WHEN t11.id_tipo_empleado in(4) THEN 'Seguimiento Clínico'
+	     WHEN t11.id_tipo_empleado in (1,6,7) THEN 'Área de citas'
+	     END as modulo,
+(select initcap(nombre) from ctl_establecimiento where configurado=true) as nombre
+FROM cit_citas_procedimientos t01
+	INNER JOIN cit_distribucion_procedimiento t02 ON (t02.id=t01.id_distribucion_procedimiento)
+	INNER JOIN mnt_rangohora  t03 ON (t03.id=t02.id_rangohora)
+	INNER JOIN mnt_procedimiento_establecimiento t04 ON(t04.id=t02.id_procedimiento_establecimiento $P!{restriccion_especialidad})
+	INNER JOIN mnt_ciq t05 ON (t05.id=t04.id_ciq)
+	INNER JOIN mnt_expediente t06 ON (t06.id=t01.id_expediente)
+	LEFT JOIN mnt_empleado t07 ON (t07.id=t02.id_empleado)
+	INNER JOIN mnt_paciente t08 ON (t08.id=t06.id_paciente)
+	INNER JOIN fos_user_user t10 ON (t10.id=t01.idusuarioreg)
+	LEFT JOIN mnt_empleado t11 ON (t11.id=t10.id_empleado)
+WHERE t01.id_estado NOT IN (3,9) AND fecha BETWEEN date($P{fechaInicial}) AND date($P{fechaFinal})
+ORDER BY t05.procedimiento ASC, coalesce(initcap(t07.nombreempleado),'No Hay Empleado Asignado') ASC,t01.fecha ASC,t03.hora_ini ASC,t03.hora_fin ASC]]>
+	</queryString>
+	<field name="nombre_procedimiento" class="java.lang.String"/>
+	<field name="nombreempleado" class="java.lang.String">
+		<fieldDescription><![CDATA[Nombre Unido para los modulos de PHP Puro y POstgresql]]></fieldDescription>
+	</field>
+	<field name="fecha" class="java.lang.String">
+		<fieldDescription><![CDATA[Fecha de la cita medica]]></fieldDescription>
+	</field>
+	<field name="fecha_otorgamiento" class="java.lang.String"/>
+	<field name="numero_expediente" class="java.lang.String"/>
+	<field name="nombre_paciente" class="java.lang.String"/>
+	<field name="rango_hora" class="java.lang.String"/>
+	<field name="modulo" class="java.lang.String">
+		<fieldDescription><![CDATA[Modulo al cual se aplicara la franja horaria]]></fieldDescription>
+	</field>
+	<field name="nombre" class="java.lang.String">
+		<fieldDescription><![CDATA[Nombre para el estado de la distribución]]></fieldDescription>
+	</field>
+	<variable name="nombreempleado_1" class="java.lang.Integer" resetType="Group" resetGroup="Empleado" calculation="Count">
+		<variableExpression><![CDATA[$F{nombreempleado}]]></variableExpression>
+	</variable>
+	<variable name="rango_hora_1" class="java.lang.Integer" resetType="Group" resetGroup="Rango Hora" calculation="Count">
+		<variableExpression><![CDATA[$F{rango_hora}]]></variableExpression>
+	</variable>
+	<group name="Procedimiento" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{nombre_procedimiento}]]></groupExpression>
+		<groupHeader>
+			<band height="20">
+				<textField>
+					<reportElement x="0" y="0" width="572" height="20" uuid="d8c7a116-2938-42e8-b48d-c28eab38f4a0"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="11" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nombre_procedimiento}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="Empleado" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{nombreempleado}]]></groupExpression>
+		<groupHeader>
+			<band height="22">
+				<textField>
+					<reportElement x="0" y="0" width="572" height="20" uuid="2e0d29aa-11e4-41b9-bf3c-b1a89ad9d6f0"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="10" isBold="true" isItalic="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Médico que realiza el procedimiento: "+$F{nombreempleado}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="Fecha" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{fecha}]]></groupExpression>
+		<groupHeader>
+			<band height="21">
+				<textField>
+					<reportElement x="215" y="0" width="100" height="20" uuid="236ceb7a-b857-4bf4-9ca5-a2132bf229f7"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{fecha}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<group name="Rango Hora" isReprintHeaderOnEachPage="true">
+		<groupExpression><![CDATA[$F{rango_hora}]]></groupExpression>
+		<groupHeader>
+			<band height="52">
+				<staticText>
+					<reportElement x="131" y="23" width="221" height="27" uuid="aa56ca04-a89f-4f3d-b93d-4a595e904d26"/>
+					<box bottomPadding="0">
+						<bottomPen lineWidth="2.0"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle"/>
+					<text><![CDATA[Nombre del Paciente]]></text>
+				</staticText>
+				<staticText>
+					<reportElement stretchType="RelativeToBandHeight" x="464" y="23" width="107" height="27" uuid="20939a5e-8fc1-4b02-a932-0e4a1bc1ed0a"/>
+					<box bottomPadding="0">
+						<bottomPen lineWidth="2.0"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle"/>
+					<text><![CDATA[Módulo en que se otorga cita]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="23" width="132" height="27" uuid="adb35ca7-db35-4889-b6c6-8ae51b30542f"/>
+					<box bottomPadding="0">
+						<bottomPen lineWidth="2.0"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle"/>
+					<text><![CDATA[Número Expediente]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="0" y="3" width="203" height="20" uuid="3d1d7bb1-6b25-41c5-b7a4-8778847859f6"/>
+					<textElement verticalAlignment="Middle">
+						<font size="10" isBold="true" isUnderline="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{rango_hora}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="352" y="23" width="112" height="27" uuid="2c2c45ff-4e7a-4170-b0d1-22fb8da0de77"/>
+					<box bottomPadding="0">
+						<bottomPen lineWidth="2.0"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle"/>
+					<text><![CDATA[Fecha otorgamiento de cita]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" evaluationTime="Group" evaluationGroup="Rango Hora" isBlankWhenNull="true">
+					<reportElement x="315" y="3" width="34" height="20" uuid="5858c104-c123-4f4c-ae0e-04e87ee4c62c"/>
+					<textElement verticalAlignment="Middle">
+						<font size="10" isBold="true" isUnderline="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{rango_hora_1}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement stretchType="RelativeToTallestObject" x="203" y="3" width="112" height="20" uuid="1115228f-c198-40a2-b875-25eb77e8ab52"/>
+					<textElement verticalAlignment="Middle">
+						<font size="10" isBold="true" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[Pacientes Citados:]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="22" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="572" height="20" uuid="480269f3-2a8b-48e0-87d5-761e8b5f5ae4"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="572" height="20" uuid="f6fbdf27-a6b0-4047-9d95-fdac61955db5"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Ministerio de Salud - "+$F{nombre}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="22" splitType="Stretch">
+			<textField>
+				<reportElement x="132" y="0" width="220" height="20" uuid="2c4befc2-f67d-4c96-9008-b367ad404bbe"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{nombre_paciente}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="464" y="0" width="108" height="20" uuid="23579a40-933c-44ff-8c50-3d31d63bf0ea"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{modulo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="-1" y="0" width="132" height="20" uuid="a5a9c6c6-6591-409e-acac-610fa7d83378"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{numero_expediente}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="352" y="0" width="112" height="20" uuid="3726a9e2-d743-4e1f-8a73-7a91d1c9ab54"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{fecha_otorgamiento}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="21" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy h:mm a">
+				<reportElement x="420" y="0" width="152" height="20" uuid="cebcaae3-8924-448c-b075-764e96d8047f"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="0" width="80" height="20" uuid="a6bdbe1f-2a67-44d3-9dc4-2b8fe371513d"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Página "+$V{PAGE_NUMBER}+" de"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="80" y="0" width="40" height="20" uuid="e06d400d-e28d-4dca-b7cf-d18614760fee"/>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

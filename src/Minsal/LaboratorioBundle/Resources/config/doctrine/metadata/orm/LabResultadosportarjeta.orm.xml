@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabResultadosportarjeta" table="lab_resultadosportarjeta">
+    <indexes>
+      <index name="IDX_7834A74689EFF53A" columns="idantibiotico"/>
+      <index name="IDX_7834A746692E4D2C" columns="iddetalleresultado"/>
+      <index name="IDX_7834A74675BB31F7" columns="idestablecimiento"/>
+      <index name="IDX_7834A74619211949" columns="id_posible_resultado"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="resultado" type="string" column="resultado" length="10" nullable="true"/>
+    <field name="valor" type="string" column="valor" length="20" nullable="true"/>
+    <many-to-one field="idPosibleResultado" target-entity="LabPosibleResultado">
+      <join-columns>
+        <join-column name="id_posible_resultado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idestablecimiento" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="idestablecimiento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="iddetalleresultado" target-entity="LabDetalleresultado">
+      <join-columns>
+        <join-column name="iddetalleresultado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idantibiotico" target-entity="LabAntibioticos">
+      <join-columns>
+        <join-column name="idantibiotico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

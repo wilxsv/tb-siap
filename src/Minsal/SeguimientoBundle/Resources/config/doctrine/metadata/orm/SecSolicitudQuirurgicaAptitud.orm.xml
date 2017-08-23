@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecSolicitudQuirurgicaAptitud" table="sec_solicitud_quirurgica_aptitud">
+    <indexes>
+      <index name="IDX_C30C9322798686A2" columns="id_aptitud_quirurgica"/>
+      <index name="IDX_C30C9322890253C7" columns="id_empleado"/>
+      <index name="IDX_C30C932248709FC9" columns="id_solicitud_quirurgica"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="fechaHoraRegistro" type="datetime" column="fecha_hora_registro" nullable="false"/>
+    <many-to-one field="idSolicitudQuirurgica" target-entity="SecSolicitudQuirurgica">
+      <join-columns>
+        <join-column name="id_solicitud_quirurgica" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idEmpleado" target-entity="MntEmpleado">
+      <join-columns>
+        <join-column name="id_empleado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idAptitudQuirurgica" target-entity="CtlAptitudQuirurgica">
+      <join-columns>
+        <join-column name="id_aptitud_quirurgica" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

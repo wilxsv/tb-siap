@@ -1,0 +1,1618 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+{% set estadoPaciente = (recetasRegistradas|length > 0 ? recetasRegistradas[0].med.getIdReceta().getPacientestable() : 0) %}
+
+{% block sonata_header %}
+    {% if params.external == false %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block actions %}
+    {% if params.external == false %}
+        <li>{% include 'SonataAdminBundle:Button:create_button.html.twig' %}</li>
+        <li>{% include 'SonataAdminBundle:Button:list_button.html.twig' %}</li>
+        {% endif %}
+    {% endblock %}
+
+{% block tab_menu %}
+    {# {% if action is not defined %}
+        {{ knp_menu_render(admin.sidemenu(action), {'currentClass' : 'active'}, 'list') }}
+    {% endif %} #}
+{% endblock %}
+
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalfarmacia/css/farmacia.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+    var estadoPaciente = '{{ estadoPaciente }}';//Variable que almacena el estado del pacienteEstable
+    var cuantificable = 0 ;
+    jQuery(document).ready(function ($) {
+        pacienteEstable(estadoPaciente);
+
+        $('input[type="checkbox"]').iCheck({//Inicializando CheckBox
+            checkboxClass: 'icheckbox_flat-blue'
+        });
+
+        $("#envioEspecializada").val('N');
+        var idEspecializada,despachoRecetaDelDia;
+        var areaAtencion = {{ idHistorialClinico.getIdAtenAreaModEstab().getHabilitadoFarmaciaEspecializada() }};//El area de atencion donde el paciente pasa consulta esta habilitado para enviar medicamento a especializada
+
+        {% if idHistorialClinico.getIdExpediente().getIdPaciente().getIdMunicipioDomicilio() is not null %}
+            {% set habitanteResidente = idHistorialClinico.getIdExpediente().getIdPaciente().getIdMunicipioDomicilio().getIdDepartamento().getIdPais().getId() %}
+        {% else %}
+            {% set habitanteResidente = 'null'%}
+        {% endif %}
+
+
+        var edadanios= {{edadanios}};
+        edadanios = parseInt(edadanios);//Solo mayores de 18 anios se envian a especializada
+        var documentoValido = {{documentoValido}};//Valor 1: Documento valido, 0: documento no valido, solo con valor 1 se envia a especializada
+        var habitanteResidente = {{ habitanteResidente }};//Evalua si el paciente reside en El Salvador
+
+        $("#idEstablecimientoConsulta").val({{ idHistorialClinico.getIdestablecimiento().getId()}});//asigno el id del establecimiento donde pasa consulta
+        despachoRecetaDelDia = {% if habilitadoFarmaciaEspecializada|length > 0 %}{{ habilitadoFarmaciaEspecializada[0].getRecetaDelDia }}{% else %}0{% endif %};
+        $("#despachoRecetaDelDia").val(despachoRecetaDelDia);//Asigno valor para saber si receta del dia se dispensara en el establecimiento=0 o especializada=1
+        idEspecializada = {% if habilitadoFarmaciaEspecializada|length > 0 %}{{ habilitadoFarmaciaEspecializada[0].getIdEspecializada().getId() }}{% else %}null{% endif %};
+        recetadelDia = {% if habilitadoFarmaciaEspecializada|length > 0 %}{{ habilitadoFarmaciaEspecializada[0].getRecetaDelDia()}}{% else %}null{% endif %};
+
+        //Se evaluan estos tres parametros que son de insumo para evaluar posteriormente con otros si el medicamento se envia a especializada
+        if(areaAtencion==1 && (habitanteResidente==68) && idEspecializada!=null && edadanios >=18 && documentoValido == 1){
+            $("#envioEspecializada").val('S');//Se asigna a lemento en formulario que si aplica el envio para especializada(se evaluan otros aspectos no solo este)
+            $("#idEspecializada").val(idEspecializada);//Se asigna en formulario el id de la especializada donde se enviaran los medicamentos
+            $("#dividpacienteestable").show();
+        }
+
+        var idsmedicamento = [];//Se utiliza cuando se borrar o agregan medicamentos
+        var idmedicinarecetadaimpresion = [];//Se utiliza para selecionar los medicamentos a los cuales se les imprimira receta
+        $('button[id^="btn_cw"]').on('click', function() {
+            window.close();
+        });
+
+        window.checkMedicamentosAreaEstablecimiento = function(arrayBtns, onLoad) {
+            var title = 'Medicamentos no levantados para el Area';
+            var dialogClass = 'dialog-error';
+            var createDefaultBtnClose = false;
+            var width = 500;
+            var msg =
+                    '<b>Medicamentos.</b>'+
+                    '<p>Descripción del error:<br />'+
+                    'No se han ingresado medicamentos al sistema</p>'
+                ;
+
+                showDialogMsg(title, msg, dialogClass, '', arrayBtns, createDefaultBtnClose,width);
+            }
+
+            {% if (medicamentolevantados <= 0) %}//Se verifica que existan medicamentos para el area
+                var arrayBtns = [
+                                    {
+                                        text: 'Aceptar', click: function() {
+                                            window.close()
+                                        }
+                                    }
+                                ];
+
+                checkMedicamentosAreaEstablecimiento(arrayBtns, true);
+            {% endif %}
+
+
+        var idMedicamento = $('#idMedicamento');
+        $("#cantidadMedicamento").numeric();
+        $("#frecuencia").numeric();
+        $("#durante").numeric();
+        $("#totalMedicamento").numeric();
+        $("#cantidadrepetitiva").numeric();
+        $("#cantidadDistribucion").numeric();
+        initMedicamentoSearch(idMedicamento, 'Seleccione el Medicamento...');
+
+        $("#tiempoFrecuencia").select2({
+            placeholder: "Periodo",
+            allowClear: true
+        });
+
+        $("#iddosificacion").select2({
+            placeholder: "Dosificación",
+            allowClear: true
+        });
+
+
+
+        $("form").submit(function (event) {
+            var num_items = getChildrenNumber('#bodycontent-receta');
+            if (num_items > 0 && $('#emptyTr').length === 1) {
+                showDialogMsg('Error', 'Por favor agregar medicamento(s)', 'dialog-error');
+                return false;
+            }
+        });
+
+        function pacienteEstable(estadoPaciente){
+            var html = '';
+            var inicializarCheckBox = false;
+
+            switch (estadoPaciente) {
+                case 'S':
+                    html = '<label style="font-size:20px;margin-left: 100px;"><u>Paciente Estable</u></label>';
+                    break;
+                case 'N':
+                    html = '<label style="font-size:20px;margin-left: 100px;"><u>Paciente No Estable</u></label>';
+                    break;
+                default:
+                    html =
+                        '<div class="col-md-2">'+
+                            '<b>Estable </b><input type="radio" name="pacienteEstable" value="S">'+
+                        '</div>'+
+                        '<div class="col-md-2">'+
+                            '<b>No Estable</b> <input type="radio" name="pacienteEstable" value="N">'+
+                        '</div>'+
+                        '<div class="col-md-8">'+
+                        '</div>';
+                    inicializarCheckBox = true;
+            }
+
+            $('#divpacienteestable').empty();
+            $('#divpacienteestable').append(html);
+
+            if(inicializarCheckBox) {
+                $('input[type="radio"]').iCheck({//Inicializando CheckBox
+                     radioClass: 'iradio_square-blue',
+                });
+            }
+
+        }
+
+
+        /*AGREGANDO LOS VALORES DE EDITAR PARA QUE LOS CARGUE*/
+        {% if action == 'edit' %}
+            $('#bodycontent-receta').empty();
+            var tbody = '';
+
+
+            {% for medicamentos in recetasRegistradas %}
+                {% set  estadoreceta = medicamentos.med.getIdreceta().getIdestado()|trim  %}
+                var tipo = "hidden";
+                {% set  banderareceta = '0' %}
+                    {% for recetamodificar in recetasmodificar %}
+                        {% if recetamodificar.id == medicamentos.med.getId()%}
+                            {% set  banderareceta = '1' %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if (banderareceta == '1' and estadoreceta!='R')  %}
+                        tipo ="text";
+                    {% endif %}
+
+                    tbody = tbody + '<tr id="tr_{{medicamentos.med.getId()}}"">\
+                        <td style="width:40%;">\
+                        {{medicamentos.med.getNombreMedicamentoReceta()}}\
+                        <input type="hidden" id="idMedicamento_{{medicamentos.med.getId()}}" name="idMedicamento[{{medicamentos.med.getId()}}]" value="{{medicamentos.med.getIdMedicina().getId()}}" />\
+                        </td>\
+                        <td>{{medicamentos.med.getCantidadMedicamento()|number_format(2)}} {{medicamentos.med.getIdDosificacion()}}<input type="hidden" name="cantidadMedicamento[{{medicamentos.med.getId()}}]" value="{{medicamentos.med.getCantidadMedicamento()}}">\
+                        {% if medicamentos.med.getDistribucionEspecial() %}\
+                            <br/>Distribuido de la siguiente manera:<table class="table"><tbody><tr><th>Cantidad</th><th>Descripción</th></tr>\
+                            {% set distribuciones=medicamentos.med.getDistribuciones()%}\
+                            {% for detalle in distribuciones %}\
+                                <tr><td> {{detalle.getCantidadDistribucion()|number_format(2)}} </td><td> {{detalle.getIndicacion()}}</td></tr>\
+                            {% endfor %}\
+                            </tbody></table>\
+                        {% endif %}\
+                        {% if medicamentos.med.getFrecuencia() == 0 %}\
+                            {% set Frecuencia = '--' %}\
+                            {% else %}\
+                                {% set Frecuencia = medicamentos.med.getFrecuencia()%}\
+                        {% endif %}\
+                        </td>\
+                        <td>{{Frecuencia}} {{medicamentos.med.getTiempoFrecuencia()}}\
+                        <input type="hidden" name="frecuencia[{{medicamentos.med.getId()}}]" value="{{medicamentos.med.getFrecuencia()}}">\
+                        <input type="hidden" name="tiempoFrecuencia[{{medicamentos.med.getId()}}]" value="{{medicamentos.med.getTiempoFrecuencia()}}">\
+                        </td>\
+                        <td>{% if banderareceta == '0' %}{{medicamentos.med.getDurante()}} {% endif %}  \
+                        <input type="'+tipo+'" size = "4" name="durante[{{medicamentos.med.getId()}}]" id="durante_{{medicamentos.med.getId()}}" value="{{medicamentos.med.getDurante()}}" >\
+                        <input type="hidden" name="tiempoDurante[{{medicamentos.med.getId()}}]" value="Dia(s)">Dias\
+                        </td>\
+                        <td>{% if banderareceta == '0' %}{{medicamentos.med.getTotalMedicamento()}}{% endif %}<input type="'+tipo+'" id = "totalMedicamento_{{medicamentos.med.getId()}}" size = "4" name="totalMedicamento[{{medicamentos.med.getId()}}]" value="{{medicamentos.med.getTotalMedicamento()}}"></td>\
+                        <td>{{medicamentos.med.getRecomendacion()|escape('js')}}<input type="hidden" name="recomendacion[{{medicamentos.med.getId()}}]" value="{{medicamentos.med.getRecomendacion()|escape('js')}}"></td>\
+                        <td>{{medicamentos.med.idreceta.fecha | date('d-m-Y')}}</td>\
+                        <td>{% if banderareceta == '1' %}<span class="glyphicon glyphicon-floppy-disk mouse-pointer"  title="Actualizar Informacion" id="actualizarMedicamento_{{medicamentos.med.getId()}}" style="font-size:20px;display:none;" role="save"></span>{% endif %}</td>\
+                        <td style="width:25px;"><span class="glyphicon glyphicon-trash mouse-pointer" id="borrarMedicamento_{{medicamentos.med.getId()}}" style="font-size:20px;" role="trash"></span></td>\
+                        <td><span style="float: right"><input type="checkbox" id="seleccionarMediciaImpresion_{{medicamentos.med.getId()}}" ></span></td>\
+                        </tr>';
+                    $('#bodycontent-receta').append(tbody);
+                    idsmedicamento.push({{medicamentos.med.getIdMedicina().getId()}});
+
+                    tbody = '';
+            {%endfor%}
+
+
+
+            var num_items = getChildrenNumber('#bodycontent-receta');
+            if (num_items == 0) {
+                tbody = '<tr id="emptyTr"><td colspan="7">No se han agregado medicamentos...</td></tr>';
+                $('#bodycontent-receta').append(tbody);
+            }
+        {% endif %}
+
+        $("body").on('click', "input[id^='seleccionarMediciaImpresion_']", function () {//Se van agregando o removiendo los id de las recetas que se desean imprimir
+            var item = $(this);
+            var valores = item.attr('id').split('_');
+            var id = valores[1];
+            var winParams = [];
+            if(item.is(':checked')) {
+                idmedicinarecetadaimpresion.push(id);
+            } else {
+                var index = idmedicinarecetadaimpresion.indexOf(id); //idsmedicamento es una variable global de tipo array que tiene los id de los medicamentos que se agregan a la receta
+                idmedicinarecetadaimpresion.splice(index, 1);
+            }
+        });
+
+        $("body").on('ifChecked','#idTodasLasRecetas',function () {//Si se han selecionado que se impriman todas las recetas se seleciona una por una
+            $("input[id^='seleccionarMediciaImpresion_']").each(//Se recorre cada fila de receta para selecionar
+                function (){
+                    $("input[id^='seleccionarMediciaImpresion_']").prop("checked", true);
+                    var item = $(this);
+                    var valores = item.attr('id').split('_');
+                    var id = valores[1];
+                    idmedicinarecetadaimpresion.push(id);// se agrega al array
+            });
+        });
+
+        $("body").on('ifUnchecked','#idTodasLasRecetas',function () {//Si se han deseleccionado que se impriman todas las recetas se deseleciona una por una
+            $("input[id^='seleccionarMediciaImpresion_']").each(
+                function (){
+                    $("input[id^='seleccionarMediciaImpresion_']").prop("checked", false);
+                    idmedicinarecetadaimpresion= [];//se borra todo el array
+            });
+        });
+
+        $(".class-valida").on('change', function(){
+            if($("#durante").val()>30){
+                $("#durante").val(30);
+            }
+            if($("#durante").val()<= 0){
+                $("#durante").val('');
+            }
+            if($("#frecuencia").val()<= 0){
+                $("#frecuencia").val('');
+            }
+            if($("#cantidadMedicamento").val()<= 0){
+                $("#cantidadMedicamento").val('');
+            }
+            if($("#totalMedicamento").val()<= 0){
+                $("#totalMedicamento").val('');
+            }
+            if($("#cantidadDistribucion").val()<= 0){
+                $("#cantidadDistribucion").val('');
+            }
+        });
+
+        //Inicio calculo de total de medicamento a entregar NOTA:esto no aplica para insulina
+        $(".class-calculototal").on('change', function(){
+            calculoTotalMedicamentoCuantificable();
+        });
+
+        function calculoTotalMedicamentoCuantificable() {
+            var aplicaCalculo = cuantificable;
+            if(aplicaCalculo == 1){
+                if(($("#cantidadMedicamento").val() == '' || $("#frecuencia").val() == ''|| $("#tiempoFrecuencia").val() == '' || $("#durante").val() == '')){
+                    $("#totalMedicamento").val('');
+                }
+                else{
+                    var can = parseFloat($("#cantidadMedicamento").val());
+                    var fre = parseFloat($("#frecuencia").val());
+                    var tif = $("#tiempoFrecuencia").val();
+                    var dur = parseInt($("#durante").val());
+                    var total;
+
+                    switch (tif) {
+                        case 'Hora(s)':
+                            tif = 24
+                            break;
+                        case 'Dia(s)':
+                            tif = 1;
+                            break;
+                        default:
+                            tif = 0;
+                        }
+                    if(tif != 0){
+                        total = Math.ceil((can*(tif/fre)*dur));
+                            $("#totalMedicamento").val(total);
+                        }
+                    }
+                }
+        }
+
+
+        //Fin calculo de total de medicamento
+
+        //Inicio validacion de campos requeridos dentro del formulario
+        $("#agregarMedicamento").on('click', function () {
+            var myError = [];
+            var errorString = '';
+
+            if ($("input[name$='pacienteEstable']:checked").length==0 && estadoPaciente != 'N' && estadoPaciente != 'S' && $("#envioEspecializada").val() == 'S'){
+                myError.push('<li>Seleccionar si el paciente es estable</li>');
+            }
+
+            if (!idMedicamento.select2('val')) {
+                myError.push('<li>Ingrese el medicamento.</li>');
+            }
+
+            if ($("#cantidadMedicamento").val() == '') {
+                myError.push('<li>Cantidad.</li>');
+            }
+
+            if ($("#frecuencia").val() == '') {
+            myError.push('<li>Cada.</li>');
+            }
+
+            if ($("#tiempoFrecuencia").select2('val') == '') {
+            myError.push('<li>Seleccione el periodo.</li>');
+            }
+
+            if ($("#iddosificacion").select2('val') == '') {
+            myError.push('<li>Seleccione dosificación.</li>');
+            }
+
+            if ($("#durante").val() == '') {
+            myError.push('<li>Durante.</li>');
+            }
+
+            if ($("#totalMedicamento").val() == '') {
+            myError.push('<li>Total medicamento a dispensar.</li>');
+            }
+
+            if ($("#repetitiva").is(':checked')) {
+                if ($("#cantidadrepetitiva").val() == '') {
+                    myError.push('<li>Numero de Repetitiva.</li>');
+                }else{
+                    if($("#cantidadrepetitiva").val()>5){
+                        myError.push('<li>No puede extender mas de 5 repetitivas por medicamento.</li>');
+                    }
+                }
+            }
+
+            if ($("#aplicarDist").is(':checked')) {
+                var num_items = getChildrenNumber('#bodycontent-distribucion');
+                if(num_items<2){
+                    myError.push('<li>Debe de tener al menos dos distribuciones por medicamento.</li>');
+                }
+            }
+
+            if ($("#aplicarDistEspecial").is(':checked')) {
+                var num_items = getChildrenNumber('#bodycontent-distribucion');
+                if(num_items<2){
+                    myError.push('<li>Debe de tener al menos dos distribuciones por medicamento.</li>');
+                }
+            }
+
+            if ( $("#justificacionprescripcion").length > 0 && $("#justificacionprescripcion").val() == '') {
+                    myError.push('<li>Ingresar Justificacion de prescripcion de medicamento.</li>');
+            }
+
+
+            if (myError.length > 0) {
+                if (myError.length == 1) {
+                    errorString = 'Por favor ingresar el siguiente campo';
+                }
+                if (myError.length > 1) {
+                    errorString = 'Por favor ingresar los siguientes campos';
+                }
+                for (var i = 0; i < myError.length; i++) {
+                    errorString = errorString + myError[i];
+                }
+                showDialogMsg('Error', errorString + '', 'dialog-error');
+            }
+            else {
+                    if($("input[name$='pacienteEstable']").length != 0) {
+                        estadoPaciente = $("input[name$='pacienteEstable']:checked").val();
+                    }
+
+                    populateTableReceta();
+                    pacienteEstable(estadoPaciente);
+            }
+        });
+
+        function initMedicamentoSearch(element, placeholder) {//Funcion que muestra la informacion de los medicamentos de manera linear
+            element.select2({
+                allowClear: true,
+                width: '100%',
+                placeholder: placeholder,
+                minimumInputLength: 3,
+                dropdownAutoWidth: true,
+                ajax: {
+                    url: Routing.generate('listadomedicamento',{'idHistorialClinico':{{params.idHistorialClinico}}}),
+                    dataType: 'json',
+                    quietMillis: 500,
+                    data: function (term, page) {
+                        return {
+                            clue: term, //search term
+                            page_limit: 10, // page size
+                            page: page, // page number
+                            ids: idsmedicamento.toString(),
+                        };
+                    },
+                    results: function (data, page) {
+                        var more = (page * 10) < data.data2;
+                        return {results: data.data1, more: more};
+                    }
+                },
+                formatResult: function(result) {
+                    var elements = [];
+                    var text     = result.text;
+                    var html     = ' ';
+
+                    elements = text.split('---');
+
+                    html =  '<table>'+
+                                '<tbody>'+
+                                    '<tr><td>Medicamento:</td><td style="padding-left: 7px;"><strong>'+elements[0]+'</strong></td></tr>'+
+                                    '<tr><td>Forma Farmaceutica:</td><td style="padding-left: 7px;"><strong>'+elements[1]+'</strong></td></tr>'+
+                                    '<tr><td>Concentracion:</td><td style="padding-left: 7px;"><strong>'+elements[2]+'</strong></td></tr>'+
+                                    '<tr><td>Presentacion:</td><td style="padding-left: 7px;"><strong>'+elements[3]+'</strong></td></tr>'+
+                                    '<tr><td>Existencia:</td><td style="padding-left: 7px;"><strong>'+elements[4]+'</strong></td></tr>'+
+                                '</tbody>'+
+                            '</table>';
+
+                    return html;
+                }
+
+            })
+            .on("select2-selecting", function(e) {//Al selecionar el medicamento se seleciona el texto que se mostrara en la lista desplegable
+                var elements = [];
+                var text = e.object.text;
+
+                elements = text.split('---');
+
+                if(elements[0] !== undefined) {
+                    text = elements[0]+'----'+elements[1]+'----'+elements[2];//Se muestra el nombre del medicamento, cormula farmaceutica y concentracion
+                }
+                e.object.text = text;
+            });
+        };
+
+        function getChildrenNumber(Selector) {
+            return $(Selector).children().length;
+        }
+
+        function populateTableReceta() {
+            var num_items = getChildrenNumber('#bodycontent-receta');
+            var repetitiva = '0';
+            var cadenadistribucion = '';
+            var exitedistribucion = 0;
+            var distribucionlistado = '';
+            var justificacionprescripcion = '';
+            var coeficiente = 1000;
+            var totalMedicamento;
+            var pacienteEstable = estadoPaciente;
+
+            cadenadistribucion = concatDistribucion ();
+
+            if (cadenadistribucion !== ''){
+                var exitedistribucion = 1;
+                var distribucionlistado = '<br/>Distribuido de la siguiente manera:';
+                distribucionlistado+='<table class="table">';
+                distribucionlistado+='<tbody><tr><th>Cantidad</th><th>Descripción</th></tr>';
+                cadenadistribucion = cadenadistribucion.slice(0, - 2)
+                var arrayDistribucion = cadenadistribucion.split('°°');
+                for (var i = 0; i < arrayDistribucion.length; i++) {
+                    resultados = arrayDistribucion[i].split("¬¬");
+                    distribucionlistado += '<tr><td>' + resultados[0] + '</td><td>'+resultados[1]+'</td></tr>';
+                }//endfor
+                    distribucionlistado+='</tbody></table>';
+            }//endif
+
+            var tbody = '';
+
+            idsmedicamento.push(idMedicamento.select2('val'));
+
+            if (num_items > 0 && $('#emptyTr').length !== 0) {
+                $('#bodycontent-receta').empty();
+            }
+
+            if ($("#repetitiva").is(':checked')) {
+                repetitiva = $("#cantidadrepetitiva").val();
+            }
+
+            var fechaCalculada='';
+            var k, tiempo, cantidad;
+
+            if($('#formulaInsulina').val() == 'S'){
+                k= $('#TiempoEnDiasInsulina').val();
+                tiempo = 'dia';//si el calculo para  receta repetitiva sera en dias
+            }
+            else{
+                k= 1;
+                tiempo = 'mes';//si el calculo para  receta repetitiva sera en meses
+            }
+
+            if ($("#justificacionprescripcion").length > 0 ) {//si el medicamento ya ha sido prescrito en un periodo corto de tiempo se justifica la prescripcion
+               justificacionprescripcion = $("#justificacionprescripcion").val();
+            }
+
+            {% if action == 'edit' %}
+                var guardar;
+                fechaReceta = "{{idHistorialClinico.getFechaconsulta()|date('Y-m-d')}}";
+                for(var i=0;i<=repetitiva;i++){
+                    tipo ="hidden";
+                    var pacienteEstable = estadoPaciente;
+
+                    //inicio evaluar medicamentos que van a especializada
+                    if(i>=recetadelDia && $("#envioEspecializada").val()=='S' && $("#banderaMedicamentoEspecializada").val()==1 && pacienteEstable == 'S'){
+                        var formulaInsulina = $("#formulaInsulina").val();
+                        if(formulaInsulina != 'S'){//Esto aplica a aquellos medicamentos que no son insulina para envio a especializada
+                            tiempo = 'especializada';//cambiar a especializada el valor
+                            coeficiente = parseInt(repetitiva)-i;//coeficiente igual a cero receta de un mes coeficiente distinto de cero receta bimensual
+                            i++;
+                            if(coeficiente == 0){
+                                totalMedicamento= $("#totalMedicamento").val();
+                                durante= $("#durante").val();
+                            }
+                            else{
+                                totalMedicamento = $("#totalMedicamento").val();//La cantidad de medicamento a suministrar se duplica ya que la receta en bimensual
+                                totalMedicamento = parseInt(totalMedicamento*2);
+                                durante = $("#durante").val();
+                                durante = parseInt(durante*2);
+                            }
+                        }
+                        else{//Medicamentos insulina ya que la entrega es mensual no bimensual
+                             coeficiente = parseInt(repetitiva)-i;//coeficiente igual a cero receta de un mes coeficiente distinto de cero receta bimensual
+                             totalMedicamento= $("#totalMedicamento").val();
+                             durante= $("#durante").val();
+                        }
+                        idestabdespacha=$('#idEspecializada').val();//El id establecimiento que se ha configurado para farmacia especializada
+                    }
+                    else{//Cuando el medicamento se despacha en el establecimiento de consulta
+                       totalMedicamento= $("#totalMedicamento").val();
+                       durante= $("#durante").val();
+                       idestabdespacha=$('#idEstablecimientoConsulta').val();
+                    }
+
+                    if($("#envioEspecializada").val()=='N'){
+                        pacienteEstable = '';
+                    }
+
+
+                    //fin evaluacion medicamentos que van a especializada
+
+
+                    if($("#aplicarDistEspecial").is(':checked')){
+                        frecuenciaDistEspecialshow = '--';
+                        frecuenciaDistEspecialhide = 0;
+                        tiempoDuranteDistEspecial = '--';
+                    }
+                    else{
+                        frecuenciaDistEspecialshow = $("#frecuencia").val();
+                        frecuenciaDistEspecialhide= $("#frecuencia").val();
+                        tiempoDuranteDistEspecial = $("#tiempoFrecuencia").val();
+                    }
+                    cantidad = parseInt(i)* parseInt(k);
+                    var dosificaciontexto = $("#iddosificacion option:selected").text();
+
+                     var parametros = '?idMedicamento=' + idMedicamento.select2('val') + '&cantidadMedicamento=' + $("#cantidadMedicamento").val()
+                                + '&frecuencia=' + $("#frecuencia").val() + '&tiempoFrecuencia=' + tiempoDuranteDistEspecial+'&pacienteEstable='+pacienteEstable
+                                + '&durante=' + durante + '&tiempoDurante=Dia(s)&totalMedicamento=' + totalMedicamento
+                                + '&recomendacion=' + $("#recomendacion").val() + '&repetitiva=' + repetitiva
+                                + '&iddosificacion='+$("#iddosificacion").val()+'&dosificaciontexto='+dosificaciontexto
+                                + '&banderaDistribucion=' + exitedistribucion + '&distribucion=' + cadenadistribucion+'&cantidad='+cantidad+'&justificacionprescripcion='+justificacionprescripcion+'&tiempo='+tiempo+'&fechaReceta='+fechaReceta+'&coeficiente='+coeficiente+'&idestabdespacha='+idestabdespacha+'&i='+i+'&recetadelDia='+recetadelDia+'&formulaInsulina='+formulaInsulina;
+                    if (i == repetitiva && i > 0){
+                        tipo ="text";
+                        totalmedicamentomostrar = '';
+                        durantemostrar = '';
+                    }
+                    else{
+                        totalmedicamentomostrar = totalMedicamento;
+                        durantemostrar = durante;
+                    }
+                    jQuery.ajax({
+                        url: Routing.generate('agregar_medicina_recetada', {'idHistorialClinico': {{params.idHistorialClinico}}}) + parametros,
+                        async: false,
+                        dataType: 'json',
+                        timeout: 8000,
+                        success: function (data) {
+                             if (i == repetitiva){//Esto es para que muestre el icono de guardar para que permita modificar algunos datos de la ultima receta
+                                guardar ='<span class="glyphicon glyphicon-floppy-disk mouse-pointer"  title="Actualizar Informacion" id="actualizarMedicamento_'+data.id.id+'" style="font-size:20px;display:none;" role="save"></span>';
+                             }
+                             else{
+                                 guardar ='';
+                             }
+                              tbody = tbody + '\
+                              <tr id="tr_' + data.id.id + '"">\
+                              <td style="width:40%;">\
+                              ' + idMedicamento.select2("data")['text'] + '\
+                              <input type="hidden" id="idMedicamento_' + data.id.id + '" name="idMedicamento[' + data.id.id + ']" value="' + idMedicamento.select2("data") + '" />\
+                              </td>\
+                              <td>' + $("#cantidadMedicamento").val() + dosificaciontexto + '' +distribucionlistado + '<input type="hidden" name="cantidadMedicamento[' + data.id.id + ']" value="' + $("#cantidadMedicamento").val() + '"></td>\
+                              <td>' + frecuenciaDistEspecialshow + ' ' + tiempoDuranteDistEspecial + '\
+                              <input type="hidden" name="frecuencia[' + data.id.id + ']" value="' + frecuenciaDistEspecialhide + '">\
+                              <input type="hidden" name="tiempoFrecuencia[' + data.id.id + ']" value="' + tiempoDuranteDistEspecial + '">\
+                              </td>\
+                              <td>' +durantemostrar+ ' \
+                              <input size = "4" type="'+tipo+'" name="durante[' + data.id.id + ']" id = "durante_'+data.id.id+'" value="' + durante + '">\
+                              <input type="hidden" name="tiempoDurante[' + data.id.id + ']" value="Dia(s)">Dias\
+                              </td>\
+                              <td>' +totalmedicamentomostrar+ '<input size = "4" type="'+tipo+'" name="totalMedicamento[' + data.id.id + ']" id = "totalMedicamento_'+data.id.id+'"value="' + totalMedicamento + '"></td>\
+                              <td>' + $("#recomendacion").val() + '<input type="hidden" name="recomendacion[' + data.id.id + ']" value="' + $("#recomendacion").val() + '"></td>\
+                              <td>' + data.id.fecha+ '<input type="hidden" name="repetitiva[' + data.id.id + ']" value="' + repetitiva + '"></td>\
+                              <td>'+guardar+'</td>\
+                              <td style="width:25px;"><span class="glyphicon glyphicon-trash mouse-pointer" id="borrarMedicamento_' + data.id.id + '" style="font-size:20px;" role="trash"></span></td>\
+                              <td><span style="float: right"><input type="checkbox" id="seleccionarMediciaImpresion_' + data.id.id + '" ></span></td>\
+                              </tr>';
+                              fechaRecetaaux = data.id.fecha;
+                              fechaRecetaaux = fechaRecetaaux.split("-");
+                              fechaReceta = fechaRecetaaux[0]+'-'+fechaRecetaaux[1]+'-'+fechaRecetaaux[2];
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                            console.error('Hubo un error al consultar la fecha.\nDetalle del Error: textStatus: '+textStatus+', errorThrown: '+errorThrown);
+                            showDialogMsg('Error al consultar la fecha','Se ha Producido un error al intentar consultar la fecha<br/>Es posible que existan problemas de conexión con la BD.','dialog-error');
+                        }
+                    });
+                }
+
+                $('#bodycontent-receta').append(tbody);
+                $("#repetitiva").prop("checked", false);
+                $("#aplicarDist").prop("checked", false).trigger('change');
+                $("#aplicarDistEspecial").prop("checked", false).trigger('change');
+                $('#idbloquecantidad').hide();
+                $('#cuantosDistribucion').val('');
+                clearform();
+
+            {% else %}/////INICIO QUITAR
+                for (i=0;i<=repetitiva;i++){
+                    totalMedicamento = 0;
+
+                    if(i>=1 && $("#envioEspecializada").val()=='S' && $("#banderaMedicamentoEspecializada").val()==1 ){
+                        tiempo = 'mes';//carbiar a especializada el valor
+                        coeficiente = parseInt(repetitiva)-i;//coeficiente igual a cero receta de un mes coeficiente distinto de cero receta bimensual
+                        cantidadCalculoFecha = parseInt(i)* parseInt(k);
+                        i++;
+                        if(coeficiente == 0){
+                            totalMedicamento= $("#totalMedicamento").val();
+                        }
+                        else{
+                            totalMedicamento = $("#totalMedicamento").val();//La cantidad de medicamento a suministrar se duplica ya que la receta en bimensual
+                            totalMedicamento = parseInt(totalMedicamento*2);
+                        }
+                        idestabdespacha=$('#idEspecializada').val();
+                    }
+                    else{//Cuando el medicamento se despacha en el establecimiento de consulta
+                        cantidadCalculoFecha = parseInt(i)* parseInt(k);
+                        totalMedicamento= $("#totalMedicamento").val();
+                        idestabdespacha=$('#idEstablecimientoConsulta').val();
+                    }
+
+                    jQuery.ajax({
+                    url: Routing.generate('calcular_fecha_receta', {'cantidad': cantidadCalculoFecha,'tiempo':tiempo,'idHistorialClinico':{{params  .idHistorialClinico}},'coeficiente':coeficiente}),
+                    async: false,
+                    dataType: 'json',
+                    timeout: 8000, // 8 segundos
+                    success:function (data) {
+                            var fechaCalculada=data.fecha;
+                            var frecuenciaDistEspecialhide,frecuenciaDistEspecialshow,tiempoDuranteDistEspecial;
+                            if($("#aplicarDistEspecial").is(':checked')){
+                                frecuenciaDistEspecialshow = '--';
+                                frecuenciaDistEspecialhide = 0;
+                                tiempoDuranteDistEspecial = '--';
+                            }
+                            else{
+                                frecuenciaDistEspecialshow = $("#frecuencia").val();
+                                frecuenciaDistEspecialhide= $("#frecuencia").val();
+                                tiempoDuranteDistEspecial = $("#tiempoFrecuencia").val();
+                            }
+                            tbody = tbody + '\
+                                <tr id="tr_' + idMedicamento.select2('val') + '_'+i+'">\
+                                <td style="width:40%;">\
+                                ' + idMedicamento.select2("data")['text'] + '\
+                                <input type="hidden" id="idMedicamento_' + idMedicamento.select2('val') + '" name="idMedicamento[' + idMedicamento.select2('val') + '_'+i+']" value="' + idMedicamento.select2('val') + '" />\
+                                </td>\
+                                <td><b>' + $("#cantidadMedicamento").val() + '</b><input type="hidden" name="cantidadMedicamento[' + idMedicamento.select2('val') + '_'+i+']" value="' + $("#cantidadMedicamento").val() + '">\
+                                ' + distribucionlistado + '\
+                                </td>\
+                                <td>' + frecuenciaDistEspecialshow + ' ' + tiempoDuranteDistEspecial + '\
+                                <input type="hidden" name="frecuencia[' + idMedicamento.select2('val') + '_'+i+']" value="' + frecuenciaDistEspecialhide + '">\
+                                <input type="hidden" name="tiempoFrecuencia[' + idMedicamento.select2('val') + '_'+i+']" value="' + tiempoDuranteDistEspecial + '">\
+                                <input type="hidden" name="distribucion[' + idMedicamento.select2('val') + '_'+i+']" value="' + cadenadistribucion + '">\
+                                <input type="hidden" name="banderaDistribucion[' + idMedicamento.select2('val') + '_'+i+']" value="' + exitedistribucion + '">\
+                                <input type="hidden" name="tiempoCalculoFecha[' + idMedicamento.select2('val') + '_'+i+']" value="' + tiempo + '">\
+                                <input type="hidden" name="cantidadCalculoFecha[' + idMedicamento.select2('val') + '_'+i+']" value="' + cantidadCalculoFecha + '">\
+                                </td>\
+                                <td>' + $("#durante").val() + ' \
+                                <input type="hidden" name="durante[' + idMedicamento.select2('val') + '_'+i+']" value="' + $("#durante").val() + '">\
+                                <input type="hidden" name="tiempoDurante[' + idMedicamento.select2('val') + '_'+i+']" value="Dia(s)">Dias\
+                                </td>\
+                                <td>' + totalMedicamento + '<input type="hidden" name="totalMedicamento[' + idMedicamento.select2('val') + '_'+i+']" value="' + totalMedicamento + '"></td>\
+                                <td>' + $("#recomendacion").val() + '<input type="hidden" name="recomendacion[' + idMedicamento.select2('val') + '_'+i+']" value="' + $("#recomendacion").val() + '"></td>\
+                                <td>' + fechaCalculada + '<input type="hidden" name="repetitiva[' + idMedicamento.select2('val') + '_'+i+']" value="' + repetitiva + '"><input type="hidden" name="fechaReceta[' + idMedicamento.select2('val') + '_'+i+']" value="' + fechaCalculada + '"></td>\
+                                <td style="width:25px;"><span class="glyphicon glyphicon-trash mouse-pointer" id="borrarMedicamento_' + idMedicamento.select2('val') + '_'+i+'" style="font-size:20px;" role="trash"></span></td>\
+                                <td><input type="hidden" name="justificacionprescripcion[' + idMedicamento.select2('val') + '_'+i+']" value="' + justificacionprescripcion + '"></td>\
+                                <td><input type="hidden" name="idestabdespacha[' + idMedicamento.select2('val') + '_'+i+']" value="' + idestabdespacha + '"></td>\
+                                </tr>';
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                            console.error('Hubo un error al consultar la fecha.\nDetalle del Error: textStatus: '+textStatus+', errorThrown: '+errorThrown);
+                            showDialogMsg('Error al consultar la fecha','Se ha Producido un error al intentar consultar la fecha<br/>Es posible que existan problemas de conexión con la BD.','dialog-error');
+                        }
+                    });
+
+                }/////FIN QUITAR
+                $('#bodycontent-receta').append(tbody);
+                $("#repetitiva").prop("checked", false);
+                $("#aplicarDist").prop("checked", false).trigger('change');
+                $("#aplicarDistEspecial").prop("checked", false).trigger('change');
+                $('#idbloquecantidad').hide();
+                $('#cuantosDistribucion').val('');
+                clearform();
+            {% endif %}
+        }
+
+        function clearform() {
+            $("#idMedicamento").select2('val', '');
+            $("#cantidadMedicamento").val("");
+            $("#frecuencia").val("");
+            $("#durante").val("");
+            $("#totalMedicamento").val("");
+            $("#recomendacion").val("");
+            $("#tiempoFrecuencia").select2('val', '');
+            $("#cantidadrepetitiva").val("");
+            $("#formulaInsulina").val("");
+            $("#TiempoEnDiasInsulina").val("");
+            $('#totalMedicamento').attr("readonly", false);
+            $('#durante').attr("readonly", false);
+            $("#divjustificacionprescripcion").remove();
+            $("#msjmedicina").remove();
+            $("#banderaMedicamentoEspecializada").val("");
+            $("#iddosificacion").select2('val', '');
+        }
+
+        //Bloque de codigo utilizado para borrar medicamentos que se han agregado
+        $("body").on('click', "span[id^='borrarMedicamento_']", function () {
+            {% if action == 'edit' %}
+                var item = $(this);
+                var valores = item.attr('id').split('_');
+                var id = valores[1];
+                var title = 'Borrar Receta';
+                var dialogClass = 'dialog-warning';
+                var msg = '¿Desea borrar la receta?';
+                var width= 350;
+                var closeBtnName = '';
+                var createDefaultBtnClose = false;
+                var arrayBtns = [
+                                    {
+                                        text: 'Aceptar', click: function() {
+                                                var tbody = '';
+                                                jQuery.ajax({
+                                                    url: Routing.generate('borrar_medicina_recetada', {'idMedicinaRecetada': id, 'idHistorialClinico':{{params.idHistorialClinico}}}),
+                                                    dataType: 'json',
+                                                    success: function (data) {
+                                                               var index = idsmedicamento.indexOf(data.id.idMedicamento); //idsmedicamento es una variable global de tipo array que tiene los id de los medicamentos que se agregan a la receta
+                                                               idsmedicamento.splice(index, 1);//Borrar los medicamentos que estan en el array, validacion para no mostrar medicamento ya ingresado
+                                                               var indeximpresion = idmedicinarecetadaimpresion.indexOf(data.id.idMedicamento);
+                                                               idmedicinarecetadaimpresion.splice(indeximpresion, 1);//Borra los medicamentos por si esta selecionado para impresion
+                                                               $('#tr_' + data.id.id).remove();
+                                                               var num_items = getChildrenNumber('#bodycontent-receta');
+                                                               if (num_items == 0) {
+                                                                   tbody = '<tr id="emptyTr"><td colspan="7">No se han agregado medicamentos...</td></tr>';
+                                                                   $('#bodycontent-receta').append(tbody);
+                                                                   estadoPaciente = '0';
+                                                                   pacienteEstable(estadoPaciente);
+                                                               }
+                                                               jQuery('div#dialog-message').dialog( "close" );
+                                                           }
+                                                });
+                                            }
+                                    },
+                                    {
+                                        text: 'Cerrar', click: function( event, ui) {
+                                            jQuery( this ).dialog( "close" );
+                                        }
+                                    }
+                                ];
+
+              showDialogMsg(title, msg, dialogClass, closeBtnName, arrayBtns, createDefaultBtnClose, width);
+
+            {% else %}
+                var tbody = '';
+                var item = $(this);
+                var valores = item.attr('id').split('_');
+                var id = valores[1];
+                var index = idsmedicamento.indexOf(id); //idsmedicamento es una variable global de tipo array que tiene los id de los medicamentos que se agregan a la receta
+                idsmedicamento.splice(index, 1);
+                idmedicinarecetadaimpresion.splice(index, 1);//Borra los medicamentos por si esta selecionado para impresion
+                $('#tr_' + id+'_'+valores[2]).remove();
+                var num_items = getChildrenNumber('#bodycontent-receta');
+                if (num_items == 0) {
+                        tbody = '<tr id="emptyTr"><td colspan="7">No se han agregado medicamentos.med...</td></tr>';
+                        $('#bodycontent-receta').append(tbody);
+                }
+            {% endif %}
+        });
+        //Fin bloque de codigo utilizado para borrar medicamentos
+
+        $("body").on('input', "input[id^='durante_']", function () {
+            console.log('hola');
+            var item = $(this);
+            var valores = item.attr('id').split('_');
+            var id = valores[1];
+
+            $('#actualizarMedicamento_'+id).show();
+        });
+
+        $("body").on('input', "input[id^='totalMedicamento_']", function () {
+            console.log('hola');
+            var item = $(this);
+            var valores = item.attr('id').split('_');
+            var id = valores[1];
+            $('#actualizarMedicamento_'+id).show();
+        });
+
+
+
+        $("body").on('click', "span[id^='actualizarMedicamento_']", function () {
+                var item = $(this);
+                var valores = item.attr('id').split('_');
+                var id = valores[1];
+                var durante = $('#durante_'+id).val();
+                var totalMedicamento = $('#totalMedicamento_'+id).val();
+                if(totalMedicamento == '' || durante == ''){
+                    showDialogMsg('Recetario', 'Para guardar los cambios no pueden quedar vacios los campos de las columnas Durante y Total Medicamento', 'dialog-info');
+                }
+                else{
+                    jQuery.ajax({
+                        url: Routing.generate('actualizar_medicina_recetada', {'idMedicinaRecetada': id, 'idHistorialClinico':{{params.idHistorialClinico}},'durante':durante, 'totalMedicamento':totalMedicamento}),
+                        dataType: 'json',
+                        success: function (data) {
+                            $('#actualizarMedicamento_'+id).hide();
+                        }
+                    });
+                }
+        });
+
+
+        $("body").on('click', "span[id='imprimir-receta']", function () {//Se envia el array de recetas que se desea imprimir
+            if(idmedicinarecetadaimpresion.length!=0){//Pregunta si el array que contiene los id de las recetas esta vacio
+                var winParams = [];
+                winParams['method'] = "post";
+                winParams['action'] = "{{ url('admin_minsal_farmacia_farmrecetas_imprimir_receta') }}";
+                winParams['target'] = "Impresion de Receta";
+                winParams['parameters'] = { 'id_receta': idmedicinarecetadaimpresion };
+                openPostPopUpWindows(winParams);
+            }
+            else{
+                showDialogMsg('Recetario', 'Por favor selecionar la(s) recetas a imprimir', 'dialog-info');
+            }
+        });
+
+
+        $('input[noIcheck="true"]').iCheck('destroy');
+        showhideblockcantidad($("#repetitiva"));
+        showhideblockdistribucion($("#aplicarDist"));
+        showhideblockdistribucionespecial($("#aplicarDistEspecial"));
+        $("#repetitiva").on('change', function (event) {
+                showhideblockcantidad($(this));
+        });
+
+        function showhideblockcantidad(element) {
+            if (element.prop('checked')){
+                $('#idbloquecantidad').show();
+            }
+            else{
+                $('#idbloquecantidad').hide();
+            }
+        }
+
+        $("#aplicarDist").on('change', function(event) {
+            showhideblockdistribucion($(this));
+        });
+
+        $("#aplicarDistEspecial").on('change', function(event) {
+            showhideblockdistribucionespecial($(this));
+        });
+
+
+         //Funcion que muestra u oculta elementos dependiendo si se aplica distribucion a la receta
+        function showhideblockdistribucionespecial(element){
+            $("#aplicarDist").removeAttr("checked");
+            if (element.prop('checked')){
+                    $('#blockdistribucion').show();
+
+
+                    $('#blockingresardistribucion').show();
+                    $('#cantidadMedicamento').attr("readonly", true);
+                    $('#cantidadMedicamento').val("");
+                    $('#totalMedicamento').val("");
+                    $('#idblockperiodo').hide();
+                    $('#durante').val("--");//se dejan por defecto estos valores ya que son ocultados en el formulario
+                    $('#frecuencia').val('0');//se dejan por defecto estos valores ya que son ocultados en el formulario
+                    $('#tiempoFrecuencia').select2('val','Dia(s)');//se dejan por defecto estos valores ya que son ocultados en el formulario
+            }else{
+                $('#bodycontent-distribucion').remove();
+                var tbody = '<tbody id="bodycontent-distribucion">\
+                            <tr id="emptyTrDistribucion"><td colspan="3">No se han agregado detalles...</td></tr>\
+                            </tbody>';
+                $('#tabla-distribucion').append(tbody);
+                $('#blockdistribucion').hide();
+
+
+                $('#blockingresardistribucion').hide();
+                $('#cantidadMedicamento').attr("readonly", false);
+                $('#cantidadMedicamento').val("");
+                $('#frecuencia').val('');
+                $('#tiempoFrecuencia').select2('val','')
+                $('#totalMedicamento').val("");
+                $('#durante').val("");
+                $('#idblockperiodo').show();
+            }
+        }
+
+        //Funcion que muestra u oculta elementos dependiendo si se aplica distribucion a la receta
+        function showhideblockdistribucion(element){
+            $("#aplicarDistEspecial").removeAttr("checked");
+            $('#idblockperiodo').show();
+            if (element.prop('checked')){
+                    $('#blockdistribucion').show();
+
+
+                    $('#blockingresardistribucion').show();
+                    $('#cantidadMedicamento').attr("readonly", true);
+                    $('#cantidadMedicamento').val("");
+                    $('#totalMedicamento').val("");
+                    $('#durante').val("");
+                    $('#frecuencia').val('1');
+                    $('#tiempoFrecuencia').select2('val','Dia(s)')
+            }else{
+                $('#bodycontent-distribucion').remove();
+                var tbody = '<tbody id="bodycontent-distribucion">\
+                            <tr id="emptyTrDistribucion"><td colspan="3">No se han agregado detalles...</td></tr>\
+                            </tbody>';
+                $('#tabla-distribucion').append(tbody);
+                $('#blockdistribucion').hide();
+
+                $('#blockingresardistribucion').hide();
+                $('#cantidadMedicamento').attr("readonly", false);
+                $('#cantidadMedicamento').val("");
+                $('#frecuencia').val('');
+                $('#tiempoFrecuencia').select2('val','')
+                $('#totalMedicamento').val("");
+                $('#durante').val("");
+            }
+        }
+
+        $("#agregarDistribucion").on('click', function(){
+            var myError = [];
+            var errorString = '';
+            if ($("#cantidadDistribucion").val() == ''){
+                myError.push('<li>Distribución.</li>');
+            }
+            if ($("#indicacion").val() == ''){
+                myError.push('<li>Indicacion.</li>');
+            }
+            if (!idMedicamento.select2('val')){
+                myError.push('<li>Selecionar medicamento.</li>');
+            }
+            if (myError.length > 0) {
+                if (myError.length === 1){
+                    errorString = 'Por favor ingresar el siguiente campo'
+                };
+                if (myError.length > 1){
+                    errorString = 'Por favor ingresar los siguientes campos'};
+                    for (var i = 0; i < myError.length; i++) {
+                        errorString = errorString + myError[i];
+                    }
+                showDialogMsg('Error', '<span class="glyphicon glyphicon-remove"></span>' + errorString + '', 'dialog-error');
+            }else{
+                    populateTableDistribucion ();
+                    calculoInsulina ();
+                    calculoTotalMedicamentoCuantificable();
+            }
+        });
+
+        function populateTableDistribucion (){//Funcion utilizada para agregar detalles a la tabla de distribucion
+            $("#cantidadrepetitiva").val('');
+            var i;
+            var num_items = getChildrenNumber('#bodycontent-distribucion');
+            var tbody = '';
+            if ($('#cuantosDistribucion').val() === ''){
+                i = 1;
+                $('#cuantosDistribucion').val(i);
+            }else{
+                i = parseFloat($('#cuantosDistribucion').val()) + 1;
+                $('#cuantosDistribucion').val(i)
+            }
+            if (num_items > 0 && $('#emptyTrDistribucion').length !== 0) {
+                $('#bodycontent-distribucion').empty();
+            }
+            tbody = tbody + '\
+                    <tr id="tr_' + idMedicamento.select2('val') + '_' + i + '">\
+                    <td>' + $("#cantidadDistribucion").val() + '<input auxid="' + i + '" type="hidden" id="td_cantdis_' + i + '_' + idMedicamento.select2('val') + '" value="' + $("#cantidadDistribucion").val() + '"></td>\
+                    <td>' + $("#indicacion").val() + '<input auxid="' + i + '" type="hidden" id="td_indicacion_' + i + '_' + idMedicamento.select2('val') + '" value="' + $("#indicacion").val() + '"></td>\
+                    <td style="width:25px;"><span class="glyphicon glyphicon-trash mouse-pointer" id="borrarDistribucion_' + idMedicamento.select2('val') + '_' + i + '" style="font-size:20px;" role="trash"></span></td>\
+                    </tr>';
+            $('#bodycontent-distribucion').append(tbody);
+            $("#cantidadDistribucion").val("");
+            $("#indicacion").val("");
+            sumarDistribucion();
+        }
+
+        function sumarDistribucion (){//Funcion utilizada para sumar las cantidades que se ingresan en distribucion y colocarlar la suma en catidadMedicamento
+            var suma = 0;
+            $("body input[id^='td_cantdis_']").each(function(){
+                suma = suma + parseFloat($(this).val());
+            });
+            $("#cantidadMedicamento").val(suma.toFixed(2));
+            calculoInsulina ();
+            calculoTotalMedicamentoCuantificable();
+        }
+
+        $("body").on('click', "span[id^='borrarDistribucion_']", function(){//Funcion para borrar un detalle de la distribucion
+            var tbody = '';
+            var item = $(this);
+            var id = item.attr('id').replace('borrarDistribucion_', '');
+            $('#tr_' + id).remove();
+            var num_items = getChildrenNumber('#bodycontent-distribucion');
+            if (num_items == 0) {
+                tbody = '<tr id="emptyTrDistribucion"><td colspan="3">No se han agregado detalles...</td></tr>';
+                $('#bodycontent-distribucion').append(tbody);
+                $('#durante').val('');
+                $("#totalMedicamento").val('');
+            }
+            sumarDistribucion();
+            $("#cantidadrepetitiva").val('');//Cuando se modifica la distribucion se borra el dato de repetitiva en caso haya sido ingresado.
+        });
+
+        function concatDistribucion (){ //Funcion para concatenar los valores cuando el medicamento contiene un distribucion
+                var cadenadistribucion = '';
+                $('body input[id^="td_cantdis_"]').each(function(){
+                    cadenadistribucion += ($(this).val() + '¬¬' + $('body input[id^="td_indicacion_' + $(this).attr('auxid') + '"]').val()) + '°°';
+                });
+                return cadenadistribucion;
+        }
+
+        //Funcion que se utiliza para el calculo de la insulina
+        function calculoInsulina (){
+            if($('#cantidadMedicamento').val() != '' && $('#formulaInsulina').val() == 'S' && $('#cantidadMedicamento').val() != 0){
+                var TotaldeUnidadesDelDia = $('#cantidadMedicamento').val();
+                var TotaldelMes;
+                var TiempoEnDias;
+
+                TotaldelMes =Math.ceil((TotaldeUnidadesDelDia/1000)*30);
+                if(TotaldelMes < 1){
+                    TotaldelMes=1;
+                }
+                if(TotaldelMes >= 4){
+                    TotaldelMes=3;
+                }
+
+                TiempoEnDias=Math.ceil((TotaldelMes*(1000))/TotaldeUnidadesDelDia);
+                if(TiempoEnDias > 30 && TotaldelMes==1){//Solo puede durar 1 mes un frasco
+                    TiempoEnDias=30;
+                }
+                $("#totalMedicamento").val(TotaldelMes);
+                $("#TiempoEnDiasInsulina").val(TiempoEnDias);//si ya lo guardo en campo durante puedo quitar este campo
+                $('#durante').val(TiempoEnDias);
+            }
+            else{
+                if(cuantificable==0){//Si es cuantificable el medicamento no se borra el valor del total de medicamento esto no aplica para la Insulina
+                    $("#totalMedicamento").val('');
+                }
+            }
+        }
+
+        //Llamar a la funcion para el calculo de la insulina cada vez que se cambie la cantidad de medicamen
+        //to
+       $("#cantidadMedicamento").on('change', function(event) {
+            calculoInsulina ();
+        });
+
+
+        //Validar que el valor de repetitiva no sea mayor que 5
+        $("#cantidadrepetitiva").on('change', function(event) {
+            if( $("#cantidadrepetitiva").val() > 5 && $('#formulaInsulina').val() != 'S'){
+                $("#cantidadrepetitiva").val('')
+                showDialogMsg('Recetario', 'El valor de repetitiva no puede ser mayor que 5', 'dialog-info');
+                $("#cantidadrepetitiva").val(5);
+            }
+
+            //Calculo para evaluar si el tiempo total del tratamiento junto con el numero de repetitiva sobre pasa los 180 dias.
+            var tiempoTotalInsulina = parseInt($("#TiempoEnDiasInsulina").val())+parseInt($("#cantidadrepetitiva").val()*$("#TiempoEnDiasInsulina").val());
+
+            if( $("#cantidadrepetitiva").val() > 1 && tiempoTotalInsulina>180 && $('#formulaInsulina').val() == 'S'){
+                var numeroRep = (180/parseInt($("#TiempoEnDiasInsulina").val()))-1;
+                showDialogMsg('Notificacion', 'Insulina no puede ser prescrita para un maximo de 6 meses. El numero maximo recomendado de recetas repetitivas es: '+parseInt(numeroRep), 'dialog-info');
+                $("#cantidadrepetitiva").val(parseInt(numeroRep));
+            }
+        });
+
+        //Inicio bloque de codigo donde se obtine cierta informacion del medicamento que se ha selecionado para recerlo
+        $("#idMedicamento").on('change', function(event) {
+            var bandera = 0;
+            var existencia = '';
+            var valor;
+            $("#msjmedicina").empty();
+            $("#divjustificacionprescripcion").remove();
+            if($(this).select2('val')){
+                jQuery.ajax({
+                        url: Routing.generate('consultar_medicina_recetada',{'idMedicamento':idMedicamento.select2('val'),'paramIdHistorialClinico':{{params.idHistorialClinico}}}),
+                        dataType: 'json',
+                         success: function (data) {
+
+                             initializeSelect2($("#iddosificacion"),true,true);
+                             $("#iddosificacion").select2({
+                                 placeholder: "Dosificación",
+                                 allowClear: true
+                             });
+                             if(data.id.dosificacion.length > 0){
+                             $.each(data.id.dosificacion, function(key, value) {
+                                    $("#iddosificacion").append('<option value="'+value.dosis+'" selected>'+value.nombre+'</option>');
+                                    valor = value.dosis;
+                                })
+                                if(data.id.dosificacion.length == 1){
+                                    $("#iddosificacion").select2('val',valor);
+                                }
+
+                            }
+                            else{
+                            {% for dosificacion in dosificaciones %}
+                                $("#iddosificacion").append('<option value="{{ dosificacion.id }}">{{ dosificacion.abreviatura }}</option>');
+                            {% endfor %}
+                            }
+
+
+                            $("#banderaMedicamentoEspecializada").val(data.id.medespecializada);//Establecer si el medicamento va a especializada
+                            cuantificable=data.id.cuantificable;//Establecer si al medicamento se le puede realizar el calculo
+                            $("#formulaInsulina").val(data.id.dosis);//Establecer si el medicamento lleva calculo de insulina
+
+                            if(cuantificable == 1){
+                                $("#totalMedicamento").prop('disabled', true);
+                            }
+                            else{
+                                $("#totalMedicamento").prop('disabled', false);
+                            }
+
+                            if(data.id.existencia == 0 ){
+                                existencia = '<li><b><span style="font-size:12px">Por el momento no se tienen existencia en el sistema de este medicamento. Usted puede prescribir este medicamento para posteriormente poder calcular la demanda insatisfecha<br/><u>EXISTENCIA 0</u></span></b></li>';
+                                bandera = 1;
+                            }
+
+                            //Inicio IF Validacion que muestra si el medicamento seleccionado ya ha sido prescrito
+                            if( data.id.resetado > 0 ){
+                                existencia ='<li><b>Este medicamento ya ha sido recetado en los ultimos 30 días'+existencia+'</li></b><br>';
+                                campo = '</br><div class="row" id = "divjustificacionprescripcion">'+
+                                            '<div class="col-md-3">'+
+                                                'Justificacion'+
+                                            '</div>'+
+                                            '<div class="col-md-8">'+
+                                                '<textarea class="form-control" name = "justificacionprescripcion" id="justificacionprescripcion" placeholder="Justificacion"></textarea>'+
+                                            '</div>'+
+                                        '</div>';
+                                $("#divrecomendacion").after(campo);
+                                bandera = 1;
+                            }//Fin IF Validacion que muestra si el medicamento seleccionado ya ha sido resetado
+
+                            if (bandera==1){//Si se ha encontrado existencia = 0 o medicamento ya prescrito bandera toma el valor de uno y se muestra el msj
+                                $("#divjustificacionprescripcion").remove();
+                                $("#msjmedicina").append( '<div class="alert alert-warning" role="alert"><ul>'+existencia+'</lu></div>' );
+                                showDialogMsg('warning', existencia, 'dialog-warning');
+                            }
+
+                            if(data.id.dosis == 'S'){
+                                $('#totalMedicamento').attr("readonly", true);
+                                $('#durante').attr("readonly", true);
+                                calculoInsulina ();
+                            }
+                            else{
+                                $('#totalMedicamento').attr("readonly", false);
+                                $('#durante').attr("readonly", false);
+                                $("#totalMedicamento").val('');
+                                $('#durante').val('');
+                            }
+                        }
+                });
+            }
+            else{
+                $("#repetitiva").prop("checked", false);
+                $("#aplicarDist").prop("checked", false).trigger('change');
+                $("#aplicarDistEspecial").prop("checked", false).trigger('change');
+                $('#idbloquecantidad').hide();
+                $('#cuantosDistribucion').val('');
+                clearform();
+            }
+        });
+        // FIN bloque de codigo donde se obtine cierta informacion del medicamento que se ha selecionado para recerlo
+
+
+    }); //fin document ready
+    </script>
+
+
+    {% if params.external is defined and params.external == true %}
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                $('#close-button').on('click', function() {
+                    window.close();
+                });
+
+                {% if app.request.get("createdElement") is defined and app.request.get("createdElement") !="" and app.request.get("createdElement") is not null %}
+                    window.addEventListener("beforeunload", function (e) {
+                        if (window.opener != null && !window.opener.closed) {
+                            try {
+                                window.opener.updateIdFarmacia({% if app.request.get("createdElement") > 0 %}"{{ app.request.get("createdElement") }}"{% else %}null{% endif %});
+                            } catch (err) {
+                                console.log(err.description || err) //or console.log or however you debug
+                            }
+                        }
+                    });
+                {% endif %}
+            });
+        </script>
+
+        <script  type="text/javascript">
+        var modal_elements = [
+                                {
+                                    id:'consultaRecetas_modal',
+                                    func:'loadmodal_receta',
+                                    header:'Consulta de recetas del paciente',
+                                    footer: '',
+                                    widthModal: '1020px'
+                                }
+                            ];
+
+        function loadmodal_receta() {
+                var pat = "{{ path('admin_minsal_farmacia_farmrecetas_list',{'external': params.external,'idHistorialClinico':params.idHistorialClinico}) }}";
+                console.log(pat);
+                var cadena = '<iframe frameborder= "0" src="'+pat+'" width="100%" style="min-height: 500px;"></iframe>';
+                return cadena;
+        }
+
+        </script>
+    {% endif %}
+{% endblock %}
+{#% extends 'SonataAdminBundle::layout.html.twig' %#}
+{% block content %}
+{% endblock %}
+
+
+{% block form %}
+        {% if not admin.hasRoute('assign_receta')%}
+            <div>
+                {{ "form_not_available"|trans({}, "SonataAdminBundle") }}
+            </div>
+        {% else %}
+
+            <form
+                {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+                role="form"
+                action="{{ admin.generateUrl('create') }}" {{ form_enctype(form) }}
+                method="POST"
+                {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+                >
+                 {% block formactionsenca %}
+                    <div class="well well-small form-actions">
+                        <a href="#myModal" id="consultaRecetas_modal" role="button" class="modal-message  btn btn-info" data-toggle="modal" custom-modal="true"><i class="fa fa-fw fa-medkit"></i>Consulta medicamentos recetados</a>
+                        <button class="btn btn-default" type="button" id="btn_cw_close" name="btn_close">Cerrar</button>
+                    </div>
+                {% endblock formactionsenca %}
+
+                <input type="hidden" name="idHistorialClinico" value="{{params.idHistorialClinico}}">
+                <input type="hidden" name="_external" value="{{params.external}}">
+                <input type="hidden" name="action" value="{{action}}">
+                <input type="hidden" name="cuantosDistribucion" id="cuantosDistribucion" value="">
+                <input type="hidden" name="formulaInsulina" id="formulaInsulina" value="">
+                <input type="hidden" name="TiempoEnDiasInsulina" id="TiempoEnDiasInsulina" value="">
+                <input type="hidden" name="envioEspecializada" id="envioEspecializada" value="">
+                <input type="hidden" name="idEspecializada" id="idEspecializada" value="">
+                <input type="hidden" name="idEstablecimientoConsulta" id="idEstablecimientoConsulta" value="">
+                <input type="hidden" name="idEstablecimientoDespacha" id="idEstablecimientoDespacha" value="">
+                <input type="hidden" name="banderaMedicamentoEspecializada" id="banderaMedicamentoEspecializada" value="">
+                <input type="hidden" name="despachoRecetaDelDia" id="despachoRecetaDelDia" value="">
+
+                {% if form.vars.errors|length > 0 %}
+                    <div class="sonata-ba-form-error">
+                        {{ form_errors(form) }}
+                    </div>
+                {% endif %}
+
+                {% block sonata_pre_fieldsets %}
+                    <div class="row">
+                    {% endblock %}
+
+                    {% block sonata_tab_content %}
+                        <div id="msjmedicina" ></div>
+                        <div class="{{ form_group.class|default('col-md-12') }}">
+                            <div class="box box-success">
+                                <div class="box-header">
+                                    <h4 class="box-title">Recetario</h4>
+                                </div>
+                                <div class="panel panel-info" style="margin-left: 20px;margin-right: 20px;display:none" id ="dividpacienteestable" >
+                                    <div class="panel-heading" >
+                                        <h2 class="panel-title"><b>Estado del Paciente</b></h2>
+                                        <br/>
+                                        <div class="row" id="divpacienteestable">
+                                            <div class="col-md-1">
+                                                Estable<input type="radio" name="pacienteEstable" value="S">
+                                            </div>
+                                            <div class="col-md-1">
+                                                No Estable  <input type="radio" name="pacienteEstable" value="N">
+                                            </div>
+                                            <div class="col-md-10">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if medicamentosadversos|length > 0 %}
+                                    {% for adversos in medicamentosadversos %}
+                                        <div class="alert alert-warning">
+                                            <strong> {{adversos.nombre}}: {{adversos.especificacion}}</strong>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+
+
+                                <div class="box-body">
+                                    <div class="container-fluid" style="background-color: #FCFCFC; border: 1px solid #CCCCCC; padding: 30px 20px 5px 20px; border-radius: 15px; margin-bottom: 8px;">
+                                        <div class="row">
+                                            <div class="col-md-2">
+                                                <h4 style="text-align: right;"><i class="fa fa-fw fa-medkit"></i> Medicamento:</h4>
+                                            </div>
+                                            <div class="col-md-10">
+                                                <div class="form-group" style="width:100%">
+                                                    <div class="input-group" style="width:100%">
+                                                        <label class="sr-only" for="idMedicamento">Medicamento</label>
+                                                        <!-- style="cursor:pointer" esto se pone adentro de la class del div para cuando quiera hacer lo del pu pop
+                                                        <div class="input-group-addon"  >+</div>-->
+                                                        <input type="text" class="form-control full_width" id="idMedicamento" >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-bottom: 10px;">
+                                            <div  style="text-align: left;" class="col-md-2">
+                                                <strong>Prescripcion por Distribución Diaria</strong>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="onoffswitch">
+                                                    <input type="checkbox" name="aplicarDist" class="onoffswitch-checkbox" id="aplicarDist" noIcheck="true">
+                                                    <label class="onoffswitch-label" for="aplicarDist">
+                                                        <span class="onoffswitch-inner" data-switch-on-label="SI" data-switch-off-label="NO"></span>
+                                                        <span class="onoffswitch-switch"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div  style="text-align: left;" class="col-md-2">
+                                                <strong>Prescripcion por Distribución Especial</strong>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="onoffswitch">
+                                                    <input type="checkbox" name="aplicarDistEspecial" class="onoffswitch-checkbox" id="aplicarDistEspecial" noIcheck="true">
+                                                    <label class="onoffswitch-label" for="aplicarDistEspecial">
+                                                        <span class="onoffswitch-inner" data-switch-on-label="SI" data-switch-off-label="NO"></span>
+                                                        <span class="onoffswitch-switch"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div><br/>
+
+                                        <div class="row">
+                                            <div class="col-md-12" id="blockdosis">
+                                                <div class="panel panel-info">
+                                                    <div class="panel-heading">
+                                                        <h3 class="panel-title">Dosis</h3>
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <div class="container-fluid">
+                                                            <div class="row">
+                                                                <!--<div id="blockingresardistribucion">
+                                                                    <div class="col-md-2">
+                                                                        Cantidad
+                                                                    </div>
+                                                                    <div class="col-md-2" >
+                                                                        <input type="text" class="form-control" id="cantidadDistribucion" placeholder="Cantidad"/>
+                                                                    </div>
+                                                                    <div class="col-md-2">
+                                                                        Indicación/Descripción
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <input type="text" class="form-control" id="indicacion" placeholder="Indicación/Descripción"/>
+                                                                    </div>
+                                                                    <div class="col-md-2">
+                                                                        <button class="btn btn-info pull-right" type="button" id="agregarDistribucion"><span class = "glyphicon glyphicon-plus-sign" aria-hidden="true"></span></button>
+                                                                    </div>
+                                                                </div>-->
+                                                                <div class="col-md-12" id="blockdistribucion">
+                                                                    <div class="bs-callout bs-callout-primary">
+                                                                            <h4 class="panel-title">Distribución</h4>
+                                                                            <div class="container-fluid">
+                                                                                <div class="row">
+                                                                                    <div class="col-md-12">
+                                                                                        <div class="table-responsive">
+                                                                                            <table id="blockingresardistribucion" style="margin-bottom: 10px; width:100%;">
+                                                                                                <tbody>
+                                                                                                    <tr style="background-color: #D9EDF7;">
+                                                                                                        <td style="padding: 7px;"><label>Cantidad</label></td>
+                                                                                                        <td style="padding: 7px;"><input type="text" class="form-control class-valida" id="cantidadDistribucion" placeholder="Cantidad"/></td>
+                                                                                                        <td style="padding: 7px;"><label>Indicación/Descripción</label></td>
+                                                                                                        <td style="padding: 7px;"><input type="text" class="form-control" id="indicacion" placeholder="Indicación/Descripción"/></td>
+                                                                                                        <td style="padding: 7px;"><button class="btn btn-info pull-right" type="button" id="agregarDistribucion"><span class = "glyphicon glyphicon-plus-sign" aria-hidden="true"></span></button></td>
+                                                                                                    </tr>
+                                                                                                </tbody>
+                                                                                            </table>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="row">
+                                                                                    <div class="col-md-12">
+                                                                                        <div class="table-responsive">
+                                                                                            <table class="table table-striped" id="tabla-distribucion">
+                                                                                                <thead>
+                                                                                                    <tr>
+                                                                                                        <th>Cantidad</th>
+                                                                                                        <th>Indicación/Descripción</th>
+                                                                                                        <th></th>
+                                                                                                    </tr>
+                                                                                                </thead>
+                                                                                            </table>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div><br/>
+
+                                                            <div class="row" >
+                                                                <div class="bs-callout bs-callout-primary">
+                                                                    <div class="container-fluid" style="background-color: #D9EDF7;">
+                                                                        <div class="col-xs-12 col-md-2" style="padding: 7px;">
+                                                                            <input type="text"  class="form-control class-calculototal class-valida" id="cantidadMedicamento" placeholder="Cantidad"/>
+                                                                        </div>
+                                                                        <div class="col-xs-12 col-md-2" style="padding: 7px;">
+                                                                            {% if dosificaciones is defined %}
+                                                                                <select id="iddosificacion" style="with:100%">
+                                                                                    <option value=""></option>
+                                                                                    {% for dosificacion in dosificaciones %}
+                                                                                        <option value="{{ dosificacion.id }}">{{ dosificacion.abreviatura }}</option>
+                                                                                    {% endfor %}
+                                                                                </select>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <div id="idblockperiodo" class="col-xs-12 col-md-8">
+                                                                            <div class="row">
+                                                                                <div class="col-xs-12 col-md-1" style="padding: 7px;">
+                                                                                    Cada
+                                                                                </div>
+                                                                                <div class="col-xs-12 col-md-2" style="padding: 7px;">
+                                                                                    <input type="text"  class="form-control class-calculototal class-valida" id="frecuencia" placeholder="Frecuencia" />
+                                                                                </div>
+                                                                                <div class="col-xs-12 col-md-4" style="padding: 7px;">
+                                                                                    <select style="" id = "tiempoFrecuencia"  class="class-calculototal class-valida"><option value=""></option><option value="Hora(s)">Hora(s)</option><option value="Dia(s)">Dia(s)</option></select>
+                                                                                </div>
+                                                                                <div class="col-xs-12 col-md-2" style="padding: 7px;">
+                                                                                    Durante
+                                                                                </div>
+                                                                                <div class="col-xs-12 col-md-2" style="padding: 7px;">
+                                                                                    <input type="text"  class="form-control class-calculototal class-valida" id="durante" placeholder="Durante"/>
+                                                                                </div>
+                                                                                <div class="col-xs-12 col-md-1" style="padding: 7px;">
+                                                                                    Dias(s)
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                    </div>
+                                                                    <br/>
+                                                                    <div class="row">
+                                                                        <div class="col-md-3">
+                                                                            Total de Medicamento a Dispensar
+                                                                        </div>
+                                                                        <div class="col-md-3">
+                                                                            <input type="text" class="form-control class-valida" id="totalMedicamento" placeholder="Total de Medicamento"/>
+                                                                        </div>
+                                                                    </div><br/>
+                                                                    <div class="row" id = "divrecomendacion">
+                                                                        <div class="col-md-3">
+                                                                            Recomendación
+                                                                        </div>
+                                                                        <div class="col-md-8">
+                                                                            <textarea class="form-control" id="recomendacion" placeholder="Recomendacion"></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="panel panel-info">
+                                                    <div class="panel-body">
+                                                        <div class="container-fluid">
+                                                            <div class="row" style="margin-bottom: 10px;">
+                                                                <div  style="text-align: left;" class="col-md-1">
+                                                                    <strong>Repetitiva</strong>
+                                                                </div>
+                                                                <div class="col-md-1">
+                                                                    <div class="onoffswitch">
+                                                                        <input type="checkbox" value="repetitiva" class="onoffswitch-checkbox" id="repetitiva" name="_repetitiva" noIcheck="true">
+                                                                        <label class="onoffswitch-label" for="repetitiva">
+                                                                            <span class="onoffswitch-inner" data-switch-on-label="SI" data-switch-off-label="NO"></span>
+                                                                            <span class="onoffswitch-switch"></span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-10" id="idbloquecantidad">
+                                                                    <div class="row">
+                                                                        <div class="col-md-2">
+                                                                            Cantidad de Recetas Repetitivas
+                                                                        </div>
+                                                                        <div class="col-md-10">
+                                                                            <input type="text" class="form-control" id="cantidadrepetitiva" placeholder="Cantidad" style="size: 10px; max-width: 80px;"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <button class="btn btn-info pull-right" type="button" id="agregarMedicamento"><span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span> <b>Guardar Medicamento</b></button>
+                                        </div>
+                                        <br/>
+                                        <br/>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Medicamento</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Cada</th>
+                                                    <th>Durante</th>
+                                                    <th>Total Medicamento</th>
+                                                    <th>Recomendacion</th>
+                                                    <th>Fecha de Entrega de Medicamento</th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th>
+                                                        <span style="font-size:20px; float: right; padding: 3px;" class="glyphicon glyphicon-print mouse-pointer" id="imprimir-receta"  role="print" data-toggle="tooltip" data-placement="left" title="Impresión Recetas Selecionadas"></span>
+                                                        <span style="float: right; padding: 3px;" data-toggle="tooltip" data-placement="bottom" title="Selecionar Recetas Todas/Ninguna">
+                                                            &nbsp;&nbsp;<input type="checkbox" id="idTodasLasRecetas" name="idTodasLasRecetas">
+                                                        </span>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="bodycontent-receta">
+                                                <tr id="emptyTr"><td colspan="7">No se han agregado medicamentos.....</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    {% endblock %}
+
+                    {% block sonata_post_fieldsets %}
+                    </div>
+                {% endblock %}
+
+                {{ form_rest(form) }}
+
+                {% block formactions %}
+                    <div class="well well-small form-actions">
+                        <button class="btn btn-default" type="button" id="btn_cw_close" name="btn_close">Cerrar</button>
+
+                    </div>
+                {% endblock formactions %}
+            </form>
+        {% endif %}
+
+{% endblock %}

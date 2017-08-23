@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabRangoedad" table="lab_rangoedad">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="edadinicio" type="integer" column="edadinicio" nullable="false"/>
+    <field name="edadfinal" type="integer" column="edadfinal" nullable="false"/>
+    <field name="unidadtiempo" type="string" column="unidadtiempo" length="1" nullable="true"/>
+    <field name="clasificacion" type="string" column="clasificacion" length="1" nullable="true"/>
+    <field name="idusuarioreg" type="integer" column="idusuarioreg" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="idusuariomod" type="integer" column="idusuariomod" nullable="true"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+  </entity>
+</doctrine-mapping>

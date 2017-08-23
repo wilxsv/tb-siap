@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecConsejeria" table="sec_consejeria">
+    <indexes>
+      <index name="IDX_1FB4531D8627A85B" columns="id_aten_area_mod_estab"/>
+      <index name="IDX_1FB4531D890253C7" columns="id_empleado"/>
+      <index name="IDX_1FB4531D31827296" columns="id_historial_clinico"/>
+      <index name="IDX_1FB4531D6405EBC5" columns="id_tipo_consejeria"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="consejo" type="text" column="consejo" nullable="true"/>
+    <field name="fechaHoraRegistro" type="datetime" column="fecha_hora_registro" nullable="true"/>
+    <field name="consejoAnterior" type="text" column="consejo_anterior" nullable="true"/>
+    <field name="fechaHoraMod" type="datetime" column="fecha_hora_mod" nullable="true"/>
+    <many-to-one field="idTipoConsejeria" target-entity="CtlTipoConsejeria">
+      <join-columns>
+        <join-column name="id_tipo_consejeria" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idEmpleado" target-entity="MntEmpleado">
+      <join-columns>
+        <join-column name="id_empleado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idAtenAreaModEstab" target-entity="MntAtenAreaModEstab">
+      <join-columns>
+        <join-column name="id_aten_area_mod_estab" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

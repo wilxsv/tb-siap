@@ -1,0 +1,23 @@
+{% block bodylayout %}
+    {% for plantilla in area.plantillas %}
+        {% if plantilla.codigo is sameas(pType) %}
+            {% for examen in plantilla.examenes %}
+                {% set examStatus = examen.codigo_estado_detalle %}
+                {% if examStatus is not sameas('RM') %}
+                    <div class="bs-callout bs-callout-{% if count[pType] % 2 %}primary{% else %}info{% endif %}">
+                        <a data-toggle="collapse" href="#collapse-exam-{{ area.codigo }}-{{ plantilla.codigo }}-{{ examen.codigo }}" aria-expanded="false" aria-controls="collapse-exam-{{ area.codigo }}-{{ plantilla.codigo }}-{{ examen.codigo }}">
+                            {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/headerLayout.html.twig' %}
+                        </a>
+
+                        <div class="collapse" id="collapse-exam-{{ area.codigo }}-{{ plantilla.codigo }}-{{ examen.codigo }}">
+                            {% if examStatus is sameas('RC') %}
+                                {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/layout' ~ pType ~ '.html.twig' %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% set count = count|merge({('' ~ pType): count[pType] + 1}) %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+{% endblock %}

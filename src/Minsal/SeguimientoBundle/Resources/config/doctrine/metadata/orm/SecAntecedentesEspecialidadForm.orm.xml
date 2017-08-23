@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecAntecedentesEspecialidadForm" table="sec_antecedentes_especialidad_form">
+    <indexes>
+      <index name="IDX_8A27FC261CCD41FE" columns="id_antecedentes"/>
+      <index name="IDX_8A27FC268627A85B" columns="id_aten_area_mod_estab"/>
+      <index name="IDX_8A27FC26A7C7EF6A" columns="id_formulario"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="fecha" type="date" column="fecha" nullable="false"/>
+    <many-to-one field="idFormulario" target-entity="FrmFormulario">
+      <join-columns>
+        <join-column name="id_formulario" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idAtenAreaModEstab" target-entity="MntAtenAreaModEstab">
+      <join-columns>
+        <join-column name="id_aten_area_mod_estab" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idAntecedentes" target-entity="SecAntecedentes">
+      <join-columns>
+        <join-column name="id_antecedentes" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

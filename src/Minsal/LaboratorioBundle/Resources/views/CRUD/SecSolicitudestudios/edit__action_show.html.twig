@@ -1,0 +1,16 @@
+{# src/Minsal/LaboratorioBundle/Resources/views/CRUD/edit__action_list.html.twig #}
+{% set external           = ( app.request.get('_external') != '' and app.request.get('_external') != null )  ? app.request.get('_external') : false  %}
+{% set local              = ( object.getIdEstablecimientoExterno().getId() == object.getIdEstablecimiento().getId() ? true : false ) %}
+{% set tipoPacPertenencia = ( local ? 'local' : 'referido' ) %}
+{% set idEmpleado         = ( local ? object.getIdHistorialClinico().getIdEmpleado().getId() : object.getIdDatoReferencia().getIdEmpleado().getId() ) %}
+{% set idEspecialidad     = ( local ? object.getIdHistorialClinico().getIdAtenAreaModEstab().getId() : object.getIdDatoReferencia().getIdAtenAreaModEstab().getId() ) %}
+{% set idHistorialClinico = ( local ? object.getIdHistorialClinico().getId() : object.getIdDatoReferencia().getId() ) %}
+{% set fechaSolicitud     = object.getFechaSolicitud()|date('Y-m-d') %}
+{% set idEstablecimiento  = object.getIdEstablecimientoExterno().getId() %}
+
+{% if admin.isGranted('ASSIGNEXAM', object) and admin.hasRoute('assign_exam') and external == false %}
+    <a href="{{ url('admin_minsal_laboratorio_secsolicitudestudios_assign_exam', { '_external': external, '_modulo': 'seguimientoclinico', 'tipoPacPertenencia': tipoPacPertenencia, 'idEmpleado': idEmpleado, 'idEspecialidad': idEspecialidad, 'idHistorialClinico': idHistorialClinico, 'fechaSolicitud': fechaSolicitud, 'action': 'edit', 'createdElement': object.getId(), 'idEstablecimiento': idEstablecimiento }) }}" class="btn btn-sm btn-default view_link" title="{{ 'action_show'|trans({}, 'SonataAdminBundle') }}">
+        <i class="glyphicon glyphicon-edit"></i>
+        {{ 'action_edit'|trans({}, 'SonataAdminBundle') }}
+    </a>
+{% endif %}

@@ -1,0 +1,89 @@
+{% block javascripts %}
+
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['order']=[[3,"asc"]];
+            opcionesTable['iDisplayLength']=25;
+            opcionesTable['aLengthMenu']= [[25, 50, 75, -1], [25, 50, 75, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+        });
+
+        /*FUNCIONALIDAD DE BOTONES PARA EXPORTAR*/
+        $('#exportar_hoja_calculo').click(function (event) {
+          url = Routing.generate('exportar_pacientes_derivados', {'report_name':'pacientes_derivados_especializada','report_format':'XLS','datos': $('#cargar_pacientes_derivados').serialize()});
+          window.open(url, '_blank');
+          event.preventDefault();
+        });
+        $('#exportar_pdf').click(function (event) {
+            url = Routing.generate('exportar_pacientes_derivados', {'report_name':'pacientes_derivados_especializada','report_format':'PDF','datos': $('#cargar_pacientes_derivados').serialize()});
+            window.open(url, '_blank');
+            event.preventDefault();
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+  <div class="col-md-10">
+    <h3 class="text-center">Pacientes y Medicamentos enviados a Farmacia Especializada</h3>
+  </div>
+  <div class="col-md-2">
+    <form id='reporteExpedientesForm' >
+      <label>Exportar a:
+        <a id="exportar_hoja_calculo" class="img_export_inf" href=""><img src={{ asset('bundles/minsalsiaps/imagenes/calc_icon.png') }} /></a>
+        <a id="exportar_pdf" class="img_export_inf" href=""><img src={{ asset('bundles/minsalsiaps/imagenes/pdf_icon.png') }} /></a>
+      </label>
+    </form>
+  </div>
+</div>
+<table id="tablaResultados" class="table table-bordered table-striped table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <td>Fecha de Retiro</td>
+            <td>Horario</td>
+            <td>NEC</td>
+            <td>Paciente</td>
+            <td>Fecha de Consulta</td>
+            <td>Médico que Prescribe</td>
+            <td>Especialidad</td>
+            <td>Medicamento</td>
+            <td>Cantidad</td>
+            <td>Dosis</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% set llave='' %}
+        {% for paciente in pacientes %}
+          {# if llave!= paciente['numero_expediente']~'-'~paciente['fecha_retiro']%}
+          {% set llave=paciente['numero_expediente']~'-'~paciente['fecha_retiro'] #}
+            <tr>
+                <td >{{ paciente['fecha_retiro'] }}</td>
+                <td >{{ paciente['horario'] }}</td>
+                <td >{{ paciente['numero_expediente']}}</td>
+                <td >{{ paciente['nombre_completo'] }}</td>
+                <td >{{ paciente['fecha_consulta'] }}</td>
+                <td >{{ paciente['medico'] }}</td>
+                <td >{{ paciente['especialidad'] }}</td>
+                <td>{{ paciente['medicamento'] }}</td>
+                <td>{{ paciente['cantidad'] }}</td>
+                <td>{{ paciente['dosis'] }}</td>
+          </tr>
+          {#else#}
+          {# <!--
+
+              <tr>  <td rowspan="{{cuantos[llave]}}">{{ paciente['numero_expediente']}}</td>
+                  <td  style="display: none;"></td>
+                  <td  style="display: none;"></td>
+                  <td  style="display: none;"></td>
+                  <td  style="display: none;"></td>
+                  <td  style="display: none;"></td>
+                  <td  style="display: none;"></td>
+                  <td  style="display: none;"></td>
+                  <td>{{ paciente['medicamento'] }}</td>
+                  <td>{{ paciente['cantidad'] }}</td>
+              </tr>
+              --> #}
+          {#endif#}
+        {%endfor%}
+    </tbody>
+</table>

@@ -1,0 +1,36 @@
+{% block javascripts %}
+
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['iDisplayLength']=25;
+            opcionesTable['aLengthMenu']= [[25, 50, 75, -1], [25, 50, 75, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+  <div class="col-md-10">
+    <h3 class="text-center">Pacientes Sin DUI o Carné de Residente</h3>
+
+<table id="tablaResultados" class="table table-bordered table-striped table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <td>Numero de Expediente</td>
+            <td>Apellidos</td>
+            <td>Nombres</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for paciente in pacientes %}
+            <tr>
+                <td >{{ paciente['numero'] }}</td>
+                <td >{{ paciente['primer_apellido']~' '~paciente['segundo_apellido']~' '~paciente['apellido_casada'] }}</td>
+                <td >{{ paciente['primer_nombre']~' '~paciente['segundo_nombre']~' '~paciente['tercer_nombre'] }}</td>
+          </tr>
+        {%endfor%}
+    </tbody>
+</table>
+</div>
+</div>

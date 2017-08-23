@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntConsultorio" table="mnt_consultorio">
+    <indexes>
+      <index name="IDX_D595DFA113B895A1" columns="idusuarioreg"/>
+      <index name="IDX_D595DFA16724C8DC" columns="idusuariomod"/>
+      <index name="IDX_D595DFA1CC2F8715" columns="id_area_mod_estab"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="descripcion" type="text" column="descripcion" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="false"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+    <field name="nombre" type="string" column="nombre" length="100" nullable="true"/>
+    <many-to-one field="idAreaModEstab" target-entity="MntAreaModEstab">
+      <join-columns>
+        <join-column name="id_area_mod_estab" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuariomod" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuariomod" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuarioreg" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuarioreg" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

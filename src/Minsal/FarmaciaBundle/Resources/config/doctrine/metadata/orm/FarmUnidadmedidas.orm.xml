@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="FarmUnidadmedidas" table="farm_unidadmedidas">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="descripcion" type="string" column="descripcion" length="6" nullable="false"/>
+    <field name="descripcionlarga" type="string" column="descripcionlarga" length="30" nullable="true"/>
+    <field name="unidadescontenidas" type="integer" column="unidadescontenidas" nullable="false"/>
+    <field name="cantidaddecimal" type="integer" column="cantidaddecimal" nullable="true"/>
+    <field name="auusuariocreacion" type="string" column="auusuariocreacion" length="15" nullable="true"/>
+    <field name="aufechacreacion" type="datetime" column="aufechacreacion" nullable="true"/>
+    <field name="auusuariomodificacion" type="string" column="auusuariomodificacion" nullable="true"/>
+    <field name="aufechamodificacion" type="datetime" column="aufechamodificacion" nullable="true"/>
+    <field name="estasincronizada" type="integer" column="estasincronizada" nullable="true"/>
+  </entity>
+</doctrine-mapping>

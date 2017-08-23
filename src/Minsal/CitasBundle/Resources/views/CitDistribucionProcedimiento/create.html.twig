@@ -1,0 +1,198 @@
+{% extends 'SonataAdminBundle:CRUD:edit.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+    $(document).ready(function () {
+        var idAreaModEstab                 = $('select[id$="_idAreaModEstab"]');
+        var idProcedimientoEstablecimiento = $('select[id$="_idProcedimientoEstablecimiento"]');
+        var yrs                            = $('select[id$="_yrs"]');
+        var idEmpleado                     = $('select[id$="_idEmpleado"]');
+        var rangoHora                      = $('select[id$="_idRangohora"]');
+        var dias                           = $('input[id^="{{admin.uniqid}}_dia_"]');
+        var meses                          = $('input[id^="{{admin.uniqid}}_mes_"]');
+        var idTipoDistribucion             = $('select[id$="_idTipoDistribucion"]');
+        var tipoDistribucion               = idTipoDistribucion.select2('val');
+
+        initializeSelect2(idTipoDistribucion,true,false,{
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(idAreaModEstab, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(idProcedimientoEstablecimiento, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(yrs,true,false,{
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(rangoHora, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(idEmpleado, true, true, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        idAreaModEstab.on('change', function () {
+            if ($(this).val()) {
+                $.ajax({
+                    url: Routing.generate("obtener_medicos_por_area", {'idAreaModEstab': $(this).val()}),
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+
+                        initializeSelect2(idEmpleado, true, true, {
+                            placeholder: 'Seleccionar...',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        $.each(data.resultados, function (indice, val) {
+                            idEmpleado.append($('<option>', {value: val.id, text: val.text}));
+                        });
+                    }
+                });
+            } else {
+                initializeSelect2(idEmpleado, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
+        dias.on('ifClicked', function () {
+            var valor = $(this).attr('value');
+            if(valor == '8'){
+                var estado=$(this).prop('checked');
+                if(estado==false){
+                    dias.each(function () {
+                        $(this).iCheck('check');
+                    });
+                }else {
+                    dias.each(function () {
+                        $(this).iCheck('uncheck');
+                    });
+                }
+            }else {
+                dias.each(function () {
+                    valor = $(this).attr('value');
+                    if ($(this).attr('value') === '8') {
+                            $(this).iCheck('uncheck');
+                    }
+                });
+            }
+        });
+
+        meses.on('ifClicked', function () {
+            var valor = $(this).attr('value');
+            if(valor == '13'){
+                var estado=$(this).prop('checked');
+                if(estado==false){
+                    meses.each(function () {
+                        $(this).iCheck('check');
+                    });
+                }else {
+                    meses.each(function () {
+                        $(this).iCheck('uncheck');
+                    });
+                }
+            }else {
+                meses.each(function () {
+                    valor = $(this).attr('value');
+                    if ($(this).attr('value') === '13') {
+                            $(this).iCheck('uncheck');
+                    }
+                });
+            }
+        });
+
+        {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+            idAreaModEstab.parent().parent().hide();
+        {% endif %}
+
+        {% if idAreaModEstab %}
+            idAreaModEstab.select2('val',{{ idAreaModEstab }} );
+            idAreaModEstab.trigger('change');
+        {% endif %}
+
+        {% if idProcedimientoEstablecimiento %}
+            idProcedimientoEstablecimiento.select2('val',{{ idProcedimientoEstablecimiento }});
+            idProcedimientoEstablecimiento.change();
+        {% endif %}
+
+        {% if idEmpleado %}
+             idEmpleado.select2('val',{{ idEmpleado }});
+        {% endif %}
+
+        $('form').on('submit',function(e){
+            $(this).parent().waitMe({ text: 'Procesando...' });
+        });
+
+
+    });
+    </script>
+{% endblock %}
+
+{% block formactions %}
+    <div class="well well-small form-actions">
+        {% if app.request.isxmlhttprequest %}
+            {% if admin.id(object) is not null %}
+                <button type="submit" class="btn btn-success" name="btn_update"><i class="fa fa-save"></i> {{ 'btn_update'|trans({}, 'SonataAdminBundle') }}</button>
+            {% else %}
+                <button type="submit" class="btn btn-success" name="btn_create"><i class="fa fa-plus-circle"></i> {{ 'btn_create'|trans({}, 'SonataAdminBundle') }}</button>
+            {% endif %}
+        {% else %}
+            {% if admin.supportsPreviewMode %}
+                <button class="btn btn-info persist-preview" name="btn_preview" type="submit">
+                    <i class="fa fa-eye"></i>
+                    {{ 'btn_preview'|trans({}, 'SonataAdminBundle') }}
+                </button>
+            {% endif %}
+            {% if admin.id(object) is not null %}
+
+                {% if admin.hasroute('list') %}
+                    <button type="submit" class="btn btn-primary" name="btn_update_and_list"><i class="fa fa-save"></i> <i class="fa fa-list"></i> {{ 'btn_update_and_return_to_list'|trans({}, 'SonataAdminBundle') }}</button>
+                {% endif %}
+
+                {% if admin.hasroute('delete') and admin.isGranted('DELETE', object) %}
+                    {{ 'delete_or'|trans({}, 'SonataAdminBundle') }}
+                    <a class="btn btn-danger" href="{{ admin.generateObjectUrl('delete', object) }}"><i class="fa fa-minus-circle"></i> {{ 'link_delete'|trans({}, 'SonataAdminBundle') }}</a>
+                {% endif %}
+
+                {% if admin.isAclEnabled() and admin.hasroute('acl') and admin.isGranted('MASTER', object) %}
+                    <a class="btn btn-info" href="{{ admin.generateObjectUrl('acl', object) }}"><i class="fa fa-users"></i> {{ 'link_edit_acl'|trans({}, 'SonataAdminBundle') }}</a>
+                {% endif %}
+
+            {% else %}
+                {% if admin.hasroute('list') %}
+                    <button type="submit" class="btn btn-primary" name="btn_create_and_list"><i class="fa fa-save"></i> <i class="fa fa-list"></i> {{ 'btn_create_and_return_to_list'|trans({}, 'SonataAdminBundle') }}</button>
+                {% endif %}
+
+                <button class="btn btn-success" type="submit" name="btn_create_and_create"><i class="fa fa-plus-circle"></i> {{ 'btn_create_and_create_a_new_one'|trans({}, 'SonataAdminBundle') }}</button>
+
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock formactions %}

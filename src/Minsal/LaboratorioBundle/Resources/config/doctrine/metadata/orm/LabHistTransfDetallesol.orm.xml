@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabHistTransfDetallesol" table="lab_hist_transf_detallesol">
+    <indexes>
+      <index name="IDX_3B47F19EBF4AAADB" columns="id_estab_origen"/>
+      <index name="IDX_3B47F19EACF26D20" columns="id_estab_envio"/>
+      <index name="IDX_3B47F19E825FEB10" columns="id_estado_transferencia"/>
+      <index name="IDX_3B47F19E9F6A6D74" columns="id_detalle_solicitud_registro"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="idDetalleSolicitudOrigen" type="integer" column="id_detalle_solicitud_origen" nullable="true"/>
+    <field name="idDetalleSolicitudEnvio" type="integer" column="id_detalle_solicitud_envio" nullable="true"/>
+    <field name="fechaHoraEnvio" type="datetime" column="fecha_hora_envio" nullable="true"/>
+    <many-to-one field="idDetalleSolicitudRegistro" target-entity="SecDetallesolicitudestudios">
+      <join-columns>
+        <join-column name="id_detalle_solicitud_registro" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idEstadoTransferencia" target-entity="LabEstadoTransferencia">
+      <join-columns>
+        <join-column name="id_estado_transferencia" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idEstabEnvio" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="id_estab_envio" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idEstabOrigen" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="id_estab_origen" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

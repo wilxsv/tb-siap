@@ -1,0 +1,81 @@
+{#
+
+This file is part of the Sonata package.
+
+(c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+
+#}
+
+{% extends base_template %}
+
+{% block actions %}
+    <li>{% include 'SonataAdminBundle:Button:edit_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:history_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:list_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:create_button.html.twig' %}</li>
+{% endblock %}
+
+{% block sonata_header %}
+    {% if params.external == 'false' %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block sonata_page_content_nav %}
+    {% if params.external == 'false' %}
+        {{ parent() }}
+    {% else %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="pull-right">
+                <button type="button" class="btn btn-info" onclick="window.history.back();"><i class="fa fa-fw fa-arrow-circle-left"></i> Regresar</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block tab_menu %}{{ knp_menu_render(admin.sidemenu(action), {'currentClass' : 'active'}, 'list') }}{% endblock %}
+
+{% block show %}
+    <div class="sonata-ba-view">
+        {{ sonata_block_render_event('sonata.admin.show.top', { 'admin': admin, 'object': object }) }}
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr class="sonata-ba-list-field-header" >
+                        <th>Medicamento</th>
+                        <th>Concentracion</th>
+                        <th>Forma Farmaceutica</th>
+                        <th>Presentacion</th>
+                        <th>Dosis</th>
+                        <th>Cantidad Prescrita por Médico</th>
+                        <th>Cantidad Entregada</th>
+                        <th>Fecha Programada de Entrega</th>
+                        <th>Fecha de Entrega</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resultmedicamento in resultmedicamentos %}
+                        <tr>
+                            <td>{{ resultmedicamento.nombre }}</td>
+                            <td>{{ resultmedicamento.concentracion }}</td>
+                            <td>{{ resultmedicamento.formafarmaceutica }}</td>
+                            <td>{{ resultmedicamento.presentacion }}</td>
+                            <td>{{ resultmedicamento.dosis }}</td>
+                            <td>{{ resultmedicamento.total_medicamento }}</td>
+                            <td>{{ resultmedicamento.cantidad }}</td>
+                            <td>{{ resultmedicamento.fecha }}</td>
+                            <td>{{ resultmedicamento.fechaentrega }}</td>
+                            <td>{{ resultmedicamento.estado }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {{ sonata_block_render_event('sonata.admin.show.bottom', { 'admin': admin, 'object': object }) }}
+
+    </div>
+{% endblock %}

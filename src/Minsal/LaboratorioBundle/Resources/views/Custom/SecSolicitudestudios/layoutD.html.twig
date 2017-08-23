@@ -1,0 +1,16 @@
+<table class="table">
+    <thead>
+        <tr>
+            <th>Elmento de Tincion</th>
+            <th>Cantidad</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for elemento in examen.elementos %}
+            <tr>
+                <td>{{ elemento.nombre }}</td>
+                <td>{{ elemento.cantidad }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

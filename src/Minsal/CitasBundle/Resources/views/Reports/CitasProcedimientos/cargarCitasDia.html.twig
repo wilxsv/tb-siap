@@ -1,0 +1,25 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            //para exportar reportes
+                $('#exportar_hoja_calculo').click(function(e) {
+                        url = Routing.generate('buildCitasProcedimientoPorDia',
+                        {'fechaInicio':'{{fechaInicio}}', 'fechaFin':'{{fechaFin}}','idProcedimientoEstablecimiento':'{{idProcedimientoEstablecimiento}}','format':'XLS'});
+                        window.open(url, '_blank');
+                        return e.preventDefault();
+                });
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+    <div class="col-md-2 col-md-offset-8">
+        <label>Exportar a:
+            <a id="exportar_hoja_calculo" class="img_export_inf" href="#"><img src={{ asset('bundles/minsalsiaps/imagenes/calc_icon.png') }} /></a>
+        </label>
+        <br/>
+        <br/>
+    </div>
+</div>
+<embed id="content-ticket"
+src="{{ url('buildCitasProcedimientoPorDia',{'fechaInicio':fechaInicio, 'fechaFin':fechaFin,'idProcedimientoEstablecimiento':idProcedimientoEstablecimiento}) }}"
+style="width:100%; height:100%;min-height: 800px;"  onload="jQuery('#resultado').waitMe('hide');">

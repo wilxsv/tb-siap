@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecRemisionPaciente" table="sec_remision_paciente">
+    <indexes>
+      <index name="IDX_633C28F731827296" columns="id_historial_clinico"/>
+      <index name="IDX_633C28F76C9F6C38" columns="id_tipo_remision"/>
+      <index name="IDX_633C28F76F82FDC3" columns="id_motivo_remision"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="codigo" type="string" column="codigo" length="15" nullable="false"/>
+    <field name="fechaRemision" type="datetime" column="fecha_remision" nullable="false"/>
+    <field name="numeroExpediente" type="string" column="numero_expediente" length="12" nullable="true"/>
+    <field name="idEstablecimientoOrigen" type="integer" column="id_establecimiento_origen" nullable="false"/>
+    <field name="idEstablecimientoDestino" type="integer" column="id_establecimiento_destino" nullable="false"/>
+    <field name="idEspecialidadDestino" type="integer" column="id_especialidad_destino" nullable="false"/>
+    <field name="nombreEspecialidadDestino" type="string" column="nombre_especialidad_destino" length="150" nullable="true"/>
+    <field name="nombreEspecialidadOrigen" type="string" column="nombre_especialidad_origen" length="150" nullable="true"/>
+    <field name="impresionDiagnostica" type="text" column="impresion_diagnostica" nullable="true"/>
+    <field name="justificacionRemision" type="text" column="justificacion_remision" nullable="true"/>
+    <field name="datosExamen" type="text" column="datos_examen" nullable="true"/>
+    <field name="observacionResultado" type="text" column="observacion_resultado" nullable="true"/>
+    <field name="tratamiento" type="text" column="tratamiento" nullable="true"/>
+    <field name="idRemisionPacienteOrigen" type="integer" column="id_remision_paciente_origen" nullable="true"/>
+    <many-to-one field="idMotivoRemision" target-entity="CtlMotivoRemision">
+      <join-columns>
+        <join-column name="id_motivo_remision" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idTipoRemision" target-entity="CtlTipoRemision">
+      <join-columns>
+        <join-column name="id_tipo_remision" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

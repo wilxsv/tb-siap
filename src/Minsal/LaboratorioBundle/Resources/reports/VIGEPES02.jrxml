@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="VIGEPES02" language="groovy" pageWidth="612" pageHeight="792" columnWidth="584" leftMargin="14" rightMargin="14" topMargin="14" bottomMargin="14" uuid="f89201dc-8227-4af7-b346-4f0453efc3b1">
+	<property name="ireport.zoom" value="1.9487171000000025"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString>
+		<![CDATA[SELECT *
+FROM sec_historial_clinico t01
+INNER JOIN mnt_expediente  t02 ON (t02.id = t01.id_numero_expediente)
+INNER JOIN mnt_paciente    t03 ON (t03.id = t02.id_paciente)
+INNER JOIN mnt_empleado    t04 ON (t04.id = t01.id_empleado)
+]]>
+	</queryString>
+	<field name="id" class="java.lang.Integer"/>
+	<field name="datosclinicos" class="java.lang.String"/>
+	<field name="fechaconsulta" class="java.sql.Date">
+		<fieldDescription><![CDATA[Fecha en la que se genero una nueva historia clinica]]></fieldDescription>
+	</field>
+	<field name="idempleado" class="java.lang.String"/>
+	<field name="idsubservicio" class="java.lang.Integer"/>
+	<field name="seguimientoconsultaext" class="java.lang.String"/>
+	<field name="idusuarioreg" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Usuario que otorga la cita, relacionado con mnt_empleados.]]></fieldDescription>
+	</field>
+	<field name="fechahorareg" class="java.sql.Timestamp">
+		<fieldDescription><![CDATA[Fecha y hora en que se ingresa la cita.]]></fieldDescription>
+	</field>
+	<field name="piloto" class="java.lang.String">
+		<fieldDescription><![CDATA[Bandera para determinar si es una version piloto y/o ingreso de historias por medio de otro modulo (Farmacia)]]></fieldDescription>
+	</field>
+	<field name="ipaddress" class="java.lang.String">
+		<fieldDescription><![CDATA[Direccion IP de la maquina en la que se realizo la transaccion]]></fieldDescription>
+	</field>
+	<field name="idestablecimiento" class="java.lang.Integer"/>
+	<field name="idnumeroexp" class="java.lang.String"/>
+	<field name="id_numero_expediente" class="java.lang.Integer"/>
+	<field name="id_empleado" class="java.lang.Integer"/>
+	<field name="idmodalidad" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Indicador de Modalidades, conectado a modalidades]]></fieldDescription>
+	</field>
+	<field name="id_estado_historia_clinica" class="java.lang.Integer"/>
+	<field name="id_formulario" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Formulario al que pertenece la Seccion o Pool de Items.]]></fieldDescription>
+	</field>
+	<field name="id_cita_dia" class="java.lang.Integer"/>
+	<field name="numero" class="java.lang.String"/>
+	<field name="id_paciente" class="java.lang.Long"/>
+	<field name="id_establecimiento" class="java.lang.Integer"/>
+	<field name="habilitado" class="java.lang.Boolean"/>
+	<field name="id_creacion_expediente" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Fóranea que representa el área en donde se creo el expediente del paciente]]></fieldDescription>
+	</field>
+	<field name="fecha_creacion" class="java.sql.Date"/>
+	<field name="hora_creacion" class="java.sql.Time"/>
+	<field name="numero_temporal" class="java.lang.Boolean"/>
+	<field name="primer_nombre" class="java.lang.String">
+		<fieldDescription><![CDATA[Primer nombre del paciente]]></fieldDescription>
+	</field>
+	<field name="segundo_nombre" class="java.lang.String">
+		<fieldDescription><![CDATA[Segundo nombre del paciente es opcional]]></fieldDescription>
+	</field>
+	<field name="tercer_nombre" class="java.lang.String">
+		<fieldDescription><![CDATA[Tercer nombre del paciente es opcional]]></fieldDescription>
+	</field>
+	<field name="primer_apellido" class="java.lang.String">
+		<fieldDescription><![CDATA[Primer apellido del paciente]]></fieldDescription>
+	</field>
+	<field name="segundo_apellido" class="java.lang.String">
+		<fieldDescription><![CDATA[Segundo apellido del paciente es opcional]]></fieldDescription>
+	</field>
+	<field name="apellido_casada" class="java.lang.String">
+		<fieldDescription><![CDATA[Apellido de casada para paciente mujer]]></fieldDescription>
+	</field>
+	<field name="fecha_nacimiento" class="java.sql.Date"/>
+	<field name="hora_nacimiento" class="java.sql.Time">
+		<fieldDescription><![CDATA[Hora de nacimiento en caso se conociera]]></fieldDescription>
+	</field>
+	<field name="id_pais_nacimiento" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el pais de nacimiento]]></fieldDescription>
+	</field>
+	<field name="id_departamento_nacimiento" class="java.lang.Integer"/>
+	<field name="id_municipio_nacimiento" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el municipio de nacimiento; sinonimo de Lugar de Nacimiento]]></fieldDescription>
+	</field>
+	<field name="id_estado_civil" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el estado civil del paciente]]></fieldDescription>
+	</field>
+	<field name="id_doc_ide_paciente" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el tipo de documento de identidad del paciente]]></fieldDescription>
+	</field>
+	<field name="numero_doc_ide_paciente" class="java.lang.String">
+		<fieldDescription><![CDATA[Número del documento de identidad seleccionado para el paciente]]></fieldDescription>
+	</field>
+	<field name="id_ocupacion" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa la ocupacion a la que se dedica el paciente]]></fieldDescription>
+	</field>
+	<field name="direccion" class="java.lang.String">
+		<fieldDescription><![CDATA[Lugar físico del establecimiento]]></fieldDescription>
+	</field>
+	<field name="telefono_casa" class="java.lang.String">
+		<fieldDescription><![CDATA[Teléfono de contacto de casa en caso existiera]]></fieldDescription>
+	</field>
+	<field name="id_departamento_domicilio" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el departamento de domicilio del paciente]]></fieldDescription>
+	</field>
+	<field name="id_municipio_domicilio" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el municipio en donde vive el paciente]]></fieldDescription>
+	</field>
+	<field name="id_canton_domicilio" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el cantón en donde vive el paciente]]></fieldDescription>
+	</field>
+	<field name="area_geografica_domicilio" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Determina si vive en un área rural o urbana. 1=Rural; 2=Urbana]]></fieldDescription>
+	</field>
+	<field name="lugar_trabajo" class="java.lang.String">
+		<fieldDescription><![CDATA[Lugar donde trabaja el paciente, En caso trabajara]]></fieldDescription>
+	</field>
+	<field name="telefono_trabajo" class="java.lang.String">
+		<fieldDescription><![CDATA[Teléfono del trabajo, en caso existiera]]></fieldDescription>
+	</field>
+	<field name="id_area_cotizacion" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el área de cotización]]></fieldDescription>
+	</field>
+	<field name="asegurado" class="java.lang.Boolean">
+		<fieldDescription><![CDATA[Para saber si es asegurado o beneficiario. Asegurado=True; Beneficiario=F]]></fieldDescription>
+	</field>
+	<field name="numero_afiliacion" class="java.lang.String">
+		<fieldDescription><![CDATA[Número de afiliación ya sea del asegurado o del beneficiario]]></fieldDescription>
+	</field>
+	<field name="cotizante" class="java.lang.Boolean">
+		<fieldDescription><![CDATA[Para saber si el paciente es cotizante. True=Es cotizante; False=NO es cotizante]]></fieldDescription>
+	</field>
+	<field name="nombre_padre" class="java.lang.String">
+		<fieldDescription><![CDATA[Nombre del padre, en caso lo conozca]]></fieldDescription>
+	</field>
+	<field name="nombre_madre" class="java.lang.String">
+		<fieldDescription><![CDATA[Nombre de la madre, en caso lo conozca]]></fieldDescription>
+	</field>
+	<field name="nombre_conyuge" class="java.lang.String">
+		<fieldDescription><![CDATA[Nombre de conyuge en caso este acompañado]]></fieldDescription>
+	</field>
+	<field name="nombre_responsable" class="java.lang.String">
+		<fieldDescription><![CDATA[Nombre del responsable del paciente]]></fieldDescription>
+	</field>
+	<field name="direccion_responsable" class="java.lang.String">
+		<fieldDescription><![CDATA[Direccion del responsable]]></fieldDescription>
+	</field>
+	<field name="telefono_responsable" class="java.lang.String">
+		<fieldDescription><![CDATA[Telefono del responsable del paciente en caso existiera]]></fieldDescription>
+	</field>
+	<field name="id_parentesco_responsable" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el parentesco del paciente con el responsable]]></fieldDescription>
+	</field>
+	<field name="id_doc_ide_responsable" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el documento de identidad del responsable]]></fieldDescription>
+	</field>
+	<field name="numero_doc_ide_responsable" class="java.lang.String">
+		<fieldDescription><![CDATA[Número del documento de identidad seleccionado para el responsable]]></fieldDescription>
+	</field>
+	<field name="nombre_proporciono_datos" class="java.lang.String">
+		<fieldDescription><![CDATA[Persona que proporciono los datos del paciente]]></fieldDescription>
+	</field>
+	<field name="id_doc_ide_proporciono_datos" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el documento de identidad del que proporciono datos]]></fieldDescription>
+	</field>
+	<field name="numero_doc_ide_propor_datos" class="java.lang.String">
+		<fieldDescription><![CDATA[Número del documento de identidad seleccionado para el proporciono datos]]></fieldDescription>
+	</field>
+	<field name="observacion" class="java.lang.String"/>
+	<field name="conocido_por" class="java.lang.String">
+		<fieldDescription><![CDATA[Campo que representa la forma en que es conocido el paciente]]></fieldDescription>
+	</field>
+	<field name="id_siff" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Id de la ficha familiar. Proviene del sistema de ficha familiar]]></fieldDescription>
+	</field>
+	<field name="estado" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Nombre del estado de la cita]]></fieldDescription>
+	</field>
+	<field name="dispensarizacion_individual" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Grupo dispensarial en que se ubica en la ficha familiar: 1: Aparentemente sano; 2:Riesgo; 3: Enfermo; 4:Con discapacidad o secuela]]></fieldDescription>
+	</field>
+	<field name="id_paciente_inicial" class="java.lang.Long"/>
+	<field name="id_nacionalidad" class="java.lang.Integer"/>
+	<field name="id_sexo" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Sexo al que aplica el Formulario.]]></fieldDescription>
+	</field>
+	<field name="id_parentesco_propor_datos" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el parentesco del paciente con la persona que proporionó los datos]]></fieldDescription>
+	</field>
+	<field name="fecha_registro" class="java.sql.Timestamp">
+		<fieldDescription><![CDATA[Fecha en que fue creado el registro del paciente]]></fieldDescription>
+	</field>
+	<field name="id_user" class="java.lang.Integer"/>
+	<field name="id_user_mod" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Foránea que representa el usuario que ha realizado la última modificación a los datos del paciente]]></fieldDescription>
+	</field>
+	<field name="fecha_mod" class="java.sql.Timestamp">
+		<fieldDescription><![CDATA[Fecha de última modificación de datos de paciente
+]]></fieldDescription>
+	</field>
+	<field name="id_condicion_persona" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Condicion del Paciente a la que aplica el Formulario.]]></fieldDescription>
+	</field>
+	<field name="id_grupo_dispensarial" class="java.lang.Integer"/>
+	<field name="nombre" class="java.lang.String">
+		<fieldDescription><![CDATA[Almacena el nombre de los diferentes ámbitos de violencia]]></fieldDescription>
+	</field>
+	<field name="apellido" class="java.lang.String">
+		<fieldDescription><![CDATA[Apellidos del Empleado]]></fieldDescription>
+	</field>
+	<field name="dui" class="java.lang.String">
+		<fieldDescription><![CDATA[DUI del empleado]]></fieldDescription>
+	</field>
+	<field name="numero_junta_vigilancia" class="java.lang.String">
+		<fieldDescription><![CDATA[Numero de junta de vigilancia en caso de que sea medico]]></fieldDescription>
+	</field>
+	<field name="numero_celular" class="java.lang.String">
+		<fieldDescription><![CDATA[Telefono celular de contacto]]></fieldDescription>
+	</field>
+	<field name="correo_electronico" class="java.lang.String">
+		<fieldDescription><![CDATA[Correo electronico]]></fieldDescription>
+	</field>
+	<field name="correlativo" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Correlativo de digitacion]]></fieldDescription>
+	</field>
+	<field name="id_cargo_empleado" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Cargo del empleado para el modulo de laboratorio]]></fieldDescription>
+	</field>
+	<field name="codigo_farmacia" class="java.lang.String">
+		<fieldDescription><![CDATA[Codigo de farmacia para la digitacion.]]></fieldDescription>
+	</field>
+	<field name="habilitado_farmacia" class="java.lang.String">
+		<fieldDescription><![CDATA[Si esta habilitado en farmacia]]></fieldDescription>
+	</field>
+	<field name="firma_digital" class="java.lang.String">
+		<fieldDescription><![CDATA[Campo para setearle el hash de la firma digital del empleado]]></fieldDescription>
+	</field>
+	<field name="id_tipo_empleado" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Almacena el tipo de empleado de la persona para el SIAP]]></fieldDescription>
+	</field>
+	<field name="idusuariomod" class="java.lang.Integer"/>
+	<field name="fechahoramod" class="java.sql.Timestamp"/>
+	<field name="nombreempleado" class="java.lang.String">
+		<fieldDescription><![CDATA[Nombre Unido para los modulos de PHP Puro y POstgresql]]></fieldDescription>
+	</field>
+	<field name="idarea" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Id del área de laboratorio]]></fieldDescription>
+	</field>
+	<field name="id_establecimiento_externo" class="java.lang.Integer">
+		<fieldDescription><![CDATA[ID para empleados externos al establecimiento, se usa para el modulo de laboratorio]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="22" splitType="Stretch">
+			<staticText>
+				<reportElement x="242" y="0" width="100" height="12" uuid="8666bf37-3b45-4bcb-87bc-ec8e1a49c303"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[República de El Salvador]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="199" y="12" width="186" height="10" uuid="ca5445ed-3179-444d-ab89-d43006de8f83"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[SISTEMA NACIONAL DE SALUD]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="12">
+			<staticText>
+				<reportElement mode="Transparent" x="7" y="0" width="569" height="12" uuid="fb83f1bf-898f-4a2b-ae14-213a0b5d1107"/>
+				<box bottomPadding="0">
+					<bottomPen lineWidth="2.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[FORMULARIOS PARA SOLICITUD DE EXAMEN POR ENFERMEDAD OBJETO DE VIGILANCIA SANITARIA (VIGEPES-02)]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<pageFooter>
+		<band height="54" splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>

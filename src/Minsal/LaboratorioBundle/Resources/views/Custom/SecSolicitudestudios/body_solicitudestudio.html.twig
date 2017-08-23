@@ -1,0 +1,60 @@
+{% if params.solicitudEstudio.setFalseHistoryId is defined %}
+    {% if params.solicitudEstudio.setFalseHistoryId %}
+        {% set history = params.solicitudEstudio.falseHistory %}
+    {% else %}
+        {% set history = object %}
+    {% endif %}
+{% else %}
+    {% set history = object %}
+{% endif %}
+{% if params.solicitudEstudio.laboratorio|length > 0 %}
+<div class="panel panel-info">
+    <div class="panel-heading"><b>Solicitud de Estudio de Laboratorio</b>
+    {% if params.solicitudEstudio.laboratorio|length > 0 %}
+        {% if impresion is not defined %}
+            {% set impresion = false %}
+        {% endif %}
+        {% if impresion == false %}
+            <a href="{{ url('admin_minsal_laboratorio_secsolicitudestudios_show', { 'id': history.getId() , 'idEstablecimiento': history.getIdEstablecimiento().getId(), 'external' : 'true' }) }}" target="_blank" class="pull-right" data-toggle="tooltip" data-placement="top" title="Ver Resultados de Examenes"><span class="fa fa-search-plus"></span> <strong>Ver Resultados</strong></a>
+            <a href="{{ url('admin_minsal_laboratorio_secsolicitudestudios_imprimir_solicitudestudios', { 'idHistorialClinico': history.getId() }) }}" target="_blank" class="pull-right" data-toggle="tooltip" data-placement="top" title="Imprimir Solicitud Estudio" style="margin-right: 15px;"><span class="fa fa-print"></span> <strong>Imprimir</strong></a>
+        {% endif %}
+    {% endif %}
+    </div>
+    <div class="table-responsive" style="overflow-x: auto;">
+        {% if params.solicitudEstudio.laboratorio|length > 0 %}
+        <table class="{% if impresion != true %} table table-hover {% endif %} table-bordered" {% if impresion == true %}style="font-size: 12px;"{% endif %}>
+            <tbody>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Nombre del Examen</th>
+                    <th>Tipo de Muestra</th>
+                    <th>Origen</th>
+                    <th>Indicacion</th>
+                    <th>Urgente</th>
+                </tr>
+                {% for exam in params.solicitudEstudio.laboratorio %}
+                <tr>
+                    <td>{{ exam.codigoexamen }}</td>
+                    <td>{{ exam.nombreexamen }}</td>
+                    <td>{{ exam.nombremuestra ? exam.nombremuestra : '-'}}</td>
+                    <td>{{ exam.nombreorigenmuestra ? exam.nombreorigenmuestra : '-'}}</td>
+                    <td>{{ exam.indicacion }}</td>
+                    <td>
+                        {% if exam.urgente is sameas('true') and exam.idtiposolicitud == 1 %}
+                        Si
+                        {% else %}
+                        No
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="panel-body" style="padding:8px;">
+            <p class="text-muted">No hay registros para mostrar.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

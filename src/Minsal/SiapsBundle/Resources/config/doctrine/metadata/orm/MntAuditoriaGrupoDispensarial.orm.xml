@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntAuditoriaGrupoDispensarial" table="mnt_auditoria_grupo_dispensarial">
+    <indexes>
+      <index name="IDX_62D934794158AF49" columns="id_grupo_dispensarial_anterior"/>
+      <index name="IDX_62D93479961045CB" columns="id_paciente"/>
+      <index name="IDX_62D93479B7A94012" columns="id_usuario_cambio"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="fechaHoraCambio" type="datetime" column="fecha_hora_cambio" nullable="false"/>
+    <field name="idHistorialClinico" type="integer" column="id_historial_clinico" nullable="true"/>
+    <many-to-one field="idUsuarioCambio" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="id_usuario_cambio" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idPaciente" target-entity="MntPaciente">
+      <join-columns>
+        <join-column name="id_paciente" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idGrupoDispensarialAnterior" target-entity="CtlGrupoDispensarial">
+      <join-columns>
+        <join-column name="id_grupo_dispensarial_anterior" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,414 @@
+{# src/Minsal/SeguimientoBundle/Resource/views/SecIngreso/edit.html.twig #}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalseguimiento/css/SecIngreso/edit.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+    {{parent()}}
+    <script type="text/javascript">
+    $(document).ready(function() {
+        {% if app.session.get("validate_ingreso_hospitalario")==false %}
+            $('select[id$="_idModalidadIngreso"]').prepend('<option/>').val(function() {
+                return $('[selected]', this).val();
+            });
+
+            $('select[id$="_idModalidadIngreso"]').select2({
+                placeholder: 'Seleccione la modalidad del ingreso...',
+                allowClear: true,
+                width: '100%'
+            });
+        {% endif %}
+
+        $('select[id$="_idEstablecimientoReferencia"]').select2({
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+
+
+        $('select[id$="_idProcedenciaIngreso"]').prepend('<option/>').val(function() {
+            return $('[selected]', this).val();
+        });
+
+        $('select[id$="_idProcedenciaIngreso"]').select2({
+            placeholder: 'Seleccione la procedencia del ingreso...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('select[id$="_idCircunstanciaIngreso"]').prepend('<option/>').val(function() {
+            return $('[selected]', this).val();
+        });
+        $('select[id$="_idCircunstanciaIngreso"]').select2({
+            placeholder: 'Seleccione la circunstancia del ingreso...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('select[id$="_idAtenAreaModEstab"]').prepend('<option/>').val(function() {
+            return $('[selected]', this).val();
+        });
+        $('select[id$="_idAtenAreaModEstab"]').select2({
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('select[id$="_hora_hour"]').prepend('<option/>').val(function() {
+            return $('[selected]', this).val();
+        });
+        $('select[id$="_hora_hour"]').select2({
+            placeholder: 'Hora...',
+            allowClear: true
+        });
+
+        $('select[id$="_hora_minute"]').prepend('<option/>').val(function() {
+            return $('[selected]', this).val();
+        });
+        $('select[id$="_hora_minute"]').select2({
+            placeholder: 'Minutos...',
+            allowClear: true
+        });
+
+        $('select[id$="_idAmbienteIngreso"]').select2({
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('select[id$="_idTipoAccidente"]').select2({
+            placeholder: 'Seleccione si existiera...',
+            allowClear: true,
+            width: '100%'
+
+        });
+
+        $('select[id$="_idEmpleado"]').select2({
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        /*COLOCAR LOS DATEPICKER Y LOS IMPUT MASK A LOS CAMPOS DE FECHA*/
+
+        if ($('input[id$="_fecha"]').val() == '')
+            $('input[id$="_fecha"]').mask("99/99/9999").datepicker("setDate", "0");
+        else
+            $('input[id$="_fecha"]').mask("99/99/9999");
+        $('input[id$="_fechaProbableParto"]').datepicker({
+            minDate: "-0m",
+            maxDate: "+9m"
+        }).mask("99/99/9999");
+
+
+
+        /*OCULTAR LO RELACIONADO A LO OBSTETRICO*/
+        $('div[id$="_embarazada"]').hide();
+        $('div[id$="_fechaProbableParto"]').hide();
+        $('div[id$="_semanasAmenorrea"]').hide();
+
+        /*VALIDAR SI ES MUJER Y SI ESTA EMBARAZADA*/
+        if ($("#sexo").val() == 2 && $("#embarazo").val() == '1')
+            $('div[id$="_embarazada"]').show();
+
+        /*AL DAR CLIC EN EMBARAZADA */
+        //$('input:checkbox[name*="embarazada"]').click(function() {
+        //if (
+
+        if ($('input:checkbox[name*="embarazada"]').prop('checked')) {
+            $('div[id$="_fechaProbableParto"]').show();
+            $('div[id$="_semanasAmenorrea"]').show();
+        } else {
+            $('div[id$="_fechaProbableParto"]').hide();
+            $('div[id$="_semanasAmenorrea"]').hide();
+        }
+        $('input:checkbox[name*="embarazada"]').on('ifChecked', function(event) {
+            $('div[id$="_fechaProbableParto"]').show();
+            $('div[id$="_semanasAmenorrea"]').show();
+        });
+
+        $('input:checkbox[name*="embarazada"]').on('ifUnchecked', function(event) {
+            $('div[id$="_fechaProbableParto"]').hide();
+            $('div[id$="_semanasAmenorrea"]').hide();
+            $('input[id$="_fechaProbableParto"]').val('');
+            $('input[id$="_semanasAmenorrea"]').val('');
+        });
+        //});
+        $('select[id$="_idAtenAreaModEstab"]').on("change", function(e) {
+            $('select[id$="idAmbienteIngreso"]').children().remove();
+
+            $('select[id$="idAmbienteIngreso"]').prepend('<option/>').val(function() {
+                return $('[selected]', this).val();
+            });
+            $('select[id$="idAmbienteIngreso"]').select2({
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                width: '100%'
+            });
+
+            if (e.val) {
+                $.getJSON(Routing.generate('get_servicios_hospitalarios') + '?idAtenAreaModEstab=' + e.val, function(data) {
+                    $.each(data.especialidades, function(indice, aux) {
+                        if (aux.nombreAmbiente != "") {
+                            $('select[id$="idAmbienteIngreso"]').append($('<option>', {value: aux.id, text: aux.nombreAmbiente}));
+                        }
+                    });
+
+                    $('select[id$="idAmbienteIngreso"]').append($('<option>', {value: 'n', text: '-------------------', disabled: true}));
+                    $.getJSON(Routing.generate('get_servicios_hospitalarios_otros') + '?idAtenAreaModEstab=' + e.val, function(data) {
+                        $.each(data.especialidades, function(indice, aux) {
+                            if (aux.nombreAmbiente != "") {
+                                $('select[id$="idAmbienteIngreso"]').append($('<option>', {value: aux.id, text: aux.nombreAmbiente}));
+                            }
+                        });
+                    });
+                    $('select[id$="idAmbienteIngreso"]').select2('readonly', false);
+                });
+            } else {
+                $('select[id$="idAmbienteIngreso"]').select2('readonly', true);
+            }
+        });
+
+        /*CARGAR LAS ESPECIALIDADES DE HOSPITALIZACION*/
+
+        if ($('select[id$="_idAtenAreaModEstab"]').select2('val') == '') {
+            $.getJSON(Routing.generate('get_especialidad_ingresos'),
+                    function(data) {
+                        $('select[id$="_idAtenAreaModEstab"]').children().remove();
+                        $('select[id$="_idAtenAreaModEstab"]').append('<option></option>');
+                        $.each(data.especialidades, function(indice, aux) {
+                            $('select[id$="_idAtenAreaModEstab"]').append($('<option>', {value: aux.id, text: aux.nombre}));
+                        });
+                        $('select[id$="_idAtenAreaModEstab"]').select2('readonly', false);
+                        $('select[id$="_idProcedenciaIngreso"]').focus();
+                    });
+        } else {
+
+            $.getJSON(Routing.generate('get_especialidad_ingresos'),
+                    function(data) {
+                        var aux2 = $('select[id$="_idAtenAreaModEstab"]').select2('val');
+                        $('select[id$="_idAtenAreaModEstab"]').children().remove();
+                        $('select[id$="_idAtenAreaModEstab"]').append('<option></option>');
+                        $.each(data.especialidades, function(indice, aux) {
+                            $('select[id$="_idAtenAreaModEstab"]').append($('<option>', {value: aux.id, text: aux.nombre}));
+                        });
+                        $('select[id$="_idAtenAreaModEstab"]').select2('val', aux2);
+                        $('select[id$="_idAtenAreaModEstab"]').select2('readonly', false);
+                        $('select[id$="_idProcedenciaIngreso"]').focus();
+                    });
+        }
+
+        if ($('select[id$="_idAtenAreaModEstab"]').select2('val') != '') {
+            var aux2 = $('select[id$="idAmbienteIngreso"]').select2('val');
+
+            $('select[id$="_idAmbienteIngreso"]').children().remove();
+            $('select[id$="_idAmbienteIngreso"]').prepend('<option/>').val(function() {
+                return $('[selected]', this).val();
+            });
+            $('select[id$="_idAmbienteIngreso"]').select2({
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                width: '100%'
+            });
+            var especialidad = $('select[id$="_idAtenAreaModEstab"]').select2('val');
+            $.getJSON(Routing.generate('get_servicios_hospitalarios') + '?idAtenAreaModEstab=' + especialidad, function(data) {
+                $.each(data.especialidades, function(indice, aux) {
+                    if (aux.nombreAmbiente != "") {
+                        $('select[id$="idAmbienteIngreso"]').append($('<option>', {value: aux.id, text: aux.nombreAmbiente}));
+                    }
+                });
+
+                $('select[id$="idAmbienteIngreso"]').append($('<option>', {value: 'n', text: '-------------------', disabled: true}));
+                $.getJSON(Routing.generate('get_servicios_hospitalarios_otros') + '?idAtenAreaModEstab=' + especialidad, function(data) {
+                    $.each(data.especialidades, function(indice, aux) {
+                        if (aux.nombreAmbiente != "") {
+                            $('select[id$="idAmbienteIngreso"]').append($('<option>', {value: aux.id, text: aux.nombreAmbiente}));
+                        }
+                    });
+                });
+                $('select[id$="idAmbienteIngreso"]').select2('readonly', false);
+                $('select[id$="idAmbienteIngreso"]').select2('val', aux2);
+            });
+        } else {
+            $('select[id$="idAmbienteIngreso"]').children().remove();
+
+            $('select[id$="idAmbienteIngreso"]').prepend('<option/>').val(function() {
+                return $('[selected]', this).val();
+            });
+            $('select[id$="idAmbienteIngreso"]').select2({
+                placeholder: 'Seleccionar...',
+                allowClear: true
+            });
+
+            $('select[id$="idAmbienteIngreso"]').select2('readonly', true);
+        }
+        /*COLOCAR HORA ACTUAL DEL SISTEMA*/
+        if ($('select[id$="_hora_hour"]').select2('val') == '') {
+            var dia = new Date();
+            $('select[id$="_hora_hour"]').select2('val',dia.getHours());
+            $('select[id$="_hora_minute"]').select2('val',dia.getMinutes());
+        }
+    });
+
+    </script>
+{% endblock %}
+
+
+
+{% block form %}
+    {{ sonata_block_render_event('sonata.admin.edit.form.top', { 'admin': admin, 'object': object }) }}
+
+    {% set url = admin.id(object) is not null ? 'edit' : 'create' %}
+
+    {% if not admin.hasRoute(url)%}
+        <div>
+            {{ "form_not_available"|trans({}, "SonataAdminBundle") }}
+        </div>
+    {% else %}
+        {% include 'MinsalSiapsBundle:MntPacienteAdmin:identificacion_paciente.html.twig' %}
+
+        {% if admin.hasroute('list') and admin.isGranted('LIST')%}
+            <a style="position:relative;float:right;margin-bottom:20px;" class="btn btn-info" href="{{ path('admin_minsal_siaps_mntpaciente_list') }}">
+                <span class="glyphicon glyphicon-list"></span> Buscar Otro Paciente
+            </a>
+        {% endif %}
+
+        <input id="sexo" type="hidden" value="{{ datos.getIdSexo().getId() }}"/>
+        <input id="embarazo" type="hidden" value="{{ embarazo }}"/>
+
+        <form
+            id="form_ingreso"
+            {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+            role="form"
+            action="{{ admin.generateUrl(url, {'id_paciente':datos.getId,'id': admin.id(object), 'uniqid': admin.uniqid, 'subclass': app.request.get('subclass')}) }}" {{ form_enctype(form) }}
+            method="POST"
+            {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+            >
+
+            {% block sonata_pre_fieldsets %}
+                <div class="row">
+                {% endblock %}
+
+                {% block sonata_tab_content %}
+                    {% for name, form_group in admin.formgroups %}
+                        <div class="{{ form_group.class|default('col-md-12') }}">
+                            <div class="box box-success">
+                                <div class="box-header">
+                                    <h4 class="box-title">
+
+                                    </h4>
+                                    <br />
+
+                                    {% block notice %}
+                                        {% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+                                    {% endblock notice %}
+                                    {% if form.vars.errors|length > 0 %}
+                                        <div class="alert alert-danger alert-dismissable">
+                                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                                            {{ form_errors(form) }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="box-body">
+                                    <div class="sonata-ba-collapsed-fields">
+                                        {% if form_group.description != false %}
+                                            <p>{{ form_group.description|raw }}</p>
+                                        {% endif %}
+                                        <center>
+                                            <table class="dat_ingreso">
+                                                <tr class="dat_ingreso_sec">
+                                                    <td colspan="4">EN CASO DE REFERENCIA</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%' colspan="4">{{form_row(form[form_group.fields.idEstablecimientoReferencia])}}</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%' colspan="4">{{form_row(form[form_group.fields.motivoReferencia])}}</td>
+                                                </tr>
+                                                <!-- BLOQUE DE INGRESO -->
+                                                <tr class="dat_ingreso_sec">
+                                                    <td colspan="4">DATOS DE INGRESO</td>
+                                                </tr>
+                                                {% if app.session.get("validate_ingreso_hospitalario")==false %}
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.idModalidadIngreso])}}</td>
+
+                                                </tr>
+                                                {% endif %}
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.idProcedenciaIngreso])}}</td>
+                                                    <td >{{form_row(form[form_group.fields.idCircunstanciaIngreso])}}</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.fecha])}}</td>
+                                                    <td >{{form_row(form[form_group.fields.hora])}}</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.idAtenAreaModEstab])}}</td>
+                                                    <td >{{form_row(form[form_group.fields.idAmbienteIngreso])}}</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.embarazada])}}</td>
+                                                    <td ></td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.semanasAmenorrea])}}</td>
+                                                    <td >{{form_row(form[form_group.fields.fechaProbableParto])}}</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%' colspan=4>{{form_row(form[form_group.fields.diagnostico])}}</td>
+
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.idTipoAccidente])}}</td>
+                                                    <td >{{form_row(form[form_group.fields.idEmpleado])}}</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'>{{form_row(form[form_group.fields.tarjetasEntregadas])}}</td>
+                                                    <td >{{form_row(form[form_group.fields.responsableTarjeta])}}</td>
+                                                </tr>
+                                                <tr class="dat_ingreso_content">
+                                                    <td width='50%'><div class="control-group">
+                                                            <label class=" control-label">Responsable de elaborar el ingreso en ESDOMED:</label>
+                                                            <div class="controls sonata-ba-field sonata-ba-field-standard-natural ">
+                                                                <strong>{{ app.user.firstname ~  app.user.lastname}}</strong>
+                                                            </div>
+                                                    </td>
+                                                    <td >
+                                                        <div class="control-group">
+                                                            <label class=" control-label"> Fecha y hora de elaboración: </label>
+                                                            <div class="controls sonata-ba-field sonata-ba-field-standard-natural ">
+                                                                <strong>{{ "now"|date("d-M-Y H:i") }}</strong>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </center>
+                                    </div>
+                                </div>
+                                {#</div>#}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endblock %}
+
+                {% block sonata_post_fieldsets %}
+                </div>
+            {% endblock %}
+
+            {{ form_rest(form) }}
+
+            {% block formactions %}
+                <div class="well well-small form-actions">
+                    <input type="submit" class="btn btn-primary" name="btn_create_and_list" value="Guardar"/>
+                </div>
+            {% endblock formactions %}
+        </form>
+    {% endif %}
+{% endblock %}

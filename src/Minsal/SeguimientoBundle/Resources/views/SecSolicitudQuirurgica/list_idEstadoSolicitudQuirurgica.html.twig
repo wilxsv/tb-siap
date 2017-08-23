@@ -1,0 +1,9 @@
+{% extends 'SonataAdminBundle:CRUD:base_list_field.html.twig' %}
+{% set idEstadoSolicitudQuirurgica = object.getIdEstadoSolicitudQuirurgica() ? object.getIdEstadoSolicitudQuirurgica().getId() : null %}
+{% set backgroundColor = idEstadoSolicitudQuirurgica != null ? ( idEstadoSolicitudQuirurgica == 4 ? 'bg-red' : ( idEstadoSolicitudQuirurgica == 3 ? 'bg-green' : ( idEstadoSolicitudQuirurgica == 2 ? 'bg-yellow' : ( idEstadoSolicitudQuirurgica == 1 ? 'bg-blue' :  'bg-gray' ) ) ) ) : 'bg-gray' %}
+
+{% block field%}
+    <span class="label {{ backgroundColor }}">
+        {{ object.getIdEstadoSolicitudQuirurgica() }}
+    </span>
+{% endblock %}

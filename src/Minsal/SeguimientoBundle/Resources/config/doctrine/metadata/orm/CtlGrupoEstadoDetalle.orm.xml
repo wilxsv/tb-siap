@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="CtlGrupoEstadoDetalle" table="ctl_grupo_estado_detalle">
+    <indexes>
+      <index name="IDX_E4822C2699A3BA8" columns="id_grupo_estado"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="nombre" type="text" column="nombre" nullable="false"/>
+    <field name="descripcion" type="text" column="descripcion" nullable="true"/>
+    <many-to-one field="idGrupoEstado" target-entity="CtlGrupoEstado">
+      <join-columns>
+        <join-column name="id_grupo_estado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

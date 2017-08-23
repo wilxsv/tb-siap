@@ -1,0 +1,7 @@
+{% if admin.hasroute('show') and admin.id(object) and admin.show|length > 0 %}
+<script type="text/javascript">
+pushModalElement('mostrar{{object.id}}_modal', 'abrirModal', {{object.id}},'cargarShow');
+</script>
+    <a class="btn btn-default" href="#myModal" id="mostrar{{object.id}}_modal" custom-modal="true" role="button" data-toggle="modal">
+        <i class="fa fa-eye"></i> Mostrar Referencia</a>
+{% endif %}

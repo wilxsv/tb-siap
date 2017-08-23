@@ -1,0 +1,33 @@
+{% if params.external is defined and params.external is sameas(true) %}
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            var urlComplement = '&external={% if params.external %}true{% else %}false{% endif %}&selectable={% if params.selectable %}true{% else %}false{% endif %}&idExpedienteHclinica={{ params.idExpedienteHclinica }}&idEspecialidadHclinica={{ params.idEspecialidadHclinica }}';
+
+            $( ".sonata-ba-list-field-header a" ).each(function() {
+                $(this).attr('href', $(this).attr('href') + urlComplement);
+            });
+            $( ".sonata-filter-form a" ).each(function() {
+                $(this).attr('href', $(this).attr('href') + urlComplement);
+            });
+
+            $( ".pagination a" ).each(function() {
+                $(this).attr('href', $(this).attr('href') + urlComplement);
+            });
+
+            $( "#{{ admin.uniqid }}_per_page option" ).each(function() {
+               $(this).attr('value', $(this).attr('value') + urlComplement);
+            });
+
+            $( "form" ).prepend(
+                '<input type="hidden" name="external" id="external" value="{% if params.external %}true{% else %}false{% endif %}">' +
+                '<input type="hidden" name="selectable" id="selectable" value="{% if params.selectable %}true{% else %}false{% endif %}">' +
+                '<input type="hidden" name="idExpedienteHclinica" id="idExpedienteHclinica" value="{{ params.idExpedienteHclinica }}">' +
+                '<input type="hidden" name="idEspecialidadHclinica" id="idEspecialidadHclinica" value="{{ params.idEspecialidadHclinica }}">'
+            );
+
+            $( 'a[href$="show"]' ).each(function(){
+                $(this).attr('href', $(this).attr('href') + '?external={% if params.external %}true{% else %}false{% endif %}&idExpedienteHclinica={{ params.idExpedienteHclinica }}&idEspecialidadHclinica={{ params.idEspecialidadHclinica }}');
+            });
+        });
+    </script>
+{% endif %}

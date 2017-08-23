@@ -1,0 +1,1002 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block sonata_header %}
+    {% if params.external == false %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block actions %}
+{% endblock %}
+
+{% block tab_menu %}
+    {% if action is defined %}
+        {{ knp_menu_render(admin.sidemenu(action), {'currentClass' : 'active'}, 'list') }}
+    {% endif %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/minsallaboratorio/css/laboratorio.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+	{{ parent() }}
+    <script type="text/javascript">
+        var count = 0;
+        function getMedicData() {
+            var idEmpleado = "";
+            var nombreEmpleado = "";
+            var idEmpleadoEspecialidadEstab = "";
+            var idHistorialClinico ="";
+            var tipoPacPertenencia ="";
+
+            {% if app.user.getIdEmpleado.getIdTipoEmpleado is defined and app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo is sameas("MED") %}
+                idEmpleado     = '{{ app.user.getIdEmpleado.getId }}';
+                nombreEmpleado = '{{ app.user.getIdEmpleado.getNombreempleado }}';
+                idEmpleadoEspecialidadEstab = '{{ app.session.get("_idEmpEspecialidadEstab") }}';
+            {% else %}
+                {#
+                if($('#idEmpleado').select2('data') != null) {
+                    idEmpleado     = $('#idEmpleado').select2('data').id;
+                    nombreEmpleado = $('#idEmpleado').select2('data').text;
+                }
+
+                if($('#idEmpleadoEspecialidadEstab').select2('data') != null) {
+                    idEmpleadoEspecialidadEstab = $('#idEmpleadoEspecialidadEstab').select2('data').id;
+                } #}
+            {% endif %}
+
+            idHistorialClinico          = '{{ params.SecHistorialClinico.getId() }}';
+            tipoPacPertenencia          = '{{ params.tipoPacPertenencia }}';
+            {% if app.user.hasRole('ROLE_SUPER_ADMIN') or ( app.user.getIdEmpleado.getIdTipoEmpleado is defined and app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo is not sameas("MED") ) %}
+                idEmpleado                  = {% if params.mntEmpleado is defined and params.mntEmpleado is not sameas(null) %}'{{ params.mntEmpleado.getId() }}'{% else %}''{% endif %};
+                nombreEmpleado              = {% if params.mntEmpleado is defined and params.mntEmpleado is not sameas(null) %}'{{ params.mntEmpleado.getNombreempleado() }}'{% else %}''{% endif %};
+                idEmpleadoEspecialidadEstab = {% if params.mntAtenAreaModEstab is defined and params.mntAtenAreaModEstab is not sameas(null) %}'{{ params.mntAtenAreaModEstab.getId() }}'{% else %}''{% endif %}
+            {% endif %}
+
+            return {'idEmpleado': idEmpleado, 'nombreEmpleado': nombreEmpleado, 'idEmpleadoEspecialidadEstab': idEmpleadoEspecialidadEstab, 'idHistorialClinico': idHistorialClinico, 'tipoPacPertenencia': tipoPacPertenencia};
+        }
+    </script>
+	<script type="text/javascript">
+        var arrayBtnsParams = [];
+
+        function pushModalElement(parameters) {
+            modalElmentFound = 0;
+
+            if( typeof parameters === 'object' && Object.keys(parameters).length !== 0 ) {
+                if (modal_elements.length != 0) {
+                    for (var i in modal_elements) {
+                        if (modal_elements[i].id == parameters['id']) {
+                            modalElmentFound = modalElmentFound + 1;
+                        }
+                    }
+                }
+
+                if (modalElmentFound == 0) {
+                    modal_elements.push({
+                        "id"                   : parameters['id'],
+                        "func"                 : parameters['function'],
+                        "header"               : parameters['header'],
+                        "footer"               : parameters['footer'],
+                        "widthModal"           : parameters['width'],
+                        "parameters"           : parameters['parameters'],
+                        "closeBtnName"         : parameters['closeBtnName'],
+                        "afterLoadCallFunction": parameters['afterLoadCallFunction']
+                    });
+                }
+            } else {
+                var title = 'Error al procesar los perfiles';
+                var body = 'Hubo un error al tratar de procesar los perfiles, por favor recargue la pagina nuevamente, si el problema persite contacte con el administrador.';
+                var clase = 'dialog-error';
+
+                showDialogMsg(title, body, clase);
+
+                console.log('Error la variable parameters no es de tipo object o la variable esta vacía.');
+                console.log(typeof parameters);
+                console.log(parameters);
+            }
+
+        }
+
+		jQuery(document).ready(function($) {
+            {#{% if params.external is defined and params.external == false %}
+                $field2 = $('#{{ admin.uniqid }}_numExpNomPac');
+                $field2.select2({
+                    allowClear: true,
+                    placeholder: 'Seleccionar...',
+                    minimumInputLength: 1,
+                    dropdownAutoWidth: true,
+                    ajax: {
+                        url: Routing.generate('citasexpedientepaciente'),
+                        dataType: 'json',
+                        quietMillis: 1000,
+                        data: function(term, page) {
+                            return {
+                                clue: term, //search term
+                                page_limit: 10, // page size
+                                page: page, // page number
+                            };
+                        },
+                        results: function(data, page) {
+                            var more = (page * 10) < data.data2;
+
+                            return {results: data.data1, more: more};
+                        }
+                    }
+                });
+            {% endif %}#}
+
+            /* Declaraciones de variables globales */
+            var uniqueIdPrograms = {'125': {'idPrograma': '125', 'nombrePrograma': 'VIH', 'limit': 1}};
+            var medicData = getMedicData();
+
+            $('#post-data').append(
+                '<input type="hidden" id="idEmpleado" name="idEmpleado" value="' + medicData.idEmpleado + '" />'+
+                '<input type="hidden" id="idEmpleadoEspecialidadEstab" name="idEmpleadoEspecialidadEstab" value="' + medicData.idEmpleadoEspecialidadEstab + '" />'+
+                '<input type="hidden" id="external" name="external" value="{{ params.external }}" />'+
+                '<input type="hidden" id="tipoPacPertenencia" name="tipoPacPertenencia" value="{{ params.tipoPacPertenencia }}" />'+
+                '<input type="hidden" id="idPaciente" name="idPaciente" value="{{ params.paciente.getId() }}" />'+
+                '<input type="hidden" id="idExpediente" name="idExpediente" value="{{ params.expediente.getId() }}" />'+
+                '<input type="hidden" id="numeroExpediente" name="numeroExpediente" value="{{ params.expediente.getNumero() }}" />'+
+                '<input type="hidden" id="idEstablecimiento" name="idEstablecimiento" value="{{ params.idEstablecimiento }}" />'+
+                '<input type="hidden" id="fechaSolicitud" name="fechaSolicitud" value="{{ params.fechaSolicitud }}" />'+
+                '<input type="hidden" id="action" name="action" value="{{ action }}" />'+
+                '<input type="hidden" id="external_modulo" name="external_modulo" value="{{ params.modulo }}" />'+
+                '<input type="hidden" id="idHistorialClinico" name="idHistorialClinico" value="{{ params.SecHistorialClinico.getId() }}" />'
+            );
+
+            $.ajax({
+                url: Routing.generate('get_laboratorio_perfiles'),
+                async: true,
+                dataType: 'json',
+                data: { idSexo: '{{ params.paciente.getIdSexo().getId() }}' },
+                success: function(object) {
+                    $('#perfil-content').empty();
+                    var html       = '';
+                    var parameters = [];
+
+                    parameters['function'] = 'viewPerfilExamn';
+                    parameters['width']    = '750px'
+
+                    if( Object.keys(object).length > 0 ) {
+                        $.each( object, function(idx, val) {
+                            html +=
+                                '<div id="perfil_'+val.id+'" class="perfil-item" id_perfil="'+val.id+'" perfil_nombre="'+val.nombre+'">'+
+                                    val.nombre+
+                                    '<a href="#" id="perfil_add_'+val.id+'" class="pull-right add-item" data-toggle="tooltip" data-placement="top" title="Click para Agregar Examenes del Perfil"><span class="fa fa-plus-circle"></span> Agregar</a>'+
+                                    '<a href="#myModal" id="perfil_view_'+val.id+'_modal" custom-modal="true" role="button" data-toggle="modal" class="pull-right view-item" data-toggle="tooltip" data-placement="top" title="Click para Ver los Examenes del Perfil"><span class="fa fa-eye"></span> Ver Exmámenes</a>'+
+                                '</div>';
+
+                            parameters['id']         = 'perfil_view_'+val.id+'_modal';
+                            parameters['header']     = '<strong>Detalle del Pefil '+val.nombre+'</strong>';
+                            parameters['parameters'] = { 'idPerfil': val.id, 'nombrePerfil': val.nombre };
+
+                            pushModalElement(parameters);
+                        });
+                    } else {
+                        html =
+                            '<div class="alert alert-info" role="alert">'+
+                                '<strong>No se ha econtrado ningún perfil</strong> para mostrar.'+
+                            '</div>';
+                    }
+
+                    $('#perfil-content').append(html);
+                }
+            });
+
+            $.ajax({
+                url: Routing.generate('getsecsollabexamen'),
+                async: true,
+                dataType: 'json',
+                data: { idSexo: '{{ params.paciente.getIdSexo().getId() }}', idHistorialClinico: medicData.idHistorialClinico, idEstablecimiento: '{{ params.idEstablecimiento }}' },
+                success: function(object) {
+
+                    var nav_header = "";
+                    var nav_content = "";
+                    var asignados = [];
+                    var exa_idx = 0;
+
+                    $('#nav-header').empty();
+                    $('#nav-content').empty();
+
+                    $.each(object.data, function(aidx,aval) {
+                        var are_idx = 0;
+
+                        if(exa_idx === 0) {
+                            nav_header = nav_header + '<li class="active">';
+                            nav_content = nav_content + '<div class="tab-pane fade in active" id="pane_'+aval.codigo+'">';
+                        } else {
+                            nav_header = nav_header + '<li>'
+                            nav_content = nav_content + '<div class="tab-pane fade" id="pane_'+aval.codigo+'">';
+                        }
+
+                        nav_header = nav_header + '<a href="#pane_'+aval.codigo+'" role="tab" data-toggle="tab">'+aval.nombre+'</a></li>';
+                        exa_idx++;
+
+                        nav_content = nav_content + '<div style="max-height: 300px;overflow: hidden;overflow-y: auto;overflow-x: auto;">';
+
+                        $.each(object.data[aidx]['examenes'], function(eidx,eval) {
+                            var disponible = '';
+
+                            if(eval.disponible) {
+                                disponible = 'true';
+                            } else {
+                                disponible = 'false';
+                                asignados.push('add_'+aval.id+'_'+eval.id);
+                            }
+
+                            nav_content = nav_content + '\
+                                            <div id="'+aval.id+'_'+eval.id+'" class="examen-item'+ (disponible === "true" ? ' clickable' : ' disabled') + '" dragme="'+disponible+'" id_area="'+aval.id+'" codigo_area="'+aval.codigo+'" nombre_area="'+aval.nombre+'" id_examen="'+eval.id+'" codigo_examen="'+eval.codigo+'" nombre_examen="'+eval.nombre+'"\
+                                            urgente="'+eval.urgente+'" id_programa="'+eval.id_programa+'" id_perfil="'+eval.id_perfil+'">\
+                                                '+eval.nombre+'<span id="add_'+aval.id+'_'+eval.id+'" class="fa fa-plus-circle add-item pull-right mouse-pointer" data-toggle="tooltip" data-placement="top" title="Agregar Examen de Laboratorio"></span>\
+                                            </div>';
+
+                            are_idx++;
+                        });
+
+                        nav_content = nav_content + '</div></div>'
+                    });
+
+                    $('#nav-header').append(nav_header);
+                    $('#nav-content').append(nav_content);
+
+                    $.each(asignados, function(sidx, sval) {
+                        id = sval.replace('add_', '');
+                        $item = $('#add_'+id);
+                        var parameters = [];
+
+                        var detalleSolicitudEstudios = {{ params.detalleSolicitudEstudios|json_encode|raw }}
+
+                        $item.parent().attr('dragme', 'true');
+                        $item.parent().removeClass('disabled');
+
+                        if(id in detalleSolicitudEstudios) {
+                            parameters['idsolicitud']     = detalleSolicitudEstudios[id]['idsolicitudestudio'];
+                            parameters['iddetalle']       = detalleSolicitudEstudios[id]['iddetalle'];
+                            parameters['urgente']         = detalleSolicitudEstudios[id]['urgente'];
+                            parameters['indicacion']      = detalleSolicitudEstudios[id]['indicacion'];
+                            parameters['idtipomuestra']   = detalleSolicitudEstudios[id]['idtipomuestra'];
+                            parameters['idorigenmuestra'] = detalleSolicitudEstudios[id]['idorigenmuestra'];
+                            parameters['idtiposolicitud'] = detalleSolicitudEstudios[id]['idtiposolicitud'];
+                            parameters['id_programa']     = detalleSolicitudEstudios[id]['id_programa'];
+                        }
+
+                        //if(Object.keys(parameters).length > 0) {
+                            addExam($item, parameters);
+                        //}
+                    });
+
+                    $('div[dragme="true"]').draggable({
+                        revert: "invalid",
+                        appendTo: "body",
+                        containment: 'document',
+                        helper: "clone",
+                        cursor: "move"
+                    });
+
+                    $('div[dropme="true"]').droppable({
+                        accept: 'div[dragme="true"]',
+                        activeClass: "ui-state-highlight",
+                        drop: function( event, ui ) {
+                            var parameters = [];
+
+                            currentItem = ui.draggable;
+
+                            if(currentItem.attr('id_programa') in uniqueIdPrograms) {
+                                validateUniqueExam(currentItem, parameters);
+                            } else {
+                                populateTable(currentItem, parameters);
+                            }
+                        }
+                    });
+                }
+            });
+
+            function populateTable (element, parameters) {
+                var num_items = getChildrenNumber('#tbody-pool-examns');
+
+                var id_area = element.attr('id_area');
+                var id_examen = element.attr('id_examen');
+                var origen_selected = '';
+                var muestra_selected = '';
+                var indicacion_cont = '';
+                var urgente_estado = '';
+                var idsolicitud = '';
+                var iddetalle = '';
+
+                if(parameters['idsolicitud'] !== undefined && parameters['idsolicitud'] !== null ) {
+                    idsolicitud = parameters['idsolicitud'];
+                }
+
+                if(parameters['iddetalle'] !== undefined && parameters['iddetalle'] !== null ) {
+                    iddetalle = parameters['iddetalle'];
+                }
+
+                if(parameters['idtipomuestra'] !== undefined && parameters['idtipomuestra'] !== null ) {
+                    muestra_selected = parameters['idtipomuestra'];
+                }
+
+                if(parameters['idorigenmuestra'] !== undefined && parameters['idorigenmuestra'] !== null) {
+                    origen_selected = parameters['idorigenmuestra'];
+                }
+
+                if(parameters['indicacion'] !== undefined && parameters['indicacion'] !== null) {
+                    indicacion_cont = parameters['indicacion'];
+                }
+
+                if(parameters['urgente'] !== undefined && parameters['urgente'] !== null) {
+                    if(parameters['urgente'] === 'false') {
+                        urgente_estado = '';
+                    } else {
+                        urgente_estado = 'checked';
+                    }
+                }
+
+                $.ajax({
+                    url: Routing.generate('gettipomuestraexam'),
+                    async: true,
+                    dataType: 'json',
+                    data: { idExamen: element.attr('id_examen') },
+                    success: function(object) {
+                        var tipo_muestra = "";
+                        var origen = "";
+
+                        if(object.data.length > 0) {
+                            if(num_items > 0 && $('#no-items').length !== 0) {
+                                $('#tbody-pool-examns').empty();
+                            }
+
+                            element.hide();
+
+                            getOrigenMuestra(object.data[0].id_muestra, function(objOrigen) {
+                                if(object.data.length <= 0) {
+                                    tipo_muestra = tipo_muestra + ' - <input type="hidden"  id="muestra_'+element.attr('id')+'" name="muestra_'+element.attr('id')+'" value="" />';
+                                    origen = origen + ' - <input type="hidden"  id="origen_'+element.attr('id')+'" name="origen_'+element.attr('id')+'" value="" />';
+                                } else {
+                                    if(object.data.length === 1) {
+                                        tipo_muestra = tipo_muestra + ''+object.data[0].nombre_muestra+' <input type="hidden"  id="muestra_'+element.attr('id')+'" name="muestra_'+element.attr('id')+'" value="'+object.data[0].id_muestra+'" />';
+                                        if(objOrigen !== undefined) {
+                                            if(objOrigen.length <= 0) {
+                                                origen = origen + ' - <input type="hidden"  id="origen_'+element.attr('id')+'" name="origen_'+element.attr('id')+'" value="" />';
+                                            } else {
+                                                if(objOrigen.length === 1) {
+                                                    origen = origen + objOrigen[0].nombre_origen+' <input type="hidden"  id="origen_'+element.attr('id')+'" name="origen_'+element.attr('id')+'" value="'+objOrigen[0].id_origen+'" />';
+                                                } else {
+                                                    origen = origen + '<select id="origen_'+element.attr('id')+'" name="origen_'+element.attr('id')+'" required="true"><option></option>';
+
+                                                    $.each(objOrigen, function(idx, val) {
+                                                        origen = origen + '<option value="'+val.id_origen+'">'+val.nombre_origen+'</option>';
+                                                    });
+
+                                                    origen = origen + '</select>';
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        tipo_muestra = tipo_muestra + '<select id="muestra_'+element.attr('id')+'" name="muestra_'+element.attr('id')+'" required="true"><option></option>';
+
+                                        $.each(object.data, function(idx, val) {
+                                            tipo_muestra = tipo_muestra + '<option value="'+val.id_muestra+'" '+ (muestra_selected == val.id_muestra ? 'selected' : '') +'>'+val.nombre_muestra+'</option>';
+                                        });
+
+                                        tipo_muestra = tipo_muestra + '</select>';
+
+                                        origen = ' - <input type="hidden"  id="origen_'+element.attr('id')+'" name="origen_'+element.attr('id')+'" value="" />';
+                                    }
+                                }
+
+                                var tbody = '';
+
+                                tbody = tbody + '\
+                                    <tr id="tr_'+element.attr('id')+'">\
+                                        <input type="hidden" id="exam_'+element.attr('id')+'" name="exam_'+count+'" value="'+element.attr('id')+'" id_programa="'+element.attr('id_programa')+'" nombre_examen="'+element.attr('nombre_examen')+'" />\
+                                        <td>'+element.attr('codigo_examen')+'</td>\
+                                        <td>'+element.attr('nombre_examen')+'</td>\
+                                        <td style="width:206px;">'+tipo_muestra+'</td>\
+                                        <td style="width:206px;" id="td_origen_'+element.attr('id')+'" name="origen_'+element.attr('id')+'">'+origen+'</td>\
+                                        <td style="width:250px;">\
+                                            <div class="input-group">\
+                                                <div class="input-group-addon"><span class="fa fa-pencil"></span></div>\
+                                                <input id="indicacion_'+element.attr('id')+'" type="text" name="indicacion_'+element.attr('id')+'" value="'+indicacion_cont+'" class="form-control" />\
+                                            </div>\
+                                        </td>\
+                                        <td style="width: 55px; vertical-align: middle;">';
+
+                                if(element.attr('urgente') === 'true') {
+                                    tbody = tbody + '\
+                                            <div class="onoffswitch">\
+                                                <input type="checkbox" name="urgente_'+element.attr('id')+'" class="onoffswitch-checkbox" id="urgente_'+element.attr('id')+'" '+urgente_estado+'>\
+                                                <label class="onoffswitch-label" for="urgente_'+element.attr('id')+'">\
+                                                    <span class="onoffswitch-inner"></span>\
+                                                    <span class="onoffswitch-switch"></span>\
+                                                </label>\
+                                            </div>';
+                                } else {
+                                    tbody = tbody + ' - '
+                                }
+
+                                tbody = tbody + '\
+                                        </td>\
+                                        <td style="vertical-align: middle;"><span id="trash_'+element.attr('id')+'" class="fa fa-trash-o mouse-pointer" role="trash" idsolicitud="'+idsolicitud+'" iddetalle="'+iddetalle+'"></span></td>\
+                                    </tr>';
+
+                                $('#tbody-pool-examns').append(tbody);
+
+                                $('select[id^="muestra_"]').select2({
+                                    placeholder: "Seleccionar muestra...",
+                                    allowClear: true,
+                                    width: '100%'
+                                });
+
+                                $('select[id^="origen_"]').select2({
+                                    placeholder: "Seleccionar origen...",
+                                    allowClear: true,
+                                    width: '100%'
+                                });
+
+                                var id = id_area + '_' + id_examen;
+                                if($('select[id="muestra_'+id+'"]').length !== 0) {
+                                    $('select[id="muestra_'+id+'"]').select2('val', muestra_selected);
+
+                                    if(parameters['idtipomuestra'] !== undefined && parameters['idtipomuestra'] !== null ) {
+                                        changeOrigenMuestra($('#muestra_'+id), parameters);
+                                    }
+                                }
+
+                                if($('select[id="origen_'+id+'"]').length !== 0) {
+                                    $('select[id="origen_'+id+'"]').select2('val', origen_selected);
+                                }
+
+                                count++;
+                            });
+                        } else {
+                            var title       = 'Tipo de muestra no configurada!';
+                            var dialogClass = 'dialog-error';
+                            var msg         = 'El tipo de muestra del Examen <strong>"'+element.attr('nombre_examen')+'"</strong> no ha sido configurado.<br /><br />'+
+                                              '<strong>Por favor contacte al Jefe/a del Laboratorio Clínico e infórmele que el examen no ha sido configurado con almenos un tipo de muestra</strong>.<br /><br />'+
+                                              'Una vez que el examen haya sido configurado podrá asignar este examen a la solicitud de laboratorio.';
+                            var width       = 500;
+
+                            showDialogMsg(title, msg, dialogClass, '', null, null, width);
+                        }
+                    }
+                });
+            }
+
+            function validateUniqueExam(element, parameters) {
+                $tbody = $('#tbody-pool-examns');
+                var idprograma = element.attr('id_programa');
+                var msj = "";
+                var closeBtnName = null;
+
+                if($('input[id_programa="'+idprograma+'"]').length > 0) {
+                    msj += '<b>No se puede agregar m&aacute;s de '+uniqueIdPrograms[idprograma]['limit'];
+
+                    if(uniqueIdPrograms[idprograma]['limit'] > 1) {
+                        msj += ' examenes ';
+                    } else {
+                        msj += ' examen ';
+                    }
+
+                    msj += '</b> a la solicitud de estudio.<br /><br />';
+
+                    if(uniqueIdPrograms[idprograma]['limit'] > 1) {
+                        msj += 'Los siguientes examenes ya han sido agregados:<br />';
+                    } else {
+                        msj += 'El siguiente examen ya ha sido agreado:<br />';
+                    }
+
+                    msj += '<ul>';
+
+                    $('input[id_programa="'+idprograma+'"]').each(function(idx) {
+                        msj += '<li><b>'+$(this).attr('nombre_examen')+'</b></li>';
+                    });
+
+                    msj += '</ul><br />';
+
+                    if($('input[id_programa="'+idprograma+'"]').length === 1) {
+                        msj += 'Si desea <b>agregar el examen seleccionado y eliminar el examen descrito arriba haga click en el boton Aceptar</b>, sino haga click en el boton Cancelar';
+                        closeBtnName = 'Cancelar';
+                    } else {
+                        msj += 'Por favor elimine un examen antes de poder agregar el examen seleccionado';
+                    }
+                }
+
+                if(msj === '') {
+                    populateTable(element, parameters);
+                } else {
+                    var title = 'Limite excedido';
+                    var dialogClass = 'dialog-warning';
+                    arrayBtnsParams['Aceptar'] = {'element': element, 'parameters': parameters, 'idprograma': idprograma};
+
+                    var arrayBtns = [{
+                                        text: 'Aceptar', click: function() {
+                                            $('input[id_programa="'+arrayBtnsParams['Aceptar']['idprograma']+'"]').each(function(idx) {
+                                                removeExam($(this).attr('id').replace('exam_',''));
+                                            });
+
+                                            arrayBtnsParams['Aceptar']['element'].hide();
+                                            populateTable(arrayBtnsParams['Aceptar']['element'], arrayBtnsParams['Aceptar']['parameters']);
+
+                                            jQuery( this ).dialog( "close" );
+                                        }
+                                    }];
+                    showDialogMsg(title, msj, dialogClass, closeBtnName, arrayBtns);
+                }
+            }
+
+            function getChildrenNumber(Selector) {
+                return $(Selector).children().length;
+            }
+
+            function addExam(element, parameters) {
+                $item = $('#'+element.attr('id').replace('add_',''));
+                var title = '';
+                var body  = '';
+                var clase = '';
+
+                if(element.parent().attr('dragme') === 'true') {
+
+                    if($item.attr('id_programa') in uniqueIdPrograms) {
+                        validateUniqueExam($item, parameters);
+                    } else {
+                        if( $('#tr_'+$item.attr('id')).length === 0 ) {
+                            $item.hide();
+                            populateTable($item, parameters);
+                        }
+                    }
+                } else {
+                    title = 'Examen ya ha sido asignado';
+                    body = 'El examen ya ha sido asignado al paciente y actualmente se encuentra en proceso, motivo por el cual <b>no es posible asignar el examen</b>.';
+                    clase = 'dialog-warning';
+
+                    showDialogMsg(title, body, clase);
+                }
+            }
+
+            function removeExam(id) {
+                if($('#trash_'+id).attr('idsolicitud') !== '' && $('#trash_'+id).attr('iddetalle') !== '') {
+                    deleteDetalle($('#trash_'+id).attr('idsolicitud'), $('#trash_'+id).attr('iddetalle'), id);
+                }
+
+                $('#tr_'+id).remove();
+                $('#'+id).show();
+
+                var num_items = getChildrenNumber('#tbody-pool-examns');
+                if(num_items === 0 && $('#no-items').length === 0) {
+                    $('#tbody-pool-examns').append('<tr><td colspan="7"><span id="no-items" class="disabled-label col-md-12 col-xs-12">No hay ningun examen asignado...</span></td></tr>');
+                }
+
+            }
+
+            function deleteDetalle(idsolicitud, iddetalle, idelement) {
+                $element = $('#exam_'+idelement);
+                var idprograma = '';
+
+                if($element.attr('id_programa') !== undefined  && $element.attr('id_programa') !== '') {
+                    idprograma = $element.attr('id_programa');
+                } else {
+                    idprograma = 'null';
+                }
+
+                $('#remove-data').append('<input type="hidden" id="delete_'+idsolicitud+'_'+iddetalle+'" name="delete_'+idsolicitud+'_'+iddetalle+'" value="'+idsolicitud+'_'+iddetalle+'_'+idprograma+'" />');
+            }
+
+            $('body').on('click', 'span[role="trash"]', function() {
+                var id = $(this).attr('id').replace('trash_','');
+
+                removeExam(id);
+            });
+
+            $('body').on('click','span[id^="add_"]', function () {
+                addExamnEvent($(this));
+            });
+
+            $('body').on('dblclick','.examen-item.clickable', function () {
+                addExamnEvent($('#add_'+$(this).attr('id')));
+            });
+
+            /* Eventos de Perfiles */
+            $('body').on('click','a[id^="perfil_add_"]', function () {
+                var idPerfil = $(this).parent().attr('id_perfil');
+                addExamnPerfilEvent(idPerfil);
+            });
+
+            $('body').on('dblclick','.perfil-item', function () {
+                var idPerfil = $(this).attr('id_perfil');
+
+                addExamnPerfilEvent(idPerfil);
+            });
+            /* Fin de Eventos de Perfiles */
+
+            $('body').on('change', 'select[id^="muestra_"]', function() {
+                var parameters = [];
+
+                changeOrigenMuestra($(this), parameters);
+            });
+
+            function addExamnPerfilEvent(idPerfil) {
+                if(idPerfil !== undefined) {
+                    $('body .examen-item[id_perfil*="'+idPerfil+'"]').each(function() {
+                        if( $.inArray( idPerfil, $(this).attr('id_perfil').replace(/\[/g, '').replace(/\]/g, '').split(',')  ) > -1 ) {
+                            addExamnEvent($('#add_'+$(this).attr('id')));
+                        }
+                    });
+                } else {
+                    var title = 'Error en el Perfil';
+                    var body = 'Hubo un error al tratar de obtener los examenes asociados al perfil seleccionado.<br /><br />Por favor intentelo nuevamente, si el problema persiste por favor contacte con el Administrador del Sistema.';
+                    var clase = 'dialog-error';
+
+                    showDialogMsg(title, body, clase);
+                }
+            }
+
+            function addExamnEvent(element) {
+                var parameters = [];
+
+                if( element.length > 0 ) {
+                    addExam(element, parameters);
+                } else {
+                    var title = 'Error al agregar el examen';
+                    var body = 'Hubo un error al tratar de agregar el examen a la solicitud de laboratorio.<br /><br />Por favor intentelo nuevamente, si el problema persiste por favor contacte con el Administrador del Sistema.';
+                    var clase = 'dialog-error';
+
+                    showDialogMsg(title, body, clase);
+                }
+            }
+
+            function changeOrigenMuestra(muestra, parameters) {
+                var origen = '';
+                var origen_selected = '';
+                var id = muestra.attr('id').replace('muestra_','');
+                var origen_selected = '';
+
+                if(parameters['idorigenmuestra'] !== undefined && parameters['idorigenmuestra'] !== null) {
+                    origen_selected = parameters['idorigenmuestra'];
+                }
+
+                getOrigenMuestra(muestra.select2('val'), function(objOrigen) {
+                    if(muestra.select2('val') !== '') {
+                        if(objOrigen !== undefined) {
+                            if(objOrigen.length <= 0) {
+                                origen = ' - <input type="hidden"  id="origen_'+id+'" name="origen_'+id+'" value="" />';
+                            } else {
+                                if(objOrigen.length === 1) {
+                                    origen = origen + objOrigen.nombre_origen+' <input type="hidden"  id="origen_'+id+'" name="origen_'+id+'" value="'+objOrigen.id_origen+'" />';
+                                } else {
+                                    origen = origen + '<select id="origen_'+id+'" name="origen_'+id+'" required="true"><option></option>';
+
+                                    $.each(objOrigen, function(idx, val) {
+                                        origen = origen + '<option value="'+val.id_origen+'" '+ (origen_selected == val.id_origen ? 'selected' : '') +'>'+val.nombre_origen+'</option>';
+                                    });
+
+                                    origen = origen + '</select>';
+                                }
+                            }
+                        }
+                    } else {
+                        origen = ' - <input type="hidden"  id="origen_'+id+'" name="origen_'+id+'" value="" />';
+                    }
+
+                    $('#td_origen_'+id).empty();
+                    $('#td_origen_'+id).append(origen);
+
+                    $('select[id="origen_'+id+'"]').select2({
+                        placeholder: "Seleccionar origen...",
+                        allowClear: true,
+                        width: '100%'
+                    });
+                });
+            }
+
+            function getOrigenMuestra(idMuestra, funct) {
+                var data = [];
+                $.ajax({
+                    url: Routing.generate('getorigenmuestraexam'),
+                    async: true,
+                    dataType: 'json',
+                    data: { idMuestra: idMuestra },
+                    success: function(object) {
+                        funct(object.data);
+                    }
+                });
+            }
+
+            window.viewPerfilExamn = function(parameters) {
+                var html     = '';
+                var idPerfil = parameters.idPerfil;
+                var count    = 0;
+                var body     = '';
+
+                if(idPerfil !== undefined) {
+                    $('body .examen-item[id_perfil*="'+idPerfil+'"]').each(function() { console.log($(this).attr('id_perfil'));
+                        var perfiles = $(this).attr('id_perfil').replace(/\[/g, '').replace(/\]/g, '');
+                        if( $.inArray( idPerfil, perfiles.split(',')  ) > -1 || parseInt(perfiles) === parseInt(idPerfil) ) {
+                            body +=
+                                '<div class="examen-item">'+
+                                    $(this).attr('nombre_examen')+
+                                '</div>';
+
+                            count++;
+                        }
+                    });
+                    console.log('count: '+count);
+                    if(count === 0) {
+                        html =
+                            '<div class="alert alert-info" role="alert">'+
+                                '<h4><strong>Sin examenes para mostrar.</strong></h4>'+
+                                'Ningún examen ha sido asociado a este perfil, por favor contacte al administrador de laboratorio para que asigne examenes al perfil.'+
+                            '</div>';
+                    } else {
+                        html =
+                            '<p>'+
+                                'A continuación se muestra un <strong>listado con los éxamenes pertenecientes al perfil</strong> seleccionados.'+
+                            '</p>'+
+                            body;
+                    }
+                } else {
+                    html =
+                        '<div class="alert alert-danger" role="alert">'+
+                            '<h3>Error al seleccionar el Perfil</h3>'+
+                            'Hubo un error al tratar de obtener los examenes asociados al perfil seleccionado.<br /><br />Por favor intentelo nuevamente, si el problema persiste por favor contacte con el Administrador del Sistema.'+
+                        '</div>';
+
+                    console.log('Error el id del Perfil es de tipo undefined');
+                }
+
+                return html;
+            }
+
+            $('form').on('submit', function(e) {
+                var num = $('td[id^=td_]').length;
+
+                if(num <= 0) {
+                    e.preventDefault();
+
+                    {% if action is sameas('create') %}
+                        var title = 'Examenes no asignados';
+                        var body = 'Debe de agregar al menos un examen antes de poder generar la solicitud de estudio.';
+                        var clase = 'dialog-error';
+                    {% else %}
+                        var title = 'Examenes no asignados';
+                        var body = 'Debe de agregar al menos un examen antes de poder actualizar la solicitud de estudio.<br />Si no desea agregar examenes, por favor haga clic en el boton <b>Eliminar Solicitud para eliminar la solicitud de estudio de laboratorio</b>.';
+                        var clase = 'dialog-error';
+                    {% endif %}
+
+                    showDialogMsg(title, body, clase);
+                }
+            });
+
+            $('#impresiones').iCheck('destroy');
+
+            {% if action is sameas('edit') %}
+                {% set urldel = url('admin_minsal_laboratorio_secsolicitudestudios_delete', { "id" : params.SecHistorialClinico.getId(), ("_token" ~ tokens.token1): tokens.token2, "idEstablecimiento" : params.idEstablecimiento, 'external': params.external, 'modulo': params.modulo, 'tipoPacPertenencia': params.tipoPacPertenencia, 'fechaSolicitud': params.fechaSolicitud }) %}
+                deleteurl = '{{ urldel }}&idEmpleado='+medicData.idEmpleado+'&idEspecialidad='+medicData.idEmpleadoEspecialidadEstab;
+
+                $('#btn_delete').attr('href', deleteurl.replace(/&amp;/g, '&'));
+            {% endif %}
+
+            $('button[id^="btn_cw"]').on('click', function() {
+                window.close();
+            });
+	    });
+	</script>
+    {% if params.external is defined and params.external == true %}
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                {% if app.request.query.get("createdElement") is defined and app.request.query.get("createdElement") !="" and app.request.query.get("createdElement") is not null %}
+                window.addEventListener("beforeunload", function (e) {
+                    if (window.opener != null && !window.opener.closed) {
+                        try {
+                            window.opener.updateIdSolicitudestudios({{app.request.query.get("createdElement")}});
+                            window.opener.reloadPage();
+                        } catch (err) {
+                            alert(err.description || err); //or console.log or however you debug
+                        }
+                    }
+                });
+                {% else %}
+                    window.opener.updateIdSolicitudestudios(null);
+                {% endif %}
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% set url = 'create' %}
+
+    {% if not admin.hasRoute(url)%}
+        <div>
+            {{ "form_not_available"|trans({}, "SonataAdminBundle") }}
+        </div>
+    {% else %}
+        <form
+              {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+              role="form"
+              action="{{ admin.generateUrl(url) }}" {{ form_enctype(form) }}
+              method="POST"
+              {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+              >
+            {% if form.vars.errors|length > 0 %}
+                <div class="sonata-ba-form-error">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            {% block sonata_pre_fieldsets %}
+                <div class="row">
+            {% endblock %}
+
+            {% block sonata_tab_content %}
+                {#<div class="{{ form_group.class|default('col-md-12') }}">
+                    <div class="box box-success">
+                        <div class="box-header">
+                            <h4 class="box-title">
+                                Datos del Paciente
+                            </h4>
+                        </div>
+                        <div class="box-body">
+                            <div class="sonata-ba-collapsed-fields">
+
+                                <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_numExpNomPac">
+                                    <label class="control-label required" for="{{ admin.uniqid }}_numExpNomPac">
+                                        No. Expediente - Nombre Paciente
+                                    </label>
+                                        {% if params.external is defined and params.external == true %}
+                                            <div class="sonata-ba-field sonata-ba-field-standard-natural">
+                                                <input type="hidden" id="{{ admin.uniqid }}_numExpNomPac" name="{{ admin.uniqid }}_numExpNomPac" value="{{ params.expediente.getId() }}">
+                                                <label style="color:black !important;">
+                                                    {{ params.expediente.getNumero() ~ " - "
+                                                        ~ params.paciente.getPrimerApellido()|default('') ~ " "
+                                                        ~ params.paciente.getSegundoApellido()|default('') ~ " "
+                                                        ~ params.paciente.getTercerApellido()|default('') ~ " "
+                                                        ~ params.paciente.getApellidoCasada()|default('') ~ ", "
+                                                        ~ params.paciente.getPrimerNombre()|default('') ~ " "
+                                                        ~ params.paciente.getSegundoNombre()|default('') ~ " "
+                                                        ~ params.paciente.getTercerNombre()|default('') }}
+                                                </label>
+                                        {% else %}
+                                            <div class="sonata-ba-field sonata-ba-field-standard-natural" style="height: 26px;">
+                                                <input type="hidden" id="{{ admin.uniqid }}_numExpNomPac" name="{{ admin.uniqid }}_numExpNomPac" class="col-md-4 col-sm-12 col-xs-12" style="padding: 0;">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>#}
+                <div id="post-data"></div>
+                <div id="remove-data"></div>
+                <div class="{{ form_group.class|default('col-md-12') }}">
+                    <div class="box box-success">
+                        <div class="box-header">
+                            <h4 class="box-title">
+                                Examenes de Laboratorio
+                            </h4>
+                        </div>
+                        <div class="box-body">
+                            <div class="sonata-ba-collapsed-fields">
+                                <!-- Tab list -->
+                                <ul class="nav nav-tabs" role="tablist">
+                                    <li role="presentation" class="active"><a href="#exam-list" aria-controls="exam-list" role="tab" data-toggle="tab">Examenes</a></li>
+                                    <li role="presentation"><a href="#exam-profile" aria-controls="exam-list" role="tab" data-toggle="tab">Perfiles</a></li>
+                                </ul>
+                                <!-- Tab panes -->
+                                <div class="tab-content" style="padding-top: 15px;">
+                                    <div role="tabpanel" class="tab-pane active" id="exam-list">
+
+                                        <!-- Por listado de Examenes -->
+                                        <div class="row">
+                                            <div class="col-xs-12 col-md-12">
+                                                <table class="nav-tabs-stacked-table">
+                                                    <tr>
+                                                        <td class="col-xs-3 col-md-3 nav-tabs-stacked-content-left">
+                                                            <ul class="nav nav-tabs nav-stacked" role="tablist" id="nav-header">
+                                                            </ul>
+                                                        </td>
+                                                        <td class="col-xs-9 col-md-9 nav-tabs-stacked-content-right">
+                                                            <div class="tab-content" id="nav-content">
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane" id="exam-profile">
+
+                                        <!-- Por Perfiles -->
+                                        <div class="row">
+                                            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                                <p style="margin-bottom: 20px;">
+                                                    A continuación se le muestra un listado de perfiles de exámenes de laboratorio, cada perfil le permitirá
+                                                    agregar a la solicitud de éxamenes de laboratorio clínico el conjunto de pruebas relacionados a dicho perfil.
+                                                    <br /><br />
+                                                    Para agregar los exámenes asociados a un perfil, haga clic sobre el botón de Agregar.<br />
+                                                </p>
+                                                <div id="perfil-content">
+                                                    <div class="alert alert-info" role="alert">
+                                                        <strong>No se ha econtrado ningún perfil</strong> para mostrar.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Resultados -->
+                                <div class="row">
+                                    <div class="col-xs-12 col-md-12">
+                                        <div class="top-boder-length-10"></div>
+                                        <div class="panel panel-primary">
+                                            <div class="panel-heading">
+                                                <h4 style="margin:0; line-height:18px;">Examenes Asignados
+                                                    <div class="onoffswitch inverted pull-right">
+                                                        <input type="checkbox" name="impresiones" class="onoffswitch-checkbox" id="impresiones" {{ params.impresiones }}>
+                                                        <label class="onoffswitch-label" for="impresiones">
+                                                            <span class="onoffswitch-inner"></span>
+                                                            <span class="onoffswitch-switch"></span>
+                                                        </label>
+                                                    </div>
+                                                    <div class="pull-right" style="padding-right: 10px; font-size:15px;"><span class="fa fa-print"></span> Resultados de Examenes Impresos (Pre-Operatorios)</div>
+                                                </h4>
+                                            </div>
+                                            <div id="pull-exams" class="table-responsive" dropme="true">
+                                                <table class="table table-hover" style="min-width:700px;">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Codigo</th>
+                                                            <th>Nombre del Examen</th>
+                                                            <th>Tipo de Muestra</th>
+                                                            <th>Origen</th>
+                                                            <th>Indicacion</th>
+                                                            <th>Urgente</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tbody-pool-examns">
+                                                        <tr>
+                                                            <td colspan="7"><span id="no-items" class="disabled-label col-md-12 col-xs-12">No hay ningun examen asignado...</span></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endblock %}
+
+            {% block sonata_post_fieldsets %}
+                </div>
+            {% endblock %}
+
+            {{ form_widget(form._token) }}
+
+            {% block formactions %}
+                <div class="well well-small form-actions">
+                    {% if action is sameas('create') %}
+                        <button class="btn btn-success" type="submit" name="btn_create"><i class="fa fa-plus-circle"></i> Crear Solicitud</button>
+                        {% if params.external == true %}
+                            <button class="btn btn-default" type="button" id="btn_cw_cancel" name="btn_cancel">Cancelar</button>
+                        {% else %}
+                            <a href="{{ url( 'admin_minsal_laboratorio_secsolicitudestudios_list' ) }}" class="btn btn-primary"><i class="fa fa-list"></i> Volver a la Lista</a>
+                        {% endif %}
+                    {% else %}
+                        <button class="btn btn-primary" type="submit" name="btn_update"><i class="glyphicon glyphicon-floppy-open"></i> Actualizar Solicitud</button>
+                        <a href="#" class="btn btn-danger" id="btn_delete" name="btn_delete"><i class="fa fa-trash-o"></i> Eliminar Solicitud</a>
+                        {% if params.external == true %}
+                            <button class="btn btn-default" type="button" id="btn_cw_close" name="btn_close">Cerrar</button>
+                        {% else %}
+                            <a href="{{ url( 'admin_minsal_laboratorio_secsolicitudestudios_list' ) }}" class="btn btn-primary"><i class="fa fa-list"></i> Volver a la Lista</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            {% endblock formactions %}
+        </form>
+    {% endif %}
+{% endblock %}

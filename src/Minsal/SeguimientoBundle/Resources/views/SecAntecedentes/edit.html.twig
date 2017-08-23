@@ -1,0 +1,105 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+{% block sonata_header %}
+    {% if expediente is defined %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+{% block actions %}
+
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+        var idInputsYearCalc = ['form_i280_s123','form_i293_s123','form_i295_s123','form_i297_s123','form_i299_s123','form_i301_s123',
+                                'form_i303_s123','form_i305_s123','form_i307_s123','form_i309_s123','form_i311_s123','form_i313_s123',
+                                'form_i263_s124','form_i317_s124','form_i320_s124','form_i321_s124',
+                                'form_i280_s86','form_i293_s86','form_i295_s86','form_i297_s86','form_i299_s86','form_i301_s86',
+                                'form_i303_s86','form_i305_s86','form_i307_s86','form_i309_s86','form_i311_s86','form_i313_s86',
+                                'form_i263_s89','form_i317_s89','form_i320_s89','form_i321_s89'
+                                ];
+
+        jQuery(document).ready(function ($) {
+
+            $.each( idInputsYearCalc, function( index, value ){
+                addAuxYearCalc($('#'+value));
+            });
+
+            {% if cerrar is defined %}
+                {% if cerrar  %}
+                        window.close();
+                {% endif %}
+            {% endif %}
+
+            {% if idFormulario == 6 %}
+                $('input[id^="form_i354_"]').on('change', function(){
+                    if( $(this).val() == '0' ){
+                        $('input[id^="form_i355_"]').val('0');
+                        $('input[id^="form_i356_"]').val('0');
+                        $('input[id^="form_i357_"]').val('0');
+                        $('input[id^="form_i358_"]').val('0');
+                    }
+                });
+            {% endif %}
+            
+            {% if idFormulario == 32 %}
+                $('input[id^="form_i656_"]').on('change', function(){
+                    if( $(this).val() == '0' ){
+                        $('input[id^="form_i657_"]').val('0');
+                        $('input[id^="form_i658_"]').val('0');
+                        $('input[id^="form_i659_"]').val('0');
+                        $('input[id^="form_i660_"]').val('0');
+                    }
+                });
+            {% endif %}
+
+
+        });//fin document ready
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {# {{ form_start(form) }} #}
+    {% if expediente is not defined %}
+        <div class="container-fluid">
+            <div class="row">
+                <div class="pull-right">
+                    <button type="button" class="btn btn-info" onclick="window.history.back();"><i class="fa fa-fw fa-arrow-circle-left"></i> Regresar</button>
+                    <button type="button" class="btn btn-default" onclick="window.close();"><i class="fa fa-fw fa-times-circle"></i> &nbsp;Cerrar&nbsp;</button>
+                </div>
+            </div>
+        </div><br/>
+    {% endif %}
+    {% block sonata_tab_content %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-success">
+                    <div class="box-header">
+                        <h4 class="box-title">
+                        </h4>
+                    </div>
+                    <div class="box-body">
+                        {% if expediente is defined %}
+                            {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                            {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                        {% endif %}
+                        <div class="sonata-ba-collapsed-fields">
+                            {{ form(form) }}
+                            {# {{ form(form, { 'attr': { 'class': 'form-horizontal' } }) }} #}
+                            {# {{ form_row(form) }} #}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+
+    {# {{ form_end(form) }}
+    {{ form_rest(form) }} #}
+{% endblock %}

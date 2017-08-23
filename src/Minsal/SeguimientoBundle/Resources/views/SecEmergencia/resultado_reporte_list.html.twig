@@ -1,0 +1,60 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['order']=[[3,"asc"]];
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['bFilter']=false;
+            opcionesTable['sDom']='<"top"flp>rt<"bottom"i>';
+            opcionesTable['aLengthMenu']= [[15,25, 50, 75, -1], [15,25, 50, 75, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+
+            $('#exportar_hoja_calculo').click(function () {
+                url = Routing.generate('total_emergencias',{'report_name':'rpt_resumen_emergencias','report_format':'XLS','datos':$('#pacientesEmergencia').serialize()});
+                window.open(url, '_blank');
+                return false;
+            });
+            $('#exportar_pdf').click(function () {
+                url = Routing.generate('total_emergencias',{'report_name':'rpt_resumen_emergencias','report_format':'PDF','datos':$('#pacientesEmergencia').serialize()});
+                window.open(url, '_blank');
+                return false;
+            });
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+  <div class="col-md-offset-3 col-md-5">
+    <h3 class="text-center">Listado de Emergencias</h3>
+  </div>
+  <div class='col-md-2'>
+      <form id='reporteExpedientesForm' >
+          <label>Exportar a:
+              <a id="exportar_hoja_calculo" class="img_export_inf" href=""><img src={{ asset('bundles/minsalsiaps/imagenes/calc_icon.png') }} /></a>
+              <a id="exportar_pdf" class="img_export_inf" href=""><img src={{ asset('bundles/minsalsiaps/imagenes/pdf_icon.png') }} /></a>
+          </label>
+      </form>
+  </div>
+</div>
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>NEC</th>
+            <th>Nombre Completo Paciente</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Fecha de la Urgencia</th>
+            <th>Número de la Urgencia</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for paciente in pacientes %}
+            <tr>
+              <td >{{ paciente['numero'] }}</td>
+              <td>{{ paciente['primer_apellido']~' '~paciente['segundo_apellido']~' '~paciente['apellido_casada']~','~paciente['primer_nombre']~' '~paciente['segundo_nombre']~' '~paciente['tercer_nombre'] }}</td>
+              <td>{{ paciente['fecha_nacimiento']|date('d/m/Y')}}</td>
+              <td>{{ paciente['fecha_emergencia']}}</td>
+              <td>{{ paciente['numero_emergencia']}}</td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>

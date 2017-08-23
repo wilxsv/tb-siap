@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecOtrasObservaciones" table="sec_otras_observaciones">
+    <indexes>
+      <index name="IDX_DF9D7FDD31827296" columns="id_historial_clinico"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="indicacionObservacion" type="text" column="indicacion_observacion" nullable="true"/>
+    <field name="consejeria" type="text" column="consejeria" nullable="true"/>
+    <field name="examenGabinete" type="text" column="examen_gabinete" nullable="true"/>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

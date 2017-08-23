@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntAreamedicina" table="mnt_areamedicina">
+    <indexes>
+      <index name="IDX_FDD2A77C45BCCC8" columns="idarea"/>
+      <index name="IDX_FDD2A77CF58EA699" columns="idmedicina"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="dispensada" type="integer" column="dispensada" nullable="true"/>
+    <field name="idestablecimiento" type="integer" column="idestablecimiento" nullable="false"/>
+    <field name="idmodalidad" type="integer" column="idmodalidad" nullable="false"/>
+    <many-to-one field="idmedicina" target-entity="FarmCatalogoproductos">
+      <join-columns>
+        <join-column name="idmedicina" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idarea" target-entity="MntAreafarmacia">
+      <join-columns>
+        <join-column name="idarea" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:tns="urn:interfaceliswebservice"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/"
+                  xmlns:soap14="http://schemas.xmlsoap.org/wsdl/soap14/"
+                  name="interfacelis"
+                  targetNamespace="urn:interfaceliswebservice">
+
+    <types>
+        <xsd:schema targetNamespace="urn:interfacelis">
+            <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+            <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/"/>
+        </xsd:schema>
+    </types>
+
+    <portType name="interfacelisPortType">
+        <operation name="acceptMessage" >
+            <input message="tns:acceptMessageRequest"/>
+            <output message="tns:acceptMessageResponse"/>
+        </operation>
+        <operation name="checkin" >
+            <input message="tns:checkinRequest"/>
+            <output message="tns:checkinResponse"/>
+        </operation>
+        <operation name="checkout" >
+            <input message="tns:checkoutRequest"/>
+            <output message="tns:checkoutResponse"/>
+        </operation>
+        <operation name="generarMensajeSolicitud" >
+            <input message="tns:generarMensajeSolicitudRequest"/>
+            <output message="tns:generarMensajeSolicitudResponse"/>
+        </operation>
+    </portType>
+    <binding name="interfacelisBinding" type="tns:interfacelisPortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="acceptMessage">
+            <soap:operation soapAction="urn:interfacelis#acceptMessage"/>
+            <input>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+            </input>
+            <output>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+            </output>
+        </operation>
+        <operation name="checkin">
+            <soap:operation soapAction="urn:interfacelis#checkin"/>
+            <input>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+            </input>
+            <output>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+            </output>
+        </operation>
+        <operation name="checkout">
+            <soap:operation soapAction="urn:interfacelis#checkout"/>
+            <input>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+            </input>
+            <output>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+            </output>
+        </operation>
+        <operation name="generarMensajeSolicitud">
+            <soap:operation soapAction="urn:interfacelis#generarMensajeSolicitud"/>
+            <input>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+            </input>
+            <output>
+                <soap:body use="literal" namespace="urn:interfacelis" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" parts="return"/>
+            </output>
+        </operation>
+    </binding>
+    <service name="interfacelis">
+        <port name="interfacelisPort" binding="tns:interfacelisBinding">
+            <soap:address location="urn:interfaceliswebservice"/>
+        </port>
+    </service>
+    <message name="acceptMessageRequest">
+        <part name="json_array" type="xsd:string"/>
+    </message>
+    <message name="acceptMessageResponse">
+        <part name="return" type="xsd:string"/>
+    </message>
+    <message name="checkinRequest">
+        <part name="json_array" type="xsd:string"/>
+    </message>
+    <message name="checkinResponse">
+        <part name="return" type="xsd:string"/>
+    </message>
+    <message name="checkoutRequest">
+        <part name="guid" type="xsd:string"/>
+    </message>
+    <message name="checkoutResponse">
+        <part name="return" type="xsd:string"/>
+    </message>
+    <message name="generarMensajeSolicitudRequest">
+        <part name="param" type="xsd:string"/>
+    </message>
+    <message name="generarMensajeSolicitudResponse">
+        <part name="return" type="xsd:string"/>
+    </message>
+</definitions>

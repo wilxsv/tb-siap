@@ -1,0 +1,30 @@
+{% if params.external is defined and params.external is sameas('true') %}
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            var urlComplement = '&_external={{ params.external }}&idExpediente={{ params.idExpediente }}&useProxy=true&idEspecialidadHclinica={{ params.idEspecialidadHclinica }}';
+
+            $( ".sonata-ba-list-field-header a" ).each(function() {
+                $(this).attr('href', $(this).attr('href') + urlComplement);
+            });
+
+            $( ".sonata-filter-form a" ).each(function() {
+                $(this).attr('href', $(this).attr('href') + urlComplement);
+            });
+
+            $( ".pagination a" ).each(function() {
+                $(this).attr('href', $(this).attr('href') + urlComplement);
+            });
+
+            $( "#{{ admin.uniqid }}_per_page option" ).each(function() {
+               $(this).attr('value', $(this).attr('value') + urlComplement);
+            });
+
+            $( "form" ).prepend(
+                '<input type="hidden" name="_external" id="_external" value="{{ params.external }}">' +
+                '<input type="hidden" name="idExpediente" id="idExpediente" value="{{ params.idExpediente }}">' +
+                '<input type="hidden" name="idEspecialidadHclinica" id="idEspecialidadHclinica" value="{{ params.idEspecialidadHclinica }}">' +
+                '<input type="hidden" name="useProxy" id="useProxy" value="false">'
+            );
+        });
+    </script>
+{% endif %}

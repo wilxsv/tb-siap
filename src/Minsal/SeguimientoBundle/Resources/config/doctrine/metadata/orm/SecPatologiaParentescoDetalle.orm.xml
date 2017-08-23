@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecPatologiaParentescoDetalle" table="sec_patologia_parentesco_detalle">
+    <indexes>
+      <index name="fki_antec_patol_paren_patol_paren_detal" columns="id_detalle_parentesco"/>
+      <index name="fki_parentesco_patologia_parentesco_detalle" columns="id_parentesco"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <many-to-one field="idParentesco" target-entity="CtlParentesco">
+      <join-columns>
+        <join-column name="id_parentesco" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idDetalleParentesco" target-entity="SecAntecedentesPatologiaParentesco">
+      <join-columns>
+        <join-column name="id_detalle_parentesco" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

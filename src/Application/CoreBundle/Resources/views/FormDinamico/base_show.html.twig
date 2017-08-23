@@ -1,0 +1,121 @@
+{% extends base_template %}
+
+{% block actions %}
+    <li>{% include 'SonataAdminBundle:Button:edit_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:history_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:list_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:create_button.html.twig' %}</li>
+{% endblock %}
+
+{% block tab_menu %}{{ knp_menu_render(admin.sidemenu(action), {'currentClass' : 'active'}, 'list') }}{% endblock %}
+
+{% block show %}
+    <div class="sonata-ba-view">
+        {% for section in savedData %} {# Por cada Seccion dentro de Saved Data #}
+        {% set colspan='2' %}
+            <div class="panel panel-info">
+                <div class="panel-heading"><b style="font-size: 17;">{{ section.name }}</b> {# Se imprime el nombre de la Seccion #}
+                </div>
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-bordered table-hover" style="font-size: 14px;">
+                            <tbody>
+                                {% if section.isCollection %} {# Si la Seccion es un Collection #}
+                                    {% if section.collection is defined and section.collection|length > 0 %}
+                                        {% for row in section.collection %} {# Por cada row dentro de la Coleccion #}
+                                            <tr class="sonata-ba-view-container">
+                                                {% for item, data in row %} {# Por cada Item,Data dentro del row #}
+                                                    <th>{{ data.name }}</th>
+                                                    <td>{{ data.value }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                     {% else %}
+                                        <tr><td><p class="text-muted">No hay registros para mostrar.</p></td></tr>
+                                    {% endif %}
+                                {% else %}
+                                    {% if section.items is defined and section.items|length > 0 %}
+                                        {% for item, data in section.items %} {# Por cada Item,Data dentro de los Items #}
+                                            {% if colspan == '2' %}
+                                                <tr class="sonata-ba-view-container">
+                                            {% endif %}
+                                                {% if data.multiple is defined %}  {# Si la Data es multiple (proviene de checkboxes) #}
+                                                    <th style="min-width: 400px; padding-left: {{ data.multiple.level * 10 }}px;">{{ data.multiple.name }}</th>
+                                                    <td>
+                                                        {% if (data.multiple.hideTitle) %}
+                                                            {% if (data.multiple.value)|length>0 %}
+                                                                {% set answer='Sí' %}
+                                                            {% else %}
+                                                                {% set answer='No' %}
+                                                            {% endif %}
+
+                                                            {{ answer  }}
+                                                        {% else %}
+                                                            <ul>
+                                                                {% for subData in data.multiple.value %}{# Por cada SubData dentro del Valor Mul.#}
+                                                                    <li>{{ subData }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        {% endif %}
+
+                                                    </td>
+                                                {% else %} {# Sino solo imprimir el name y el value #}
+                                                    {% if data.hideTitle %}
+                                                        {% if data.itemObject.getIdFormItem().getIdTipoObjeto().getId() == 3 %}
+                                                            {% set colspan='1' %}
+                                                            <th colspan="{{colspan}}" style="min-width: 400px; padding-left: {{ data.level * 10 }}px;">{{ data.name }}</th>
+                                                        {% else %}
+                                                            <td colspan="{{colspan}}" style="min-width: 250px;">{{ data.value }}</td>
+                                                            {% set colspan='2' %}
+                                                            <!-- <td><span>{{ data.value }}</span></td> -->
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if colspan == '1' %}
+                                                                <td colspan="{{colspan}}" style="min-width: 250px;"></td>
+                                                            </tr>
+                                                            <tr class="sonata-ba-view-container">
+                                                            {% set colspan='2' %}
+                                                        {% endif %}
+                                                        <th style="min-width: 400px; padding-left: {{ data.level * 10 }}px;">{{ data.name }}</th>
+                                                        <td><span>{{ data.value }}</span></td>
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% if colspan == '2' %}
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr><td><p class="text-muted">No hay registros para mostrar.</p></td></tr>
+                                    {% endif %}
+
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{# {% for name, view_group in admin.showgroups %}
+            <table class="table table-bordered">
+                {% if name %}
+                    <thead>
+                        <tr class="sonata-ba-view-title">
+                            <th colspan="2">
+                                {{ admin.trans(name) }}
+                            </th>
+                        </tr>
+                    </thead>
+                {% endif %}
+
+                <tbody>
+                    {% for field_name in view_group.fields %}
+                        <tr class="sonata-ba-view-container">
+                            {% if elements[field_name] is defined %}
+                                {{ elements[field_name]|render_view_element(object) }}
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+{% endfor %} #}

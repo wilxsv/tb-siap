@@ -1,0 +1,101 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+        jQuery(document).ready(function($) {
+
+            // Manejando Inicializacion de Procedimientos Quirurgicos de Collection
+
+            $('div[id="form_collectionSection174"]').on('sonata-collection-item-added', function(event, rowId, index){
+                initProcedimientoQuirurgicoSearch( $('#'+rowId+'_'+index+'_i581_s174'), 'Seleccione Procedimiento...');
+            });
+
+            $('div[id="form_collectionSection174"]').on('sonata-collection-item-deleted', function(event, rowId, index){
+                // Do something
+            });
+
+            $('input[id$="_i581_s174"]').each(function(){
+                initProcedimientoQuirurgicoSearch( $(this), 'Seleccione Procedimiento...');
+            });
+
+            //  Agregar item "Preparación Pre-Operatoria" a ultima sección para ser mostrado
+            //$('#form_save').next().appendTo($('div[id^="divSection"]').last());
+
+            // Inicialiar bootstrapNumber en Tiempo Quirurgico Estimado y realizar validaciones
+            if ( ! $('#form_i587_s175').val() ){
+                $('#form_i587_s175').val("0");
+            }
+
+            $('#form_i587_s175').bootstrapNumber({
+                upClass: 'success',
+                downClass: 'danger',
+                center: true
+            });
+
+            $('#form_i587_s175').parent().css( { width: '150px'} );
+
+            $('form').on('submit', function(e){
+                if( parseInt( $('#form_i587_s175').val() ) <= 0 || $('#form_i587_s175').val() == 'NaN' || parseInt( $('#form_i587_s175').val() ) == 'NaN' ){
+                    var arrayBtns = [
+                                        {
+                                            text: 'Cerrar', click: function( event, ui) {
+                                                jQuery( this ).dialog( "close" );
+                                                $('#form_i587_s175').focus();
+                                            }
+                                        }
+                                    ];
+                    showDialogMsg('Tiempo Quirúrgico','El tiempo quirúrgico estimado debe ser mayor que cero.','dialog-error', '', arrayBtns, false);
+                    e.preventDefault();
+                }
+                else if( $('input[id$="_i581_s174"]').length == 0 ){
+                    var arrayBtns = [
+                                        {
+                                            text: 'Cerrar', click: function( event, ui) {
+                                                jQuery( this ).dialog( "close" );
+                                            }
+                                        }
+                                    ];
+                    showDialogMsg('Procedimientos quirúrgicos','Debe agregar al menos un procedimiento quirúrgico.','dialog-error', '', arrayBtns, false);
+                    e.preventDefault();
+                }
+            });
+
+            // $('#form_i588_s175').data("wysihtml5").editor.composer.commands.exec("insertOrderedList");
+            // $('#form_i588_s175').data("wysihtml5").editor.setValue('Item 1');
+            // $('#form_i588_s175').data("wysihtml5").editor.on('load', function(){});
+
+        });//fin document ready
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {% block sonata_tab_content %}
+    <div class="row">
+	   <div class="col-md-12">
+            <div class="box box-success">
+                <div class="box-header">
+                    <h4 class="box-title">
+                        Solicitud de Intervención Quirúrgica Programada
+                    </h4>
+                </div>
+                <div class="box-body">
+                    {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                    {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                    <div class="sonata-ba-collapsed-fields">
+                        <br/>
+                        {{ form(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+{% endblock %}

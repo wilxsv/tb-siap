@@ -1,0 +1,40 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['bSort']=false;
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['sDom']='<"top"flp>rt<"bottom"i>';
+            opcionesTable['aLengthMenu']= [[15,20], [15,20]];
+            tablaResultados.DataTable(opcionesTable);
+        });
+    </script>
+{% endblock javascripts %}
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>NEC</th>
+            <th>Nombre del Paciente</th>
+            <th>Especialidad</th>
+            <th>Médico</th>
+            <th>Fecha y Hora de la Cita</th>
+            <th>Persona que elimino la cita</th>
+            <th>Fecha de eliminación</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cita in citasMedicas %}
+            <tr>
+            <td >{{ cita.idExpediente }}</td>
+            <td >{{ cita.idExpediente.idPaciente }}</td>
+            <td >{{ cita.idAtenAreaModEstab }}</td>
+            <td>{{ cita.idEmpleado }}</td>
+            <td >{{ cita.fecha | date('d/m/Y') ~' En el horario: '~ cita.idRangohora }}</td>
+            <td>{{ cita.idusuariomod }}</td>
+            <td >{{ cita.fechahoramod ? cita.fechahoramod | date('d/m/Y H:i:s') : ''}}</td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

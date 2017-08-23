@@ -1,0 +1,29 @@
+<div class="panel panel-info">
+    <div class="panel-heading" style="padding:5px 7px;"><b>{{ area.nombre }}</b></div>
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-bordered table-condensed" style="font-size: 12px;">
+            <tbody>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Nombre del Examen</th>
+                    <th>Tipo de Muestra</th>
+                    <th>Origen</th>
+                    <th>Indicacion</th>
+                    <th>Urgente</th>
+                </tr>
+                {% for exam in area.examenes %}
+                    <tr>
+                        <td>{{ exam.codigo }}</td>
+                        <td>{{ exam.nombre }}</td>
+                        <td>{{ exam.nombreMuestra ? exam.nombreMuestra : '-'}}</td>
+                        <td>{{ exam.nombreOrigenMuestra ? exam.nombreOrigenMuestra : '-'}}</td>
+                        <td>{{ exam.indicacion }}</td>
+                        <td>
+                            {% if exam.urgente is sameas('true') and exam.idTipoSolicitud == 1 %}Si{% else %}No{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

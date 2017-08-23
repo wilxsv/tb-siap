@@ -1,0 +1,58 @@
+{% block about_content %}
+    {% set descripcionModulo=''%}
+    {% set modulo=app.session.get("_moduleSelection")%}
+    {% if modulo==1%}
+            {% set nombreModulo='Identificación del Paciente'%}
+            {% set descripcionModulo='Este módulo permite consultar información de pacientes registrados en el sistema y así como realizar el registro de nuevos pacientes; busca facilitar la administración
+del la información de los pacientes. También proporciona la interfaz para la administración de los
+usuarios que tienen acceso al manejo de este módulo.'%}
+    {% elseif modulo==2 %}
+            {% set nombreModulo='Citas'%}
+            {% set descripcionModulo='Este módulo permite llevar la gestión en cuanto al manejo de las citas a los pacientes que están registrados dentro del sistema.
+            Se lleva el manejo de la agenda médica según especialidad y médico, administrado horarios en los cuales los médicos brindan atención.
+            Además se administra la configuración tanto de los días hábiles como los no hábiles, permitiendo así que la asignación de citas pueda darse
+            en fecha con disponibilidad tanto de tiempo como de recursos.' %}
+        {% elseif modulo==6 %}
+            {% set nombreModulo='Agenda Médica'%}
+            {% set descripcionModulo='Este módulo permite gestionar según su disponibilidad y especialidad la asignación de citas a los pacientes. La gestión del modulo de “Agenda Médica” incluye tanto la asignación de citas, la eliminación de citas
+        y la consulta de la cantidad de citas que tienen programadas en una vista tipo calendario.'%}
+    {% elseif modulo==4 %}
+        {% set nombreModulo='Laboratorio'%}
+        {% set descripcionModulo='Este módulo permite consultar todo lo relacionado con las CITAS'%}
+    {% elseif modulo==5 %}
+        {% set nombreModulo='Farmacia'%}
+        {% set descripcionModulo='Este módulo permite consultar todo lo relacionado con las CITAS'%}
+    {% elseif modulo==3 %}
+        {% set nombreModulo='Seguimiento Clinico'%}
+        {% set descripcionModulo='Este módulo permite gestionar las historias clínicas según la especialidad del médico y el tipo de paciente. Permite generar una nueva
+historia clínica, ver historias anteriores, ver y generar solicitudes para exámenes de laboratorio, ver y generar recetas.'%}
+        {% elseif modulo==7 %}
+            {% set nombreModulo='Clínica de Selección'%}
+            {% set descripcionModulo='Este módulo permite gestionar el cupo de un determinado paciente a una especialidad según prioridades'%}
+            {% elseif modulo==8 %}
+        {% set nombreModulo='Imagenología Digital'%}
+        {% set descripcionModulo='Este módulo permite gestionar el cupo de un determinado paciente a una especialidad según prioridades'%}
+    {% endif %}
+            <div>
+            <h3 style="color: #003399;text-align:center;">Sistema Integral de Atención al Paciente </h3>
+            <h3 style="color: #003399;text-align:center;"><strong>Módulo:</strong>{{nombreModulo}}</h3>
+            <div style="text-align:justify;line-height:25px;">
+                <p><strong>Finalidad:</strong>{{descripcionModulo}}</p>
+                <p><strong>Versión:</strong>2.0</p>
+                <p><strong>Tecnologías Utilizadas:</strong>
+                <ul>
+                    <li><strong>Framework de programación:</strong> Symfony 2.0</li>
+                    <li><strong>Gestor de Base de Datos:</strong> PostgreSQL</li>
+                    <li><strong>Licencia:</strong> OpenGL</li>
+
+                </ul>
+                </p>
+                <p><strong>SIAP-SUIS </strong>es diseñado por el equipo de desarrollo de la Dirección de Tecnología de Información y Comunicaciones(DTIC)</p>
+                <p><strong>Contactenos:</strong> listasiap@salud.gob.sv </p>
+            </div>
+            <br />
+        </div>
+        <br />
+
+    </div>
+{% endblock %}

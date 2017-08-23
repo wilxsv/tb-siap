@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="CtlRangoEdad" table="ctl_rango_edad">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="nombre" type="string" column="nombre" length="50" nullable="false"/>
+    <field name="edadMinimaAnios" type="integer" column="edad_minima_anios" nullable="false"/>
+    <field name="edadMinimaMeses" type="integer" column="edad_minima_meses" nullable="false"/>
+    <field name="edadMinimaDias" type="integer" column="edad_minima_dias" nullable="false"/>
+    <field name="edadMinimaHoras" type="integer" column="edad_minima_horas" nullable="false"/>
+    <field name="edadMinimaMinutos" type="integer" column="edad_minima_minutos" nullable="false"/>
+    <field name="edadMaximaAnios" type="integer" column="edad_maxima_anios" nullable="false"/>
+    <field name="edadMaximaMeses" type="integer" column="edad_maxima_meses" nullable="false"/>
+    <field name="edadMaximaDias" type="integer" column="edad_maxima_dias" nullable="false"/>
+    <field name="edadMaximaHoras" type="integer" column="edad_maxima_horas" nullable="false"/>
+    <field name="edadMaximaMinutos" type="integer" column="edad_maxima_minutos" nullable="false"/>
+    <field name="codModulo" type="string" column="cod_modulo" length="3" nullable="true"/>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,24 @@
+<!-- Seguimiento de consulta -->
+{% if citasAsignadas %}
+<div class="panel panel-info" id="seguimiento">
+    <div class="panel-heading"><b >Seguimiento de Consulta</b> {# Se imprime el nombre de la Seccion #}
+    </div>
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-bordered table-hover" >
+            <tbody>
+                <tr class="sonata-ba-view-container">
+                    <td>
+                        <span>
+                                <ul>
+                                    {% for citas in citasAsignadas %}
+                                        <li><span style="font-size: 13px;"><strong>{{'Cita de '~ citas.getIdTipoCitaSubsecuente().nombre}}</strong>: {{citas.getIdCitaDia().fecha|date('d-m-Y')}}</span></li>
+                                    {% endfor %}
+                                </ul>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

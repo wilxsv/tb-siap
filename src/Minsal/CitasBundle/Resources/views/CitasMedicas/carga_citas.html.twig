@@ -1,0 +1,98 @@
+{# src/CitasBundle/Resources/view/citasMedicas/cargar_citas.html.twig #}
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['bSort']=false;
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['bFilter']=false;
+            opcionesTable['sDom']='<"top"flp>rt<"bottom"i>';
+            opcionesTable['aLengthMenu']= [[15,20], [15,20]];
+            tablaResultados.DataTable(opcionesTable);
+
+            //citasbuildcomprobante
+            $('.glyphicon-print').on('click',function(){
+              var id=$(this).attr('citaImprimir');
+            });
+
+            $('.glyphicon-trash').on('click',function(){
+                var id=$(this).attr('citaEliminar');
+                var medico=$(this).attr('medico');
+                var fechaCita=$(this).attr('fechaCita');
+                var especialidad=$(this).attr('especialidad');
+                var title='Confirmación';
+                var paciente=$('#numExpNomPac').select2('data').text.split(' - ');
+                var body="¿Esta seguro que desea eliminar la Cita de <strong>"+paciente[1]+"</strong> en la especialidad <strong>"+especialidad
+                        +"</strong> con el médico <strong>"+medico+"</strong>"
+                        + " en la fecha <strong>"+fechaCita+"</strong>";
+                var width='750px'
+                var clase='dialog-warning';
+                var arrayBtns = [
+                    {
+                        text: 'Confirmar', click: function() {
+                            $(this).dialog('close');
+                            $('#idCita').val(id);
+                            $('body form#eliminar_cita').submit();
+                        }
+                    },
+                    {
+                        text: 'Cancelar', click: function( event, ui) {
+                            $(this).dialog('close');
+                        }
+                    }
+                ];
+                showDialogMsg(title, body, clase, '', arrayBtns, false, width, true);
+            });
+        });
+    </script>
+{% endblock javascripts %}
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>Especialidad</th>
+            <th>Médico</th>
+            <th>Tipo Cita</th>
+            <th>Fecha y Hora de la Cita</th>
+            <th>Estado de la cita</th>
+            <th>Usuario que asigno la cita</th>
+            <th>Fecha y Hora de asignación</th>
+            <th width="60px;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set fechaActual = date() %}
+        {% for cita in citasMedicas %}
+        <tr>
+            <td >{{ cita.idAtenAreaModEstab }}</td>
+            <td>{{ cita.idEmpleado }}</td>
+            <td >{{ cita.idTipoCita }}</td>
+            <td >
+                {% set nombreTipoDistribucion = '' %}
+            {% if cita.idDistribucion %}
+                {% if cita.idDistribucion.idTipoDistribucion %}
+                    {% set nombreTipoDistribucion = cita.idDistribucion.idTipoDistribucion %}
+                {% endif %}
+            {% endif %}
+            {{ cita.fecha | localizeddate('full', 'none', 'es_SV')| title ~' En el horario: '~ cita.idRangohora ~' '~ nombreTipoDistribucion }}
+                </td>
+            <td >{{ cita.idEstado }}</td>
+            <td >{{ cita.getIdusuarioreg().getIdEmpleado() }}</td>
+            <td >{{ cita.fechahorareg | date('d/m/Y h:i A') }}</td>
+            <td>
+                {% if app.user.hasRole('ROLE_SONATA_ADMIN_CITCITASDIA_REPORTES')==false %}
+                    {% if cita.idEstado.id != 5 and cita.idEstado.id != 7 and cita.idEstado.id != 8 and cita.fecha >= fechaActual|date_modify("-1 day") %}
+                        <span class="glyphicon glyphicon-trash mouse-pointer" citaEliminar="{{ cita.id}}" fechaCita='{{ cita.fecha | date('d/m/Y')}}'
+                        medico="{{ cita.idEmpleado }}"
+                        especialidad="{{ cita.idAtenAreaModEstab }}"
+                        style="font-size:20px;padding-left:10px;" role="trash"></span>
+                    {% endif %}
+                {% endif %}
+                <a href="{{ url('citasgetcomprobante',{id:cita.id}) }}" target="_blank" class="">
+                    <span class="glyphicon glyphicon-print mouse-pointer"
+                    style="font-size:20px;padding-left:10px;"></span></a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
