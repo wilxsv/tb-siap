@@ -1,6 +1,0 @@
-.multiple-icons { display:block; font-size:15px; }
-.multiple-icons li:first-child { font-size:20px; margin-right: 3px; }
-.multiple-icons li:last-child { position: absolute; left: 50%; top: 40%; background: #fafafa; }
-.multiple-icons li { display:inline-block; }
-table.vista_paciente.padding-table tr td { padding: 5px; }
-table.vista_paciente.padding-table tr.titulo_vista td { padding: 0px; }
