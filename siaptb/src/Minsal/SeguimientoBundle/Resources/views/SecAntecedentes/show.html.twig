@@ -1,0 +1,94 @@
+{% extends base_template %}
+
+{% block actions %}
+    <li>{% include 'SonataAdminBundle:Button:edit_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:history_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:list_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:create_button.html.twig' %}</li>
+{% endblock %}
+
+{% block tab_menu %}{{ knp_menu_render(admin.sidemenu(action), {'currentClass' : 'active'}, 'list') }}{% endblock %}
+
+{% block show %}
+    <div class="sonata-ba-view">
+
+        {% for section in savedData %} {# Por cada Seccion dentro de Saved Data #}
+            <div class="panel panel-info">
+                <div class="panel-heading"><b style="font-size: 17;">{{ section.name }}</b> {# Se imprime el nombre de la Seccion #}
+                </div><br/>
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-bordered table-hover" style="font-size: 14px;">
+                            <tbody>
+                                {% if section.isCollection %} {# Si la Seccion es un Collection #}
+                                    {% for row in section.collection %} {# Por cada row dentro de la Coleccion #}
+                                        <tr class="sonata-ba-view-container">
+                                            {% for item, data in row %} {# Por cada Item,Data dentro del row #}
+                                                <th>{{ data.name }}</th>
+                                                <td>{{ data.value }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    {% if section.items is defined %}
+                                        {% for item, data in section.items %} {# Por cada Item,Data dentro de los Items #}
+                                            <tr class="sonata-ba-view-container">
+                                                {% if data.multiple is defined %}  {# Si la Data es multiple (proviene de checkboxes) #}
+                                                    <th style="min-width: 250px;">{{ data.multiple.name }}</th>
+                                                    <td>
+                                                        {% if (data.multiple.hideTitle) %}
+                                                            {% if (data.multiple.value)|length>0 %}
+                                                                {% set answer='SI' %}
+                                                            {% else %}
+                                                                {% set answer='NO' %}
+                                                            {% endif %}
+
+                                                            {{ answer  }}
+                                                        {% else %}
+                                                        <ul>
+                                                            {% for subData in data.multiple.value %}{# Por cada SubData dentro del Valor Mul.#}
+                                                                <li>{{ subData }}</li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                        {% endif %}
+
+                                                    </td>
+                                                {% else %} {# Sino solo imprimir el name y el value #}
+                                                    <th style="min-width: 250px;">{{ data.name }}</th>
+                                                    <td><span>{{ data.value }}</span></td>
+                                                {% endif %}
+                                            </tr>
+                                        {% endfor %}
+                                    {% endif %}
+
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{# {% for name, view_group in admin.showgroups %}
+            <table class="table table-bordered">
+                {% if name %}
+                    <thead>
+                        <tr class="sonata-ba-view-title">
+                            <th colspan="2">
+                                {{ admin.trans(name) }}
+                            </th>
+                        </tr>
+                    </thead>
+                {% endif %}
+
+                <tbody>
+                    {% for field_name in view_group.fields %}
+                        <tr class="sonata-ba-view-container">
+                            {% if elements[field_name] is defined %}
+                                {{ elements[field_name]|render_view_element(object) }}
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+{% endfor %} #}

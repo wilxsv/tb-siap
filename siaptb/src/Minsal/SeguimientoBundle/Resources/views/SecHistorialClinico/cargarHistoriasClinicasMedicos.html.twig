@@ -1,0 +1,40 @@
+{% block javascripts %}
+<script type="text/javascript">
+    jQuery(document).ready(function ($) {
+        var tablaResultados=$('#tablaResultados');
+        var opcionesTable=setDataTableOptions(tablaResultados);
+        opcionesTable['order']=[[3,"asc"]];
+        opcionesTable['iDisplayLength']=15;
+        opcionesTable['bFilter']=false;
+        opcionesTable['sDom']='<"top"flp>rt<"bottom"i>';
+        opcionesTable['aLengthMenu']= [[15,25, 50, 75, -1], [15,25, 50, 75, "Todos"]];
+        tablaResultados.DataTable(opcionesTable);
+    });
+</script>
+{% endblock javascripts %}
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>Especialidad</th>
+            <th>Médico</th>
+            <th>Total Citados</th>
+            <th>Historias Clínicas Realizadas</th>
+            {% if app.user.hasRole('ROLE_SONATA_ADMIN_SECHISTORIALCLINICO_PACIENTESAPTOSESPECIALIZADA')=='1' or app.user.hasRole('ROLE_SUPER_ADMIN')=='1' %}
+                <th>Enviados a Farmacia Especializadas</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for cita in citas %}
+            <tr>
+              <td>{{ cita['especialidad'] }}</td>
+              <td>{{ cita['nombreempleado'] }}</td>
+              <td>{{ cita['total_citas'] }}</td>
+              <td>{{ cita['cantidad'] }}</td>
+              {% if app.user.hasRole('ROLE_SONATA_ADMIN_SECHISTORIALCLINICO_PACIENTESAPTOSESPECIALIZADA')=='1' or app.user.hasRole('ROLE_SUPER_ADMIN')=='1' %}
+                <td>{{ cita['pacientes_derivados'] }}</td>
+              {% endif %}
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>

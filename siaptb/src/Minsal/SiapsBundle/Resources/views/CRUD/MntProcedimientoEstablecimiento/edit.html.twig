@@ -1,0 +1,67 @@
+{% extends 'SonataAdminBundle:CRUD:edit.html.twig' %}
+
+{% set action     = admin.id(object) is not null ? 'edit' : 'create' %}
+{% set superAdmin = app.user.hasRole('ROLE_SUPER_ADMIN') %}
+{% set idCiq      = object.getIdCiq() ? object.getIdCiq().getId() : '' %}
+{% set nameCiq    = object.getIdCiq() ? object.getIdCiq().__toString() : '' %}
+
+{% block javascripts %}
+    {{parent()}}
+
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            /*
+             * Declaracion de Variables
+             */
+            $idCiq = $('#{{ admin.uniqid }}_idCiq');
+
+            /*
+             * Inicialización de Elementos del Formulario.
+             */
+            $idCiq.select2({
+                placeholder: 'Seleccionar Procedimiento...',
+                allowClear: true,
+                containerCss: {
+                    'width': '100%'
+                },
+                minimumInputLength: 1,
+                dropdownAutoWidth: true,
+                ajax: {
+                    url: Routing.generate('get_ciq_remote_select2'),
+                    dataType: 'json',
+                    quietMillis: 500,
+                    data: function(term, page) {
+                        return {
+                            clue: term, //search term
+                            page_limit: 10, // page size
+                            page: page, // page number
+                        };
+                    },
+                    results: function(data, page) {
+                        var more = (page * 10) < data.total;
+
+                        return {results: data.result, more: more};
+                    }
+                },
+                initSelection: function (element, callback) {
+                    var id = '{{ idCiq }}';
+
+                    if(id !== "") {
+                        var text = '{{ nameCiq }}';
+                        var data = { id: id, text: text };
+                        callback(data);
+                    }
+                },
+                sorter: function(results) {
+                    var query = $('.select2-search__field').val().toLowerCase();
+
+                    return results.sort(function(a, b) {
+                        return a.text.toLowerCase().indexOf(query) -
+                        b.text.toLowerCase().indexOf(query);
+                    });
+                }
+            })
+            .select2('val', []);
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,319 @@
+{% extends 'SonataAdminBundle:CRUD:edit.html.twig' %}
+
+{% set action = admin.id(object) is not null ? 'edit' : 'create' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        var select2_options = {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            containerCss: {
+                'width': '100%'
+            }
+        };
+
+        $(document).ready(function () {
+            //Asignando los objetos
+            var idAreaModEstab = $('select[id$="_idAreaModEstab"]');
+            {#var idAtenAreaModEstab = $('#{{ admin.uniqid }}_idAtenAreaModEstab');#}
+            var idTipoevento = $('#{{ admin.uniqid }}_idTipoEvento');
+            var idEmpleadoMultiple = $('#{{ admin.uniqid }}_idEmpleadoMultiple');
+            var claseEvento = $('#{{ admin.uniqid }}_aplicacionEvento');
+            var duracion = $('#{{ admin.uniqid }}_duracion');
+            var todosLosMedicos = $('#{{ admin.uniqid }}_todos_los_medicos');
+            var idProcedimiento = $('#{{ admin.uniqid }}_idProcedimientoEstablecimiento');
+            {#var todasLasEspecialidades = $('#{{ admin.uniqid }}_todas_especialidades');#}
+
+            initializeSelect2(claseEvento, true, false, select2_options);
+            //Por defecto se pondrá la opción de clase de evento "Citas Médicas"
+            {% if action == 'create' %}
+                claseEvento.select2('val','med');
+            {% endif %}
+
+            select2_options['placeholder'] = 'seleccione tipo de evento...';
+            initializeSelect2(idTipoevento, true, false, select2_options);
+            /*Por defecto no aparecerá la opción "Días Festivos" sólo al seleccionar la clase de evento "Citas Médicas y de Procedimientos"*/
+            $('#'+idTipoevento.attr('id')+' option[value="1"]').addClass('hidden');
+
+            select2_options['placeholder'] = 'seleccione área de atención...';
+            initializeSelect2(idAreaModEstab, true, false, select2_options);
+
+            {# select2_options['placeholder']='seleccione especialidad...';
+            initializeSelect2(idAtenAreaModEstab, true, true,select2_options);#}
+
+            select2_options['placeholder'] = 'seleccione médico...';
+            initializeSelect2(idEmpleadoMultiple, false, false, select2_options);
+
+            select2_options['placeholder'] = 'seleccione procedimiento...';
+            initializeSelect2(idProcedimiento, true, false, select2_options);
+            //Agregando la opción de "Todos los procedimientos"
+            idProcedimiento.append($('<option>', {value: 'todos', text: 'Todos los procedimientos'}));
+
+            var duracionOptions = setBootstrapDateRangePickerOptions(duracion);
+            duracionOptions['locale']['format'] = 'DD/MM/YYYY hh:mm A';
+            duracionOptions['autoApply']=true;
+            duracion.daterangepicker(duracionOptions);
+
+
+            duracion.on('apply.daterangepicker', function(ev, picker) {
+                if( (picker.startDate.format('hh:mm:ss A') === '12:00:00 AM' && picker.endDate.format('hh:mm:ss A') === '12:00:00 AM') || (picker.startDate.format('hh:mm:ss A') === '12:00:00 PM' && picker.endDate.format('hh:mm:ss A') === '12:00:00 PM') ) {
+                		$dateRangePicker = $(this).data('daterangepicker');
+
+                    var startDate = moment(picker.startDate.format('YYYY-MM-DD')+' 00:00:00', 'YYYY-MM-DD HH:mm:ss');
+                    var endDate   = moment(picker.endDate.format('YYYY-MM-DD')+' 23:59:00', 'YYYY-MM-DD HH:mm:ss');
+
+                    $dateRangePicker.startDate = startDate;
+                    $dateRangePicker.endDate   = endDate;
+
+                    $dateRangePicker.updateView();
+                    $dateRangePicker.updateCalendars();
+                    $(this).val(startDate.format('DD/MM/YYYY hh:mm:ss A')+' - '+endDate.format('DD/MM/YYYY hh:mm:ss A'));
+                }
+            });
+
+            //Ocultar el combo de procedimientos al inicio de la pantalla
+            idProcedimiento.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}"]').hide();
+
+            claseEvento.on('change', function () {
+                if ($(this).val() == 'proc') {
+                    idProcedimiento.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}"]').show();
+                    todosLosMedicos.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').show();
+                    todosLosMedicos.iCheck('enable');
+                    todosLosMedicos.iCheck('uncheck');
+                    idEmpleadoMultiple.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').show();
+                    idEmpleadoMultiple.select2('val', '');
+                    idEmpleadoMultiple.select2("enable", true);
+                    idProcedimiento.select2('val', '');
+                    idProcedimiento.select2("enable", true);
+                    idAreaModEstab.select2('val', '');
+                    idTipoevento.select2('val', '');
+                    //Ocultar la opción "Días Festivos"
+                    $('#'+idTipoevento.attr('id')+' option[value="1"]').addClass('hidden');
+                }
+                else if ($(this).val() == 'med') {
+                    idProcedimiento.select2("enable", false);
+                    idProcedimiento.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}"]').hide();
+                    todosLosMedicos.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').show();
+                    todosLosMedicos.iCheck('enable');
+                    todosLosMedicos.iCheck('uncheck');
+                    idEmpleadoMultiple.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').show();
+                    idEmpleadoMultiple.select2('val', '');
+                    idEmpleadoMultiple.select2("enable", true);
+                    idAreaModEstab.select2('val', '');
+                    idTipoevento.select2('val', '');
+                    //Ocultar la opción "Días Festivos"
+                    $('#'+idTipoevento.attr('id')+' option[value="1"]').addClass('hidden');
+                }else{
+                    idProcedimiento.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}"]').hide();
+                    idProcedimiento.select2('val', '');
+                    todosLosMedicos.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').hide();
+                    idEmpleadoMultiple.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').hide();
+                    //Mostrar la opción "Días Festivos"
+                    $('#'+idTipoevento.attr('id')+' option[value="1"]').removeClass('hidden');
+                }
+            });
+
+            idProcedimiento.on('change', function () {
+                if ($(this).val()){
+                    if ($(this).val() != 'todos'){
+                        if (idAreaModEstab.select2('val')){
+                            cargarMedicosPorProcedimiento();
+                        }
+                        idEmpleadoMultiple.select2('val', '');
+                        idEmpleadoMultiple.select2("enable", true);
+                        todosLosMedicos.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').show();
+                        todosLosMedicos.iCheck('enable');
+                        todosLosMedicos.iCheck('uncheck');
+                    }
+                    else{
+                        idEmpleadoMultiple.select2('val', '');
+                        idEmpleadoMultiple.select2("enable", false);
+                        todosLosMedicos.closest('div[id^="sonata-ba-field-container-{{ admin.uniqid }}_"]').show();
+                        todosLosMedicos.iCheck('disable');
+                        todosLosMedicos.iCheck('check');
+                    }
+                }
+            });
+
+            function cargarMedicosPorProcedimiento(){
+                $.ajax({
+                    url: Routing.generate("obtener_procedimientos_por_area_medico"),
+                    async: false,
+                    dataType: 'json',
+                    data: {
+                        'objetoRequerido': 'empleado', //médicos con distribución en ese procedimiento
+                        'idProcedimientoEstablecimiento': idProcedimiento.select2('val'),
+                        'idAreaModEstab': idAreaModEstab.select2('val')
+                    },
+                    success: function (data) {
+                        select2_options['placeholder'] = 'seleccione médico...';
+                        initializeSelect2(idEmpleadoMultiple, false, true, select2_options);
+
+                        $.each(data.resultados, function (indice, val) {
+                            idEmpleadoMultiple.append($('<option>', {value: val.id, text: val.text}));
+                        });
+                    }
+                });
+            }
+
+            idAreaModEstab.on('change', function () {
+
+                if ($(this).val()) {
+                    $.ajax({
+                        url: Routing.generate("obtener_medicos_por_area", {'idAreaModEstab': $(this).val()}),
+                        async: false,
+                        dataType: 'json',
+                        success: function (data) {
+                            select2_options['placeholder'] = 'seleccione médico...';
+                            initializeSelect2(idEmpleadoMultiple, false, true, select2_options);
+                            $.each(data.resultados, function (indice, val) {
+                                idEmpleadoMultiple.append($('<option>', {value: val.id, text: val.text}));
+                            });
+                        }
+                    });
+                    if (idProcedimiento.val() && idProcedimiento.select2('val') != 'todos'){
+                        cargarMedicosPorProcedimiento();
+                    }
+                }
+                else {
+                    select2_options['placeholder'] = 'seleccione médico...';
+                    initializeSelect2(idEmpleadoMultiple, false, true, select2_options);
+                }
+            });
+
+            {#idAtenAreaModEstab.on('change', function () {
+                select2_options['placeholder']='seleccione médico...';
+                initializeSelect2(idEmpleadoMultiple, false, true,select2_options);
+
+                if ($(this).val()) {
+                    $.ajax({
+                        url: Routing.generate("obtener_medicos_por_especialidad", {'idAtenAreaModEstab': $(this).val()}),
+                        async: false,
+                        dataType: 'json',
+                        success: function (data) {
+
+                            $.each(data.resultados, function (indice, val) {
+                                idEmpleadoMultiple.append($('<option>', {value: val.id, text: val.text}));
+                            });
+                        }
+                    });
+                }
+            });#}
+
+            idTipoevento.on('change', function () {
+                if ($(this).val() == '1') {
+                    idAreaModEstab.select2("enable", false);
+                    todosLosMedicos.iCheck('disable');
+                    idEmpleadoMultiple.select2("enable", false);
+                    idEmpleadoMultiple.select2('val', '');
+                    todosLosMedicos.iCheck('uncheck');
+                    idAreaModEstab.select2('val', '');
+                }
+                else {
+                    idAreaModEstab.select2("enable", true);
+                    todosLosMedicos.iCheck('enable');
+                    idEmpleadoMultiple.select2("enable", true);
+                }
+            });
+
+            {#todasLasEspecialidades.on('ifChanged',function(){
+                var estado=$(this).prop('checked');
+                if(estado==true){
+                    idAtenAreaModEstab.select2("enable", false);
+                    idAtenAreaModEstab.select2('val', '');
+                    todosLosMedicos.iCheck('disable');
+                    todosLosMedicos.iCheck('uncheck');
+                    idEmpleadoMultiple.select2("enable", false);
+                    idEmpleadoMultiple.select2('val','');
+                }
+                else{
+                    if(idTipoevento.val()!='1'){
+                        idAtenAreaModEstab.select2("enable", true);
+                        todosLosMedicos.iCheck('enable');
+                        idEmpleadoMultiple.select2("enable", true);
+                    }
+                }
+            });#}
+
+            todosLosMedicos.on('ifChanged', function () {
+                var estado = $(this).prop('checked');
+                if (estado == true) {
+                    idEmpleadoMultiple.select2("enable", false);
+                    idEmpleadoMultiple.select2('val', '');
+                }
+                else {
+                    idEmpleadoMultiple.select2("enable", true);
+                }
+            });
+
+            {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+              idAreaModEstab.parent().parent().hide();
+              idAreaModEstab.select2('val',{{idAreaModEstab.getId()}} );
+              idAreaModEstab.change();
+            {% endif %}
+
+
+            {% if object.getId() %}
+                idAreaModEstab.change();
+                {% if medicos == null %}
+                    todosLosMedicos.iCheck('check');
+                {% else %}
+                    idEmpleadoMultiple.select2('val',{{medicos}});
+                {% endif %}
+                {% if object.getEsEventoMedico %}
+                    claseEvento.select2('val', 'med');
+                {% else %}
+                    claseEvento.select2('val', 'proc');
+                {% endif %}
+                duracion.val('{{duracion_evento}}');
+                //No se puede cambiar la clase de evento"
+                claseEvento.select2( 'readonly', true );
+            {% endif %}
+        });
+    </script>
+{% endblock %}
+
+{% block formactions %}
+    <div class="well well-small form-actions">
+        {% if app.request.isxmlhttprequest %}
+            {% if admin.id(object) is not null %}
+                <button type="submit" class="btn btn-success" name="btn_update"><i class="fa fa-save"></i> {{ 'btn_update'|trans({}, 'SonataAdminBundle') }}</button>
+            {% else %}
+                <button type="submit" class="btn btn-success" name="btn_create"><i class="fa fa-plus-circle"></i> {{ 'btn_create'|trans({}, 'SonataAdminBundle') }}</button>
+            {% endif %}
+        {% else %}
+            {% if admin.supportsPreviewMode %}
+                <button class="btn btn-info persist-preview" name="btn_preview" type="submit">
+                    <i class="fa fa-eye"></i>
+                    {{ 'btn_preview'|trans({}, 'SonataAdminBundle') }}
+                </button>
+            {% endif %}
+            {% if admin.id(object) is not null %}
+                {% if admin.hasroute('list') %}
+                    <button type="submit" class="btn btn-success" name="btn_update_and_list"><i class="fa fa-save"></i> <i class="fa fa-list"></i> {{ 'btn_update'|trans({}, 'SonataAdminBundle') }}</button>
+                {% endif %}
+
+                {% if admin.hasroute('delete') and admin.isGranted('DELETE', object) %}
+                   {% set fechaActual = date() %}
+                    {% if app.user.hasRole('ROLE_SUPER_ADMIN') or (fechaActual <= object.getFechaHoraIni()) %}
+                      <a class="btn btn-danger" href="{{ admin.generateObjectUrl('delete', object) }}"><i class="fa fa-minus-circle"></i> {{ 'link_delete'|trans({}, 'SonataAdminBundle') }}</a>
+                    {% endif %}
+                {% endif %}
+
+                {% if admin.isAclEnabled() and admin.hasroute('acl') and admin.isGranted('MASTER', object) %}
+                    <a class="btn btn-info" href="{{ admin.generateObjectUrl('acl', object) }}"><i class="fa fa-users"></i> {{ 'link_edit_acl'|trans({}, 'SonataAdminBundle') }}</a>
+                {% endif %}
+            {% else %}
+                {% if admin.hasroute('list') %}
+                    <button type="submit" class="btn btn-success" name="btn_create_and_list"><i class="fa fa-save"></i> <i class="fa fa-list"></i> {{ 'btn_create_and_return_to_list'|trans({}, 'SonataAdminBundle') }}</button>
+                {% endif %}
+                <button class="btn btn-success" type="submit" name="btn_create_and_create"><i class="fa fa-plus-circle"></i> {{ 'btn_create_and_create_a_new_one'|trans({}, 'SonataAdminBundle') }}</button>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock formactions %}

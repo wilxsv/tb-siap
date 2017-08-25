@@ -1,0 +1,30 @@
+services:
+    minsal_seguimiento.admin.sec_dato_embarazo:
+        class: Minsal\SeguimientoBundle\Admin\SecDatoEmbarazoAdmin
+        arguments: [~, Minsal\SeguimientoBundle\Entity\SecDatoEmbarazo, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: admin, label: SecDatoEmbarazo, show_in_dashboard:false}
+
+    minsal_seguimiento.admin.sec_solicitud_quirurgica:
+        class: Minsal\SeguimientoBundle\Admin\SecSolicitudQuirurgicaAdmin
+        arguments: [~, Minsal\SeguimientoBundle\Entity\SecSolicitudQuirurgica, MinsalSeguimientoBundle:SecSolicitudQuirurgicaAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: SQ-1-Solicitud Quirurgica, label: Solicitud Quirurgica}
+
+    minsal_seguimiento.admin.sec_solicitud_quirurgica_aptitud:
+        class: Minsal\SeguimientoBundle\Admin\SecSolicitudQuirurgicaAptitudAdmin
+        arguments: [~, Minsal\SeguimientoBundle\Entity\SecSolicitudQuirurgicaAptitud, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: admin, label: SecSolicitudQuirurgicaAptitud, show_in_dashboard: false}
+
+    minsal_seguimiento.admin.sec_solicitud_quirurgica_procedimiento:
+        class: Minsal\SeguimientoBundle\Admin\SecSolicitudQuirurgicaProcedimientoAdmin
+        arguments: [~, Minsal\SeguimientoBundle\Entity\SecSolicitudQuirurgicaProcedimiento, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: admin, label: SecSolicitudQuirurgicaProcedimiento, show_in_dashboard: false}
+
+    minsal_seguimiento.admin.sec_solicitud_quirurgica_tipo_anestesia:
+        class: Minsal\SeguimientoBundle\Admin\SecSolicitudQuirurgicaTipoAnestesiaAdmin
+        arguments: [~, Minsal\SeguimientoBundle\Entity\SecSolicitudQuirurgicaTipoAnestesia, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: admin, label: SecSolicitudQuirurgicaTipoAnestesia, show_in_dashboard: false}

@@ -1,0 +1,179 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+{{parent()}}
+<link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+{{parent()}}
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+    var idExpediente=0;
+    var winParams=[];
+    var parameters=[];
+    var idAreaModEstab = $('#idAreaModEstab');
+    var idProcedimientoEstablecimiento = $('#idProcedimientoEstablecimiento');
+    var numeroExpediente=$('#numExpNomPac');
+
+    $('#numExpNomPac').val({{idExpediente}});
+    initExpedienteMedicoSearch($('#numExpNomPac'),'Seleccionar...');
+    function initExpedienteMedicoSearch(element, placeholder){
+        element.select2({
+            allowClear: true,
+            placeholder: placeholder,
+            minimumInputLength: 1,
+            width:'100%',
+            dropdownAutoWidth: true,
+            ajax: {
+                url: Routing.generate('citasexpedientepaciente'),
+                dataType: 'json',
+                quietMillis: 1000,
+                data: function(term, page) {
+                    return {
+                        clue: term, //search term
+                        page_limit: 10, // page size
+                        page: page, // page number
+                    };
+                },
+                results: function(data, page) {
+                    var more = (page * 10) < data.data2;
+                    return {results: data.data1, more: more};
+                }
+            },
+            initSelection: function(element, callback) {
+                // the input tag has a value attribute preloaded that points to a preselected repository's id
+                // this function resolves that id attribute to an object that select2 can render
+                // using its formatResult renderer - that way the repository name is shown preselected
+                var id = element.val();
+                if (id !== "") {
+                    $.ajax(Routing.generate('citasexpedientepaciente') +'?id='+id, {
+                        dataType: "json"
+                    }).done(function(data) {
+                        callback(data);
+                        element.select2('data',{id: id,text: data.data1[0].text });
+                        $('#buscar').trigger('click');
+                    });
+                }
+            }
+        });
+    }
+
+    $('#buscar').on('click',function(){
+        $('#resultado').empty();
+        if(numeroExpediente.select2('val')!=''){
+            $('#resultado').append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+            $('#resultado').load(Routing.generate('consultar_citas_proximas_procedimiento',{'idExpediente':numeroExpediente.select2('val'),
+                                                                              'idProcedimientoEstablecimiento':idProcedimientoEstablecimiento.select2('val'),
+                                                                              'rangoFechas':$('#rango_fechas').val()
+                                                                             }));
+        }else{
+            var title='Error de llenado';
+            var body="Debe seleccionar al menos el número de expediente para realizar la busqueda";
+            var width='500px'
+            var clase='dialog-error';
+            var arrayBtns = [];
+            showDialogMsg(title, body, clase, 'Aceptar', arrayBtns, false, width, true);
+        }
+    });
+
+    $('#rango_fechas').val('');
+
+    initializeSelect2(idAreaModEstab, true, false, {
+        placeholder: 'Seleccionar...',
+        allowClear: true,
+        width: '100%'
+    });
+
+    initializeSelect2(idProcedimientoEstablecimiento, true, true, {
+        placeholder: 'Seleccionar...',
+        allowClear: true,
+        width: '100%'
+    });
+
+    idAreaModEstab.on('change', function () {
+        initializeSelect2(idProcedimientoEstablecimiento, true, true, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+        if ($(this).val()) {
+            $.ajax({
+                url: Routing.generate("obtener_procedimientos_distribucion_area", {'idAreaModEstab': $(this).val()}),
+                async: false,
+                dataType: 'json',
+                success: function (data) {
+                    $.each(data.resultados, function (indice, val) {
+                        idProcedimientoEstablecimiento.append($('<option>', {value: val.id, text: val.text}));
+                    });
+                }
+            });
+        }
+    });
+
+    {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+        idAreaModEstab.parent().parent().hide();
+    {% endif %}
+
+    {% if idAreaModEstab %}
+        idAreaModEstab.select2('val',{{ idAreaModEstab.getId() }});
+        idAreaModEstab.trigger('change');
+    {% endif %}
+
+});
+</script>
+{% endblock %}
+
+{% block notice %}
+{% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+
+{% block form -%}
+<form class="" action="" method="post" id="eliminar_cita">
+    <div class="container-fluid">
+        <h2 class="text-center">Citas de Procedimientos Programadas por Paciente</h2>
+        <img src="{{ asset('bundles/minsalcitas/imagenes/BuscarCita.png') }}" alt="imagen_buscar" style="width: 100px; margin: 20px auto; display:block;" />
+        <div class="row">
+            <div class="col-md-6 center-block">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th>No. Expediente - Nombre Paciente *: </th>
+                            <td><input type="hidden" id="numExpNomPac" name="numExpNomPac" style="width:400px !important;"></input></td>
+                        </tr>
+                        <tr>
+                            <th>Rango de Fechas:</th>
+                            <td><input type="text" id="rango_fechas" name="rango_fechas" class="bootstrap-daterangepicker" data-mask="99/99/9999 - 99/99/9999" placeholder='dd/mm/yyyy - dd/mm/yyyy' style="width:200px"></td>
+                        </tr>
+                        <tr>
+                            <th style="width: 300px;">Área a la que pertenece el procedimiento:</th>
+                            <td><select id="idAreaModEstab" name="idAreaModEstab" style="width:400px !important;">
+                                {% for area in areas %}
+                                <option value="{{ area.id }}">{{ area }}</option>
+                                {% endfor%}
+                            </select></td>
+                        </tr>
+                        <tr>
+                            <th>Procedimiento:</th>
+                            <td><select id="idProcedimientoEstablecimiento" name="idProcedimientoEstablecimiento" style="width:400px !important;"></select></input></td>
+                        </tr>
+                        <tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row text-center">
+            <div class="col-md-6 center-block">
+                <a id="buscar" style="width: 160px; margin-top: 5px;" class="btn btn-primary" href="#"><i class="glyphicon glyphicon-zoom-in"></i>&nbsp; Buscar</a>
+                <a id="limpiar" style="width: 160px; margin-top: 5px;" class="btn btn-info" href="#"><i class="fa fa-trash-o"></i><strong>&nbsp; Limpiar</strong></a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-offset-2 col-md-7">
+                <div id="resultado"></div>
+            </div>
+        </div>
+
+    </div>
+    <input type="hidden" name="idCita" id="idCita" value=""/>
+</form>
+{% endblock %}

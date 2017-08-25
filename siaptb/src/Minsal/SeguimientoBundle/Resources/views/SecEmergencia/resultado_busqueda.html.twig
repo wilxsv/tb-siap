@@ -1,0 +1,47 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['order']=[[3,"asc"]];
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['bFilter']=false;
+            opcionesTable['sDom']='<"top"flp>rt<"bottom"i>';
+            opcionesTable['aLengthMenu']= [[15,25, 50, 75, -1], [15,25, 50, 75, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+  <div class="col-md-offset-3 col-md-2">
+    <h3 class="text-center">Lista de Emergencias</h3>
+  </div>
+</div>
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>Acciones</th>
+            <th>NEC</th>
+            <th>Apellidos</th>
+            <th>Nombres</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Número Urgencia</th>
+            <th>Fecha Urgencia</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for paciente in pacientes %}
+            <tr>
+              <td>
+                  <a href="{{ path ('_report_seguimiento_paciente',{'report_name':'rpt_hoja_urgencia','report_format':'PDF','paciente':paciente['id'],'id_emergencia':paciente['id_emergencia']})}}" target="_blank" class="btn btn-info"><span class="glyphicon glyphicon-book"></span> Hoja de Emergencia</a>
+              </td>
+              <td >{{ paciente['numero'] }}</td>
+              <td>{{ paciente['primer_apellido']~' '~paciente['segundo_apellido']~' '~paciente['apellido_casada'] }}</td>
+              <td>{{ paciente['primer_nombre']~' '~paciente['segundo_nombre']~' '~paciente['tercer_nombre'] }}</td>
+              <td>{{ paciente['fecha_nacimiento']|date('d/m/Y')}}</td>
+              <td>{{ paciente['numero_emergencia']}}</td>
+              <td>{{ paciente['fecha_emergencia']|date('d/m/Y')}}</td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>

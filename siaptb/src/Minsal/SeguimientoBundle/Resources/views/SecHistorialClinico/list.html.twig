@@ -1,0 +1,148 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+{{parent()}}
+{% endblock %}
+
+{% block javascripts %}
+{{parent()}}
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+    var idExpediente=0;
+    var winParams=[];
+    var parameters=[];
+    $('#numExpNomPac').select2({
+        allowClear: true,
+        placeholder: 'Seleccionar...',
+        minimumInputLength: 1,
+        dropdownAutoWidth: true,
+        ajax: {
+            url: Routing.generate('citasexpedientepaciente'),
+            dataType: 'json',
+            quietMillis: 1000,
+            data: function(term, page) {
+                return {
+                    clue: term, //search term
+                    page_limit: 10, // page size
+                    page: page, // page number
+                };
+            },
+            results: function(data, page) {
+                var more = (page * 10) < data.data2;
+                return {results: data.data1, more: more};
+            }
+        }
+    }).on('change',function(e){
+            if( e.val== ''){
+                $('#especialidades').children().remove();
+                $('#especialidades').append('<option></option>');
+                $('#especialidades').select2({
+                    allowClear: true,
+                    placeholder: 'Seleccionar...',
+                    dropdownAutoWidth: true
+                }).prop('disabled',true);
+                $('#verHistorial').hide();
+                $('#verAntecedentes').hide();
+            }else{
+                $('#especialidades').children().remove();
+                $('#especialidades').append('<option></option>');
+                $.ajax({
+                    url: Routing.generate('especialidades_historia',{'idPaciente':e.val}),
+                    type: "GET",
+                    dataType: 'json',
+                    async: false,
+                    success: function(data) {
+                        $.each(data.idEspecialidad, function(indice, val) {
+                            $('#especialidades').append($('<option>', {value: val.id, text: val.nombre}));
+                            idExpediente=val.idexpediente;
+                        });
+                    }
+                });
+                $('#especialidades').prop('disabled',false);
+            }
+    });
+
+    $('#especialidades').select2({
+        allowClear: true,
+        placeholder: 'Seleccionar...',
+        dropdownAutoWidth: true
+    }).prop('disabled',true).on('change',function(e){
+        if(e.val!=""){
+            $('#verHistorial').show();
+            $('#verAntecedentes').show();
+        }
+        else{
+            $('#verHistorial').hide();
+            $('#verAntecedentes').hide();
+        }
+    });
+
+    $('#verHistorial').on('click', function(){
+        parameters['idExpedienteHclinica'] = idExpediente;
+        parameters['idEspecialidadHclinica']  = $('#especialidades').select2('val');
+        parameters['external'] = 'true';
+        winParams['method'] = "post";
+        winParams['action'] = "{{ url('admin_minsal_seguimiento_sechistorialclinico_list') }}";
+        winParams['target'] = "Historias Clinicas del Paciente";
+        winParams['parameters'] = parameters;
+        openPostPopUpWindows(winParams);
+    });
+
+    $('#verAntecedentes').on('click', function() {
+            var idExpediente   = $('#numExpNomPac').select2('val');
+            var idEspecialidad = $('#especialidades').select2('val');
+            var showUrl = "{{ url('admin_minsal_seguimiento_secantecedentes_showespe', { 'id':'idAntecedente', 'idatenareamodestab':'idEspecialidad' }) }}";
+
+            $.ajax({
+                url: Routing.generate('sec_antecedentes_leer') + '/' + idExpediente + '/' + idEspecialidad + '/1', // 1: Envío de Id de Expediente, 0: Envío de Id de Paciente
+                type: "POST",
+                dataType: 'json',
+                success: function (data) {
+                    if (data.idantecedente == 0) {
+                        showDialogMsg('Informacion','Este paciente aun no tiene antecedentes');
+                    } else {
+                        parameters['external'] = 'true';
+                        parameters['noEdit']   = 'true';
+                        var winParams = [];
+
+                        if (data.idantecedente){
+                            parameters['id'] = data.idantecedente;
+                            winParams['method'] = "post";
+                            //winParams['action'] = Routing.generate('sec_antecedentes_show',{ 'id':data.idantecedente, 'idatenareamodestab':idEspecialidad });
+                            winParams['action'] = showUrl.replace('idAntecedente', data.idantecedente).replace('idEspecialidad', idEspecialidad );
+                            winParams['target'] = "Antecedente de Paciente";
+                            winParams['parameters'] = parameters;
+                            openPostPopUpWindows(winParams);
+                        }
+                    }
+
+                }
+            });
+    });
+});
+</script>
+{% endblock %}
+
+{% block sonata_admin_content -%}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th>No. Expediente - Nombre Paciente </th>
+                        <td><input type="hidden" id="numExpNomPac" name="numExpNomPac" style="width:400px !important;"></input></td>
+                    </tr>
+                    <tr>
+                        <th>Especialidades en las que ha pasado consulta</th>
+                        <td><select id="especialidades" name="especialidades" style="width:400px !important;"><option></option></select></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-4">
+            <a id="verHistorial" style="display: none; width: 160px; margin-top: 5px;" class="btn btn-info" href="#"><i class="fa fa-archive"></i>&nbsp; Ver Historial Cl&iacute;nico</a>
+            <a id="verAntecedentes" style="display: none; width: 160px; margin-top: 5px;" class="btn btn-primary" href="#"><i class="fa fa-file-text"></i>&nbsp; Ver Antecedentes</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

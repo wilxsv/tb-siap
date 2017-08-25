@@ -1,0 +1,65 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['bSort']=false;
+            opcionesTable['iDisplayLength']=20;
+            opcionesTable['aLengthMenu']= [[20, 40, 80, -1], [20, 40, 80, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+            //tablaResultados.fnSort([[3,'asc'],[4,'asc']]);//ORDERNARLOS POR LA FICHA DE INICIO
+        });
+    </script>
+{% endblock javascripts %}
+<table id="tablaResultados" class="table table-bordered table-striped table-hover" data-table-enabled="true" >
+    <thead>
+        <tr>
+            <td>Tipo Evento</td>
+            <td>Nombre Evento</td>
+            <td>Médicos</td>
+            {% if claseEvento == 'proc' %}
+                <td>Procedimiento</td>
+            {% endif %}
+            <td>Fecha Inicio</td>
+            <td>Fecha Fin</td>
+            <td>Acciones</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% set fechaActual = date() %}
+        {% for evento in eventos %}
+            <tr>
+                <td>{{ evento.tipo_evento }}</td>
+                <td>{{ evento.nombre }}</td>
+                <td>
+                    {% if evento.medico|length >0 %}
+                        <ul>
+                        {% for medico in evento.medico %}
+                            {% if medico!=null %}
+                                <li>{{ medico }}</li>
+                            {% else %}
+                                <li>Todos los médicos</li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                </td>
+                {% if claseEvento == 'proc' %}
+                    {% if evento.procedimiento %}
+                        <td>{{evento.procedimiento}}</td>
+                    {% else %}
+                        <td>Todos los procedimientos</td>
+                    {% endif %}
+                {% endif %}
+                <td>{{ evento.fechaini|date("d/m/Y h:i A") }}</td>
+                <td>{{ evento.fechafin|date("d/m/Y h:i A") }}</td>
+                <td>
+                    {% if (fechaActual <  date(evento.fechafin) ) or app.user.hasRole('ROLE_SUPER_ADMIN') %}
+                        <a id="editar" class="btn btn-sm btn-default view_link" href="{{ path('admin_minsal_siaps_mntevento_edit',{id:evento.id_evento})}}"><i class="glyphicon glyphicon-edit"></i>&nbsp; Editar</a>
+                    {% endif %}
+                    <a id="editar" class="btn btn-sm btn-default view_link" href="{{ path('admin_minsal_siaps_mntevento_show',{id:evento.id_evento})}}"><i class="glyphicon glyphicon-zoom-in"></i>&nbsp; Mostrar</a>
+                </td>
+            </tr>
+        {%endfor%}
+    </tbody>
+</table>

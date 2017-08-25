@@ -1,0 +1,260 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+{% endblock%}
+
+{% block javascripts %}
+    {{parent()}}
+    <script type="text/javascript">
+    $(document).ready(function () {
+        var idAreaModEstab = $('#idAreaModEstab');
+        var idAtenAreaModEstab = $('#idAtenAreaModEstab');
+        var yrs = $('#yrs');
+        var idEmpleado = $('#idEmpleado');
+        var mes = $('#mes');
+
+        initializeSelect2(idAreaModEstab, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(idAtenAreaModEstab, true, true, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+        initializeSelect2(idEmpleado, true, true, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+        initializeSelect2(yrs, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(mes, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        idAreaModEstab.on('change', function () {
+            if ($(this).val()) {
+                $.ajax({
+                    url: Routing.generate("obtener_especialidades_por_area", {'idAreaModEstab': $(this).val()}),
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+
+                        initializeSelect2(idAtenAreaModEstab, true, true, {
+                            placeholder: 'Seleccionar...',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        $.each(data.resultados, function (indice, val) {
+                            idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.text}));
+                        });
+                    }
+                });
+            } else {
+                initializeSelect2(idAtenAreaModEstab, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                initializeSelect2(idEmpleado, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                $('#resultado').empty();
+            }
+        });
+
+        idAtenAreaModEstab.on('change', function () {
+            if ($(this).val()) {
+                $.ajax({
+                    url: Routing.generate("obtener_medicos_por_especialidad", {'idAtenAreaModEstab': $(this).val()}),
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+
+                        initializeSelect2(idEmpleado, true, true, {
+                            placeholder: 'Seleccionar...',
+                            allowClear: true,
+                            width: '100%'
+                        });
+                        $.each(data.resultados, function (indice, val) {
+                            idEmpleado.append($('<option>', {value: val.id, text: val.text}));
+                        });
+                    }
+                });
+                $('#mostrar').show();
+            } else {
+                initializeSelect2(idEmpleado, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+            $('#resultado').empty();
+        });
+
+        idEmpleado.on('change', function () {
+            if ($(this).val() != '') {
+                $('#mostrar').show();
+                $('#resultado').empty();
+            } else {
+                $('#mostrar').hide();
+                $('#resultado').empty();
+            }
+        });
+
+        mes.on('change', function () {
+            if ($(this).val() != '' & idAreaModEstab.select2('val') != '' & yrs.select2('val') != '' & idAtenAreaModEstab.select2('val') != '' & idEmpleado.select2('val') != '') {
+                var mes_seleccionado = parseInt($(this).val());
+                var mes_actual = moment().format('M');
+                var anio_actual = moment().format('YYYY');
+                
+                {% if app.user.hasRole('ROLE_SUPER_ADMIN') %}
+                    $('#editar').show();
+                {% else %}
+                    if(yrs.select2('val') > anio_actual){
+                        $('#editar').show();
+                    }else if (mes_seleccionado >= mes_actual){
+                        $('#editar').show();
+                    }else{
+                        $('#editar').hide();
+                    }
+                {% endif %}
+            }else {
+                $('#editar').hide();
+                $('#resultado').empty();
+            }
+        });
+
+        yrs.on('change', function () {
+            if ($(this).val() != '' & idAreaModEstab.select2('val') != '' & mes.select2('val') != '' & idAtenAreaModEstab.select2('val') != '' ) {
+                var mes_seleccionado = $(this).val();
+                var mes_actual = moment().format('M');
+                if (mes_seleccionado >= mes_actual){
+                    $('#editar').show();
+                }
+                else {
+                    {% if app.user.hasRole('ROLE_SUPER_ADMIN') %}
+                        $('#editar').show();
+                    {% else %}
+                        $('#editar').hide();
+                    {% endif %}
+                }
+            }else {
+                $('#editar').hide();
+                $('#resultado').empty();
+            }
+        });
+
+        $('#mostrar').on('click', function () {
+            $('#resultado').empty();
+            $('#resultado').append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+            $('#resultado').load(Routing.generate("cargar_distribucion_medico"), {'datos': $('#formDistribucion').serialize()});
+        }).hide();
+
+        $('#editar').hide().on('click', function () {
+            $('#formDistribucion').attr('action','{{ url('admin_minsal_citas_citdistribucion_edit')}}');
+            $('#formDistribucion').submit();
+        });
+
+        $('#agregar').on('click',function(){
+            $('#agregar').attr('href', $('#agregar').attr('href')+'?idAreaModEstab='+$('#idAreaModEstab').val()+'&idAtenAreaModEstab='+$('#idAtenAreaModEstab').val()+'&idEmpleado='+$('#idEmpleado').val());
+        });
+
+        {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+            idAreaModEstab.parent().parent().hide();
+        {% endif %}
+
+        {% if idAreaModEstab %}
+            idAreaModEstab.select2('val',{{ idAreaModEstab.getId() }});
+            idAreaModEstab.trigger('change');
+        {% endif %}
+    });
+    </script>
+{% endblock%}
+
+{% block notice %}
+{% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+
+{% block list_table -%}
+
+<div class="container-fluid">
+    <div class="row">
+        <form id="formDistribucion" method="post" >
+            <div class="col-md-7 col-md-offset-2">
+                <h2><img class="icono" src={{ asset('bundles/minsalsiaps/imagenes/agenda.png') }} />Distribución Médica</h2>
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 300px;">Área a la que pertenece la especialidad:</th>
+                            <td><select id="idAreaModEstab" name="idAreaModEstab" style="width:400px !important;">
+                                {% for area in areas %}
+                                <option value="{{ area.id }}">{{ area }}</option>
+                                {% endfor%}
+                            </select></td>
+                        </tr>
+                        <tr>
+                            <th>Especialidad:</th>
+                            <td><select id="idAtenAreaModEstab" name="idAtenAreaModEstab" style="width:400px !important;"></select></input></td>
+                        </tr>
+                        <tr>
+                            <th>Médico:</th>
+                            <td><select id="idEmpleado" name="idEmpleado" style="width:400px !important;"></select></td>
+                        </tr>
+                        <tr>
+                            <th>Año:</th>
+                            <td><select id="yrs" name="yrs" style="width:400px !important;">
+                                <option value="{{ "now"|date("Y") }}">{{ "now"|date("Y") }}</option>
+                                <option value="{{ ("now"|date("Y"))+1 }}">{{ ("now"|date("Y"))+1 }}</option>
+                                <option value="{{ ("now"|date("Y"))+2 }}">{{ ("now"|date("Y"))+2 }}</option>
+                            </select></td>
+                        </tr>
+                        <tr>
+                            <th>Mes:</th>
+                            <td><select id="mes" name="mes" style="width:400px !important;">
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <div class="col-md-6 center-block">
+            <a id="agregar" style="width: 160px; margin-top: 5px;" class="btn btn-primary" href="{{ path('admin_minsal_citas_citdistribucion_create') }}"><i class="fa  fa-plus-circle"></i>&nbsp; Agregar Nuevo</a>
+            <a id="mostrar" style="width: 160px; margin-top: 5px;" class="btn btn-info" href="#"><i class="glyphicon glyphicon-zoom-in"></i>&nbsp; Mostrar</a>
+            <a id="editar"  style="width: 160px; margin-top: 5px;" class="btn btn-info" href="#"><i class="glyphicon glyphicon-pencil"></i>&nbsp; Editar</a>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div id="resultado" class="col-md-10 center-block">
+        </div>
+    </div>
+</div>
+{% endblock -%}

@@ -1,0 +1,509 @@
+<html>
+    <head>
+        <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        {% include 'MinsalSiapsBundle::standard_css_reportes.html.twig' %}
+        <link href="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" rel="stylesheet">
+        <style type="text/css">
+
+            html,body {overflow: visible !important; color: black !important; border-style: none !important; border-color:black !important;font-size: 12px!important;}
+            div .table-responsive {overflow: visible !important; border-style: none !important}
+
+            .panel{ margin: 8px;}
+            .panel-info > .panel-heading,.titulo_vista {
+                background-color: white;
+                font-size: 12px;
+                border-color: black;
+                color: black;
+                font-weight: bold;
+                border-style: none !important;
+                padding: 2px 5px;
+            }
+            table{font-size: 10px!important;}
+            .panel-body, .vista_paciente{font-size: 10px; border-style: none !important;}
+            td,th {padding: 2px 5px;}
+            .panel-info{border-color:black}
+            table {width: 100%}
+
+        </style>
+    </head>
+    <body >
+        <div style="height: 830px;border-bottom-style: dashed;border-width: 1px;">             
+            <div class="table-responsive" style="overflow-x: auto; border:0px; ">
+                <table  style="font-size: 10px;border:0px;">
+                    <tbody>
+                        <tr>
+                            <td><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/Reporte-Escudo.png') }}" style="width: 50px;"/></td>
+                            <td  width="500px"><center>MINISTERIO DE SALUD <br/>
+                        SISTEMA NACIONAL DE SALUD/COMISION INTERSECTORIAL DE SALUD (CISALUD)<br/>
+                        FORMULARIO PARA SOLICITUD Y CONFIRMACIÓN DE VIH (FVIH-01)<br/>
+                        {{ app.user.getIdEstablecimiento()|upper }}
+                    </center></td>
+                    <td ><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/minsal_2014.png') }}" style="width: 120px;float:right;"/></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <table class="">
+                <tbody>
+                    <tr class="sonata-ba-view-container" style="border-style: solid;border-color: black; border-width: 2px;">
+                        <th COLSPAN="4">
+                            A. DATOS GENERALES
+                        </th>
+                    </tr>
+                    <tr>
+                        <td><strong>Fecha de Consulta:</strong></td>
+                        <td>{{object.fechaconsulta | date('d-m-Y')}}</td>
+                        <td> <strong>Nombre del Establecimiento</strong></td>
+                        <td>{{ app.user.getIdEstablecimiento()|upper }} </td>
+                    </tr>
+                    <tr>
+                        <td><strong>No. Expediente:</strong></td>
+                        <td>{{expediente.numero}}</td>
+                        <td><strong>Categoría de Afiliación:</strong></td>
+                        <td> {{(expediente.idPaciente.idAreaCotizacion ?: '-')}} </td>
+                    </tr>
+                    <tr style="border-style: solid;border-color: black; border-width: 2px;">
+                        <th COLSPAN="4">
+                            I. DATOS DE IDENTIFICACIÓN
+                        </th>
+                    </tr>
+                    <tr>
+                        <td><strong>No. DUI:</strong></td>
+                        <td>{% if expediente.idPaciente.idDocPaciente.id == 1%} {{expediente.idPaciente.numeroDocIdePaciente}} {%else%} - {% endif %}</td>
+                        <td><strong>Fecha de nacimiento</strong></td>
+                        <td>{{expediente.idPaciente.fechaNacimiento | date ('d/m/Y')}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Apellidos:</strong></td>
+                        <td>{{expediente.idPaciente.primerApellido ~ ' '~ expediente.idPaciente.segundoApellido ~ ' '~ expediente.idPaciente.apellidoCasada}}</td>
+                        <td><strong>Edad:</strong></td>
+                        <td>{{edad}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nombre:</strong></td>
+                        <td>{{expediente.idPaciente.primerNombre ~ ' '~ expediente.idPaciente.segundoNombre ~ ' '~ expediente.idPaciente.tercerNombre}}</td>
+                        <td><strong>Sexo:</strong></td>
+                        <td>{{expediente.idPaciente.idSexo}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><strong>Si es menor de edad, nombre completo de responsable:</strong></td>
+                        <td colspan="2">{% set var=edad|split('año')%}
+                            {% if var|length == 2 %}
+                                {% if var[0] <18 %}
+                                    {{expediente.idPaciente.nombreResponsable}}
+                                {% endif %}
+                            {% else %}
+                                {{expediente.idPaciente.nombreResponsable}}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dirección Completa:</strong></td>
+                        <td>{{expediente.idPaciente.direccion}}</td>
+                        <td><strong>Area:</strong>{{expediente.idPaciente.areaGeograficaDomicilio}}</td>
+                        <td><strong>Nacionalidad:</strong>{{expediente.idPaciente.idNacionalidad}}<br/>
+                            <strong>Teléfono:</strong>{{expediente.idPaciente.telefonoCasa}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Municipio: </strong></td>
+                        <td>{{expediente.idPaciente.idMunicipioDomicilio}}</td>
+                        <td><strong>Departamento: </strong></td>
+                        <td>{{expediente.idPaciente.idDepartamentoDomicilio}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Estado Civil: </strong></td>
+                        <td>{{expediente.idPaciente.idEstadoCivil}}</td>
+                        <td><strong>Numero de Hijos: </strong></td>
+                        <td>0</td>
+                    </tr>
+                    <tr style="border-style: solid;border-color: black; border-width: 2px">
+                        <th colspan="2" style="border-style: solid;border-color: black; border-width: 2px"><strong>{{'II.Datos Espeficos de Mujeres en edad Reproductiva (10-54) Años'|upper}}</strong></th>
+                        <th style="border-style: solid;border-color: black; border-width: 2px"><strong>{{'III.Datos Especificos Sobre Factores de Riesgo'|upper}} </strong></th>
+                        <th style="border-style: solid;border-color: black; border-width: 2px"><strong>{{'IV.Datos Sobre Solicitud y motivos de Exámen'|upper}} </strong></th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="border-style: solid;border-color: black; border-width: 2px">
+                            <table>
+                                <tr><td colspan="2"><center>Indagar en toda mujer en edad reproductiva (10 a 54 años de edad)</center></td></tr>
+                    <tr><td><strong>Embarazada:</strong>{%if expediente.getIdPaciente().getIdCondicionPersona().getId()==1%} Si {%else%}No {%endif%}</td>
+                        <td><strong>Semanas de amenorrea:</strong>{{datoEmbarazo ? datoEmbarazo.semanaAmenorrea:'N/A'}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>FUM:</strong>{{datoEmbarazo ? datoEmbarazo.fechaUltimaMestruacion | date ('d/m/Y') :'N/A'}}</td>
+                        <td><strong>FPP:</strong>{{datoEmbarazo ? datoEmbarazo.fechaProblableParto | date ('d/m/Y') :'N/A'}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            {%if expediente.getIdPaciente().getIdCondicionPersona().getId()==1%}
+                                <table>
+                                    <tr><td>G: {{expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.gestaciones}}</td>
+                                        <td>P: {{expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.partosTermino}}</td>
+                                        <td>P: {{expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.partoPrematuro}}</td>
+                                        <td>A: {{expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.nacidosVivos}}</td>
+                                        <td>V: N/A</td></tr>                                
+                                </table>
+
+                            {%else%}
+                                <table>
+                                    <tr><td>G: N/A</td>
+                                        <td>P: N/A</td>
+                                        <td>P: N/A</td>
+                                        <td>A: N/A</td>
+                                        <td>V: N/A</td></tr>                                
+                                </table>
+                            {%endif%}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><strong>Periodo de indicación del examen:</strong>{{solicitud.idDatoEmbarazo ? solicitud.idDatoEmbarazo.idPeriodo :'N/A'}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><strong>En control prenatal:</strong>{{solicitud.idDatoEmbarazo ? solicitud.idDatoEmbarazo.controlPrenatal ? 'Si':'No' :'N/A'}}</td>
+                    </tr>
+            </table>
+
+        </td><!-- BLOQUE IV-->
+        <td style="border-style: solid;border-color: black; border-width: 2px">
+            <table>
+                <tr>
+                    <td><strong>Orientación Sexual:</strong></td>
+                    <td>{{solicitud.getIdOrientacionSexual()}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Identitidad Sexual</strong></td>
+                    <td>{{solicitud.getIdentidadGenero()}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Otros Posibles Factores de Riesgo</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="2">{%for factor in solicitud.getIdFactoresRiesgo()%}
+                        <ul style="margin: 0px;">
+                            <li>{{factor}}</li>
+                        </ul>
+                        {%endfor%}    
+                        </td>
+                    </tr>
+                </table>
+            </td><!-- BLOQUE III-->
+            <td style="border-style: solid;border-color: black; border-width: 2px">
+                <table class="">
+                    <tr>
+                        <td colspan="2"><strong>Indicación de Examen para (D/C):</strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            {{solicitud.getIdIndicacionExamen()}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><strong>Motivo de Solicitud de Examen:</strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            {{solicitud.getIdMotivoSolicitud()}}
+                        </td>
+                    </tr>
+                </table>
+            </td><!-- BLOQUE IV-->
+        </tr>
+        <tr>
+            <td colspan="2">
+                <br/><br/>
+                <table>
+                    <tr><td ><center>{{object.getIdEmpleado()}}</center></td></tr>
+        <tr><td><center>Nombre de responsable de indicar prueba</center></td></tr>
+<tr><td><center><br/><br/><br/><br/></center></td></tr>
+<tr><td><center>Firma y Sello</center></td></tr>
+</table>
+</td><!-- DATOS DEL MÉDICO-->
+<td>
+    <table class="" style="border-style: solid;border-color: black; border-width: 2px">
+        <tr>
+            <td colspan="2"><strong>V. DATOS CLINICOS:</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Clínica</strong></td>
+            <td><strong>Manejo</strong></td>
+        </tr>
+        <tr>
+            <td>{{solicitud.getIdDatosClinicos()}}</td>
+            <td>{{solicitud.getIdDatosManejo()}}</td>
+        </tr>
+    </table></td><!-- BLOQUE V -->
+<td>
+    <table class="" style="border-style: solid;border-color: black; border-width: 2px">
+        <tr>
+            <td colspan="2"><strong>VI. CONSEJERIA:</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Se Brindó consejería:</strong></td>
+            <td>{% if solicitud.getEsConsejeria()%} Si {%else%} No {%endif%}</td>
+        </tr>
+        <tr>
+            <td colspan="2"> </td>
+        </tr>
+    </table></td>
+</tr>
+<tr>
+    <td colspan="4"><center><br/>Esta hoja deberá ser llenada en forma completa con letra legible por personal que indicó la prueba de VIH</center></td>
+</tr>
+<tr style="border-style: solid;border-color: black; border-width: 2px">
+    <td colspan="4"><center><strong>Ley y Reglamento de Prevención y Control de la Infección Provocada por el Virus de Inmunodefiencia Humana
+        <br/>DECRETO No. 588. CAPITULO III. Vigilancia Epidemiológica Art. 30. Y DECRETO No.40 CAPITULO IV. Art.59. Art.61.</strong></center></td>
+</tr>
+</tbody>
+</table>  
+</div>
+<br/>
+<table style="border-style: solid;border-color: black; border-width: 1px">
+    <tbody>                       
+        <tr>
+            <td><strong>Establecimiento:</strong>{{ app.user.getIdEstablecimiento()|upper }}</td>
+            <td><strong>ORDEN DE SOLICIUTD DE EXAMEN</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Apellidos:</strong>{{expediente.idPaciente.primerApellido ~ ' '~ expediente.idPaciente.segundoApellido ~ ' '~ expediente.idPaciente.apellidoCasada}}</td>
+            <td><strong>No. DUI:</strong>{% if expediente.idPaciente.idDocPaciente.id == 1%} {{expediente.idPaciente.numeroDocIdePaciente}} {%else%} - {% endif %}</td>
+        </tr>
+        <tr>
+            <td><strong>Nombre:</strong>{{expediente.idPaciente.primerNombre ~ ' '~ expediente.idPaciente.segundoNombre ~ ' '~ expediente.idPaciente.tercerNombre}}</td>
+            <td><strong>No. Expediente:</strong>{{expediente.numero}}</td>
+        </tr>
+        <tr>
+            <td><strong>Edad:</strong>{{edad}}</td>
+            <td><strong>Sexo:</strong>{{expediente.idPaciente.idSexo}}</td>
+        </tr>
+        <tr>
+            <td><strong>Motivo de Solicitud de Examen:</strong>{{solicitud.getIdMotivoSolicitud()}}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td >
+    <center>{{object.getIdEmpleado()}}</center>
+</td>
+<td></td>
+</tr>
+<tr>
+    <td><center>Nombre de responsable de indicar prueba</center></td>
+<td><center>Firma y Sello</center></td>
+</tr>
+</tbody>
+</table>
+
+<!-- Salto de Página-->
+<p style="page-break-after: always;"></p>
+<div style="height: 830px;border-bottom-style: dashed;border-width: 1px;">             
+    <p style="text-align: right">Uso exclusivo de Laboratorio</p>
+    <p><strong>B. EXAMENES QUE FUNDAMENTAN EL DIANÓSTICO</strong></p>
+    <table style="border-style: solid;border-color: black; border-width: 1px">
+        <tbody>                       
+            <tr>
+                <td colspan="3"><strong>Nombre del Establecimiento que realiza la prueba:</strong>_________________________________________________________________________________________________________</td>
+
+            </tr>
+            <tr>
+                <td><strong>Fecha de toma de muestra:</strong>________________________</td>
+                <td><strong>Fecha de realización:________________________</strong></td>
+                <td><strong>Fecha de resultado:________________________</strong></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <br/>
+                </td>
+            </tr>
+            <tr>
+
+                <td>
+                    <strong>Prueba Rápida:</strong> <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/><strong> Marca:</strong>______________________</td>
+                <td colspan="2">Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                    No Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                    Indeterminada <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>ELISA</strong> <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>   <strong>Marca:</strong>______________________</td>
+                <td colspan="2">Lectura:_______________ Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                    No Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                    Indeterminada <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Responsable:</strong></td>
+                <td colspan="2">
+                    <br/><br/>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <br/>
+    <!--Sección de confirmación de Elisa-->
+    <table style="">
+        <tbody>                       
+            <tr>
+                <td colspan="2">
+                    <table style="border-style: solid;border-color: black; border-width: 1px">
+                        <tr>
+                            <td colspan="2">
+                                <strong>ELISA para confirmación</strong>   
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                Establecimiento:______________________________________________________
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de recepción:_______________</td>
+                            <td>Fecha de realización:_____________</td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de resultado:_______________</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Marca:_______________</td>
+                            <td>Lectura:_____________</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                Resultado: Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                                No Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                                Indeterminada <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><strong>Responsable:</strong></td>
+
+                        </tr>
+                    </table>
+
+                </td>
+                <td colspan="2">
+                    <table style="border-style: solid;border-color: black; border-width: 1px">
+                        <tr>
+                            <td colspan="2">
+                                <strong>ELISA para confirmación</strong>   
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                Establecimiento:______________________________________________________
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de recepción:_______________</td>
+                            <td>Fecha de realización:_____________</td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de resultado:_______________</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Marca:_______________</td>
+                            <td>Lectura:_____________</td>
+                        </tr>      
+                        <tr>
+                            <td colspan="2">
+                                Resultado: Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                                No Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                                Indeterminada <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><strong>Responsable:</strong></td>
+
+                        </tr>
+                    </table>
+
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <br/>
+    <!--Sección WESTERN BLOT-->
+    <table style="border-style: solid;border-color: black; border-width: 1px">
+        <tr><td colspan="3"><strong>WESTERN BLOT</strong></td></tr>
+        <tr><td colspan="3"><strong>Nombre del Establecimiento que confirma prueba:</strong>_________________________________________________________________________________________________________</td></tr>
+        <tr>
+            <td>Fecha de toma de muestra:________________________</td>
+            <td>Fecha de realización:________________________</td>
+            <td>Fecha de resultado:________________________</td>
+        </tr>
+        <tr>                
+            <td colspan="2">Resultado: Positivo <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                Negativo <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                Indeterminado <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">Responsable:</td>
+
+        </tr>
+    </table>
+    <br/>
+    <!--Sección DIAGNOSTIVO FINAL-->
+    <p><strong>C. DIAGNÓSTICO FINAL DEL CASO</strong></p>
+    <table style="border-style: solid;border-color: black; border-width: 1px">
+        <tr>
+            <td><strong>Clasificación final de caso</strong>(Se completará esta información con los resultados de laboratorio que confirma muestra y cuadro cliico de paciente</td>
+        </tr>
+        <tr>
+            <td>
+                1. Negativo <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                2. Infección por VIH <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                3. Caso SIDA <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                4. Seguimiento <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                5. Caso Conocido <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+            </td>
+        </tr>
+    </table>
+</div>
+<p><strong>EXÁMENES QUE FUNDAMENTAN EL DIAGNÓSTICO</strong></p>
+<table style="border-style: solid;border-color: black; border-width: 1px">
+    <tbody>                       
+        <tr>
+            <td colspan="3"><strong>Nombre del Establecimiento que realiza la prueba:</strong>_________________________________________________________________________________________________________</td>
+
+        </tr>
+        <tr>
+            <td><strong>Fecha de toma de muestra:</strong>________________________</td>
+            <td><strong>Fecha de realización:________________________</strong></td>
+            <td><strong>Fecha de resultado:________________________</strong></td>
+        </tr>
+        <tr>
+        <tr>
+            <td colspan="3">
+                <br/>
+            </td>
+        </tr>
+        <tr>
+
+            <td>
+                <strong>Prueba Rápida:</strong> <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/><strong> Marca:</strong>______________________</td>
+            <td colspan="2">Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                No Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                Indeterminada <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>ELISA</strong> <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>   <strong>Marca:</strong>______________________</td>
+            <td colspan="2">Lectura:_______________ Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                No Reactiva <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                Indeterminada <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td><strong>Responsable:</strong></td>
+            <td colspan="2">
+                <br/><br/>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</body>
+</html>

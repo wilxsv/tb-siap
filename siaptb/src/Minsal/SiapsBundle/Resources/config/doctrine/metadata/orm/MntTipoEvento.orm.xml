@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntTipoEvento" table="mnt_tipo_evento">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="nombre" type="string" column="nombre" length="100" nullable="false"/>
+    <field name="idusuarioreg" type="smallint" column="idusuarioreg" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="idusuariomod" type="smallint" column="idusuariomod" nullable="true"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+  </entity>
+</doctrine-mapping>

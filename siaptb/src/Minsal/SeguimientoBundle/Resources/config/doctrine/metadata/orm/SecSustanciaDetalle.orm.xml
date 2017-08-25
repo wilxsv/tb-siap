@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecSustanciaDetalle" table="sec_sustancia_detalle">
+    <indexes>
+      <index name="fki_antecedentes_sustancia_sustancia_detalle" columns="id_antecedentes_sustancia"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="anioInicioConsumo" type="integer" column="anio_inicio_consumo" nullable="true"/>
+    <field name="aniosConsumio" type="integer" column="anios_consumio" nullable="true"/>
+    <field name="especificacion" type="text" column="especificacion" nullable="true"/>
+    <many-to-one field="idAntecedentesSustancia" target-entity="SecAntecedentesSustancia">
+      <join-columns>
+        <join-column name="id_antecedentes_sustancia" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

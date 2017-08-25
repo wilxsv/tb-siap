@@ -1,0 +1,45 @@
+parameters:
+#    minsal_citas.example.class: Minsal\CitasBundle\Example
+
+services:
+#    minsal_citas.example:
+#        class: %minsal_citas.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]
+    sonata.admin.citcitasdia:
+        class: Minsal\CitasBundle\Admin\CitCitasDiaAdmin
+        arguments: [~, Minsal\CitasBundle\Entity\CitCitasDia, MinsalCitasBundle:CitCitasDiaAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: AG-1-Agenda, label: Agenda Médica}
+
+    minsal_citas.admin.cit_tipo_distribucion:
+        class: Minsal\CitasBundle\Admin\CitTipoDistribucionAdmin
+        arguments: [~, Minsal\CitasBundle\Entity\CitTipoDistribucion, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Tipo de Distribución}
+    minsal_citas.admin.cit_distribucion:
+        class: Minsal\CitasBundle\Admin\CitDistribucionAdmin
+        arguments: [~, Minsal\CitasBundle\Entity\CitDistribucion, MinsalCitasBundle:CitDistribucionAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Distribución Médica}
+    minsal_citas.admin.cit_distribucion_procedimiento:
+        class: Minsal\CitasBundle\Admin\CitDistribucionProcedimientoAdmin
+        arguments: [~, Minsal\CitasBundle\Entity\CitDistribucionProcedimiento, MinsalCitasBundle:CitDistribucionProcedimientoAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Distribución de Procedimiento}
+    minsal_citas.admin.cit_estado_cita:
+        class: Minsal\CitasBundle\Admin\CitEstadoCitaAdmin
+        arguments: [~, Minsal\CitasBundle\Entity\CitEstadoCita, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Estado de la Cita}
+
+    minsal_citas.admin.cit_tipocita:
+        class: Minsal\CitasBundle\Admin\CitTipocitaAdmin
+        arguments: [~, Minsal\CitasBundle\Entity\CitTipocita, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Tipo de Cita}
+
+    minsal_citas.admin.cit_citas_procedimientos:
+        class: Minsal\CitasBundle\Admin\CitCitasProcedimientosAdmin
+        arguments: [~, Minsal\CitasBundle\Entity\CitCitasProcedimientos, MinsalCitasBundle:CitCitasProcedimientosAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm,  group: CT-2-Citas Procedimiento, label: Asignar}

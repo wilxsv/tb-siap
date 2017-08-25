@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntRangohora" table="mnt_rangohora">
+    <indexes>
+      <index name="IDX_C8705FB7DFA12F6" columns="id_establecimiento"/>
+      <index name="IDX_C8705FBCAC67ADB" columns="id_modulo"/>
+      <index name="IDX_C8705FB13B895A1" columns="idusuarioreg"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="horaIni" type="time" column="hora_ini" nullable="true"/>
+    <field name="horaFin" type="time" column="hora_fin" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="meridianoini" type="string" column="meridianoini" length="2" nullable="true"/>
+    <field name="meridianofin" type="string" column="meridianofin" length="2" nullable="true"/>
+    <field name="modulo" type="string" column="modulo" length="60" nullable="true"/>
+    <field name="activo" type="boolean" column="activo" nullable="false"/>
+    <many-to-one field="idusuarioreg" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuarioreg" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idModulo" target-entity="CtlModulo">
+      <join-columns>
+        <join-column name="id_modulo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idEstablecimiento" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="id_establecimiento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

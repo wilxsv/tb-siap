@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabPosibleObservacion" table="lab_posible_observacion">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="posibleObservacion" type="string" column="posible_observacion" length="500" nullable="false"/>
+    <field name="habilitado" type="boolean" column="habilitado" nullable="false"/>
+  </entity>
+</doctrine-mapping>

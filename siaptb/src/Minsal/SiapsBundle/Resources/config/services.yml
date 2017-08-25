@@ -1,0 +1,35 @@
+services:
+    minsal_siaps.admin.mnt_paciente_referido:
+        class: Minsal\SiapsBundle\Admin\MntPacienteReferidoAdmin
+        arguments: [~, Minsal\SiapsBundle\Entity\MntPacienteReferido, MinsalSiapsBundle:MntPacienteReferidoAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: IP-1-Identificación Paciente, label: Buscar Referencia}
+
+    minsal_siaps.admin.mnt_consultorio:
+        class: Minsal\SiapsBundle\Admin\MntConsultorioAdmin
+        arguments: [~, Minsal\SiapsBundle\Entity\MntConsultorio,  MinsalSiapsBundle:MntConsultorioAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Consultorios}
+
+    minsal_siaps.admin.mnt_rangohora:
+        class: Minsal\SiapsBundle\Admin\MntRangohoraAdmin
+        arguments: [~, Minsal\SiapsBundle\Entity\MntRangohora, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Rango Hora}
+
+    minsal_siaps.admin.mnt_procedimiento_establecimiento:
+        class: Minsal\SiapsBundle\Admin\MntProcedimientoEstablecimientoAdmin
+        arguments: [~, Minsal\SiapsBundle\Entity\MntProcedimientoEstablecimiento, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Procedimiento}
+    minsal_siaps.admin.mnt_tipo_evento:
+        class: Minsal\SiapsBundle\Admin\MntTipoEventoAdmin
+        arguments: [~, Minsal\SiapsBundle\Entity\MntTipoEvento, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Tipos de Evento}
+
+    minsal_siaps.admin.mnt_evento:
+        class: Minsal\SiapsBundle\Admin\MntEventoAdmin
+        arguments: [~, Minsal\SiapsBundle\Entity\MntEvento, MinsalSiapsBundle:MntEventoAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: CT-2-Administración, label: Eventos}

@@ -1,0 +1,5 @@
+/siaptb/app/cache/*
+/siaptb/app/config/parameters.yml
+/siaptb/app/logs/*
+!siaptb/app/cache/.gitkeep
+!siaptb/app/logs/.gitkeep

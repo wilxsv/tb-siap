@@ -1,0 +1,32 @@
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+<table class="vista_paciente" border="0" width="100%">
+    <tr class="titulo_vista">
+        <td colspan="4">Identificación del Paciente</td>
+    </tr>
+
+    <tr>
+        <td><label>Nombre:</label> </td>
+        <td> {{expediente.getIdPaciente().primerApellido}} {{expediente.getIdPaciente().segundoApellido}} {{expediente.getIdPaciente().apellidoCasada}}, {{expediente.getIdPaciente().primerNombre}} {{expediente.getIdPaciente().segundoNombre}} {{expediente.getIdPaciente().tercerNombre}}   </td>
+        <td><label>Conocido por:</label></td><td>{{expediente.getIdPaciente().getConocidoPor()}}</td>
+    </tr>
+    <tr class="dat_paciente_content">
+        <td><label>Edad:</label></td><td>{{edad}}</td>
+        <td><label>Sexo:</label></td><td>{{expediente.getIdPaciente().idSexo}}</td>
+    </tr>
+    <tr class="dat_paciente_content">
+        <td><label>Fecha de Nacimiento:</label></td><td>{{expediente.getIdPaciente().getFechaNacimiento()|date('d-m-Y')}}</td>
+        <td><label>Area Geografica:</label></td><td>{{expediente.getIdPaciente().getAreaGeograficaDomicilio()}}</td>
+    </tr>
+    <tr>
+        <td><label>Dirección:</label> </td>
+        <td colspan="3"> {{expediente.getIdPaciente().getDireccion()}}</td>
+    </tr>
+    <tr class="dat_paciente_content">
+        <td><label>Departamento Domicilio:</label></td><td>{{expediente.getIdPaciente().getIdDepartamentoDomicilio()}}</td>
+        <td><label>Municipio Domicilio:</label></td><td>{{expediente.getIdPaciente().getIdMunicipioDomicilio()}}</td>
+    </tr>
+</table>
+<br/>

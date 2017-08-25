@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntAreafarmaciaxestablecimiento" table="mnt_areafarmaciaxestablecimiento">
+    <indexes>
+      <index name="IDX_2B5F8AA845BCCC8" columns="idarea"/>
+    </indexes>
+    <id name="idrelacion" type="integer" column="idrelacion">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="habilitado" type="string" column="habilitado" nullable="false"/>
+    <field name="idestablecimiento" type="integer" column="idestablecimiento" nullable="false"/>
+    <field name="idmodalidad" type="integer" column="idmodalidad" nullable="false"/>
+    <many-to-one field="idarea" target-entity="MntAreafarmacia">
+      <join-columns>
+        <join-column name="idarea" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

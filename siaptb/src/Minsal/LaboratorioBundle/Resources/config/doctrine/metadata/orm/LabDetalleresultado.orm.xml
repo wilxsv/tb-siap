@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabDetalleresultado" table="lab_detalleresultado">
+    <indexes>
+      <index name="fki_resultados_detalleresultado" columns="idresultado"/>
+      <index name="fki_subelemento_detalleresultado" columns="idsubelemento"/>
+      <index name="fki_baterias_detalleresultado" columns="idbacteria"/>
+      <index name="fki_elementos_detalleresultado" columns="idelemento"/>
+      <index name="fki_cantidad_detalleresultado" columns="idcantidad"/>
+      <index name="fki_tarjeta_detalleresultado" columns="idtarjeta"/>
+      <index name="fki_establecimiento" columns="idestablecimiento"/>
+      <index name="fki_procedimientos" columns="idprocedimiento"/>
+      <index name="IDX_3013028D3130FF2C" columns="id_elementotincion"/>
+      <index name="IDX_3013028D19211949" columns="id_posible_resultado"/>
+      <index name="IDX_3013028DAF62D408" columns="id_posresult_elemento_referido"/>
+      <index name="IDX_3013028D3B05AA65" columns="id_posresult_subelemento_referido"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="resultado" type="string" column="resultado" length="200" nullable="true"/>
+    <field name="observacion" type="string" column="observacion" length="250" nullable="true"/>
+    <field name="cantidad" type="text" column="cantidad" nullable="true"/>
+    <field name="bReferido" type="boolean" column="b_referido" nullable="true"/>
+    <field name="elementoReferido" type="string" column="elemento_referido" length="150" nullable="true"/>
+    <field name="resultadoElementoReferido" type="string" column="resultado_elemento_referido" length="300" nullable="true"/>
+    <field name="subelementoReferido" type="string" column="subelemento_referido" length="150" nullable="true"/>
+    <field name="resultadoSubelementoReferido" type="string" column="resultado_subelemento_referido" length="300" nullable="true"/>
+    <field name="unidadElementoReferido" type="string" column="unidad_elemento_referido" length="30" nullable="true"/>
+    <field name="rangoinicioElementoReferido" type="float" column="rangoinicio_elemento_referido" precision="10" scale="0" nullable="true"/>
+    <field name="rangofinElementoReferido" type="float" column="rangofin_elemento_referido" precision="10" scale="0" nullable="true"/>
+    <field name="unidadSubelementoReferido" type="string" column="unidad_subelemento_referido" length="30" nullable="true"/>
+    <field name="rangoinicioSubelementoReferido" type="float" column="rangoinicio_subelemento_referido" precision="10" scale="0" nullable="true"/>
+    <field name="rangofinSubelementoReferido" type="float" column="rangofin_subelemento_referido" precision="10" scale="0" nullable="true"/>
+    <many-to-one field="idsubelemento" target-entity="LabSubelementos">
+      <join-columns>
+        <join-column name="idsubelemento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idresultado" target-entity="LabResultados">
+      <join-columns>
+        <join-column name="idresultado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idtarjeta" target-entity="LabTarjetasvitek">
+      <join-columns>
+        <join-column name="idtarjeta" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idPosresultElementoReferido" target-entity="LabPosibleResultado">
+      <join-columns>
+        <join-column name="id_posresult_elemento_referido" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idPosresultSubelementoReferido" target-entity="LabPosibleResultado">
+      <join-columns>
+        <join-column name="id_posresult_subelemento_referido" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idprocedimiento" target-entity="LabProcedimientosporexamen">
+      <join-columns>
+        <join-column name="idprocedimiento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idPosibleResultado" target-entity="LabPosibleResultado">
+      <join-columns>
+        <join-column name="id_posible_resultado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idcantidad" target-entity="LabCantidadestincion">
+      <join-columns>
+        <join-column name="idcantidad" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idelemento" target-entity="LabElementos">
+      <join-columns>
+        <join-column name="idelemento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idElementotincion" target-entity="LabElementostincion">
+      <join-columns>
+        <join-column name="id_elementotincion" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idestablecimiento" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="idestablecimiento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idbacteria" target-entity="LabBacterias">
+      <join-columns>
+        <join-column name="idbacteria" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

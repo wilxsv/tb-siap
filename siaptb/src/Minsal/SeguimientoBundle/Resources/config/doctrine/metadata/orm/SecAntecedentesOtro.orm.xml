@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecAntecedentesOtro" table="sec_antecedentes_otro">
+    <indexes>
+      <index name="fki_otro_antecedente_antecedentes_otro" columns="id_otros_antecedentes"/>
+      <index name="fki_antecedente_antecedentes_otro" columns="id_antecedentes"/>
+      <index name="IDX_A37E76C945B4A6F0" columns="id_respuesta_basica"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <many-to-one field="idRespuestaBasica" target-entity="CtlRespuestaBasica">
+      <join-columns>
+        <join-column name="id_respuesta_basica" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idOtrosAntecedentes" target-entity="CtlOtroAntecedente">
+      <join-columns>
+        <join-column name="id_otros_antecedentes" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idAntecedentes" target-entity="SecAntecedentes">
+      <join-columns>
+        <join-column name="id_antecedentes" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

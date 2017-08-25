@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabResultadoMetodologia" table="lab_resultado_metodologia">
+    <indexes>
+      <index name="IDX_91F409CD8CF54CB6" columns="id_examen_metodologia"/>
+      <index name="IDX_91F409CD7812238F" columns="id_codigoresultado"/>
+      <index name="IDX_91F409CD13B895A1" columns="idusuarioreg"/>
+      <index name="IDX_91F409CD1DD8A541" columns="id_detallesolicitudestudio"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="resultado" type="string" column="resultado" length="250" nullable="true"/>
+    <field name="observacion" type="string" column="observacion" length="250" nullable="true"/>
+    <field name="fechaRealizacion" type="datetime" column="fecha_realizacion" nullable="false"/>
+    <field name="fechaResultado" type="datetime" column="fecha_resultado" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="idusuariomod" type="integer" column="idusuariomod" nullable="true"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+    <many-to-one field="idDetallesolicitudestudio" target-entity="SecDetallesolicitudestudios">
+      <join-columns>
+        <join-column name="id_detallesolicitudestudio" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuarioreg" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuarioreg" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idCodigoresultado" target-entity="LabCodigosresultados">
+      <join-columns>
+        <join-column name="id_codigoresultado" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idExamenMetodologia" target-entity="LabExamenMetodologia">
+      <join-columns>
+        <join-column name="id_examen_metodologia" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

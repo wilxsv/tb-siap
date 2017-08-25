@@ -1,0 +1,12 @@
+services:
+    minsal_laboratorio.admin.lab_suministrante:
+        class: Minsal\LaboratorioBundle\Admin\LabSuministranteAdmin
+        arguments: [~, Minsal\LaboratorioBundle\Entity\LabSuministrante, SonataAdminBundle:CRUD]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: LB-2-Configuración, label: Suministrante}
+
+    minsal_laboratorio.admin.sec_solicitudestudios:
+        class: Minsal\LaboratorioBundle\Admin\SecSolicitudestudiosAdmin
+        arguments: [~, Minsal\SeguimientoBundle\Entity\SecSolicitudestudios, MinsalLaboratorioBundle:SecSolicitudestudiosAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: LB-1-Laboratorio, label: Solicitud de Estudio}

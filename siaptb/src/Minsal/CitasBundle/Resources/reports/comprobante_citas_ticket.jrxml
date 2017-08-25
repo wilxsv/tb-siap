@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="comprobante_citas" language="groovy" pageWidth="260" pageHeight="500" columnWidth="260" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="1b9cb22e-6b50-49ab-ba37-6f84fc4fddf4">
+	<property name="ireport.zoom" value="1.3310000000000064"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="90"/>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="dataset1" uuid="7bf88c8f-664d-409b-a37d-46c6dd28d813"/>
+	<subDataset name="Table Dataset 1" uuid="3b9f42c4-6cc4-4e37-98dd-048a7586ecc9"/>
+	<parameter name="id" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[57349]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT DISTINCT t02.nombre AS nom_establecimiento,
+       t05.nombre AS nom_departamento,
+       t06.numero AS num_expediente,
+       TO_CHAR(t01.fecha, 'TMDay, FMDD "de" TMMONTH "de" YYYY')AS fecha_cita,
+       TO_CHAR(t11.hora_ini, 'HH12:MI:SS AM') AS hora_cita,
+       CONCAT_WS(' ',t07.primer_nombre, t07.segundo_nombre, t07.tercer_nombre, t07.primer_apellido, t07.segundo_apellido, t07.apellido_casada) AS nom_paciente,
+       COALESCE(t08.nombreempleado) AS nom_medico,
+       COALESCE(t13.nombre, 'N/A') AS num_consultorio,
+       UPPER(t10.nombre) AS nom_especialidad,
+       initcap(t15.nombreempleado) as nom_usuarioreg,
+       t02.tiempoprevioalacita as tiempoprevioalacita,
+       CASE WHEN t02.minutoshora=1 THEN 'Minutos' ELSE 'Horas' END as minutoshoras
+FROM cit_citas_dia t01
+INNER JOIN ctl_establecimiento      t02 ON (t02.id = t01.id_establecimiento)
+INNER JOIN ctl_tipo_establecimiento t03 ON (t03.id = t02.id_tipo_establecimiento)
+INNER JOIN ctl_municipio            t04 ON (t04.id = t02.id_municipio)
+INNER JOIN ctl_departamento         t05 ON (t05.id = t04.id_departamento)
+INNER JOIN mnt_expediente           t06 ON (t06.id = t01.id_expediente)
+INNER JOIN mnt_paciente             t07 ON (t07.id = t06.id_paciente)
+INNER JOIN mnt_empleado             t08 ON (t08.id = t01.id_empleado)
+INNER JOIN mnt_aten_area_mod_estab  t09 ON (t09.id = t01.id_aten_area_mod_estab)
+INNER JOIN ctl_atencion             t10 ON (t10.id = t09.id_atencion)
+INNER JOIN mnt_rangohora         t11 ON (t11.id = t01.id_rangohora)
+INNER JOIN cit_distribucion         t12 ON (t12.id = t01.id_distribucion)
+INNER JOIN mnt_consultorio          t13 ON (t13.id = t12.id_consultorio)
+INNER JOIN fos_user_user            t14 ON (t14.id=t01.idusuarioreg)
+INNER JOIN mnt_empleado             t15 ON (t15.id=t14.id_empleado)
+WHERE t01.id = $P{id}]]>
+	</queryString>
+	<field name="nom_establecimiento" class="java.lang.String"/>
+	<field name="nom_departamento" class="java.lang.String"/>
+	<field name="num_expediente" class="java.lang.String"/>
+	<field name="fecha_cita" class="java.lang.String"/>
+	<field name="hora_cita" class="java.lang.String"/>
+	<field name="nom_paciente" class="java.lang.String"/>
+	<field name="nom_medico" class="java.lang.String"/>
+	<field name="num_consultorio" class="java.lang.String"/>
+	<field name="nom_especialidad" class="java.lang.String"/>
+	<field name="nom_usuarioreg" class="java.lang.String"/>
+	<field name="tiempoprevioalacita" class="java.lang.Integer">
+		<fieldDescription><![CDATA[Tiempo previo que el paciente debe presentarse a su cita]]></fieldDescription>
+	</field>
+	<field name="minutoshoras" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="480" splitType="Stretch">
+			<textField isStretchWithOverflow="true">
+				<reportElement x="4" y="5" width="254" height="29" uuid="4ca0744c-410a-47ad-bb97-c40e6bc63e6b"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Dashed" lineColor="#848484"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nom_establecimiento}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" x="4" y="34" width="253" height="17" uuid="f026c775-0bb3-4677-95c5-5f8644ffc2de"/>
+				<box topPadding="0" leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#A4A4A4"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#A4A4A4"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="11" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Comprobante de Control de Cita Medica]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="3" y="155" width="255" height="35" uuid="377c37fa-feab-4496-b096-2210286577c1"/>
+				<box leftPadding="2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{fecha_cita}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="102" y="190" width="153" height="36" uuid="a5cea69c-fca6-40cd-8b7b-79d1abcfa73a"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Top">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{hora_cita}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="4" y="261" width="101" height="33" uuid="5e815e20-d5eb-4184-8059-5adc719e1ae0"/>
+				<box leftPadding="2" rightPadding="5"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13"/>
+				</textElement>
+				<text><![CDATA[Nombre Médico:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="6" y="295" width="101" height="21" uuid="ab4072f4-746a-4f9f-80ab-745f7475a370"/>
+				<box leftPadding="2" rightPadding="5"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13"/>
+				</textElement>
+				<text><![CDATA[Consultorio:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="5" y="227" width="101" height="34" uuid="7e148751-782b-42cb-834a-ecf604dd3748"/>
+				<box leftPadding="2" rightPadding="5"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13"/>
+				</textElement>
+				<text><![CDATA[Especialidad:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="69" y="90" width="189" height="47" uuid="8fc6099a-0d53-4820-b75b-5d211775694b"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nom_paciente}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="69" y="261" width="190" height="33" uuid="e0b13089-d07d-4eed-9a79-bd66d1557f06"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nom_medico}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="108" y="295" width="150" height="20" uuid="60f157ca-a76d-4eb2-989d-807c938c783d"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{num_consultorio}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="107" y="228" width="150" height="33" uuid="76fed16d-5ae8-4a20-b649-5eff4e2dd20e"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nom_especialidad}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="3" y="439" width="124" height="18" forecolor="#010101" uuid="0a52bb15-d64a-4abd-b724-75cf0a4e7146"/>
+				<box>
+					<pen lineStyle="Dashed"/>
+					<topPen lineStyle="Dashed"/>
+					<leftPen lineStyle="Dashed"/>
+					<bottomPen lineWidth="0.0" lineStyle="Dashed" lineColor="#A4A4A4"/>
+					<rightPen lineStyle="Dashed"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="11" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Usuario de Cita:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="114" y="439" width="137" height="25" forecolor="#010101" uuid="4ad21bed-24cb-45b8-9482-c0e47fa9ccfd"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Top">
+					<font fontName="SansSerif" size="11" isBold="true" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nom_usuarioreg}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy h:mm:ss a">
+				<reportElement x="39" y="464" width="221" height="14" forecolor="#010101" uuid="93f6c4ca-896b-4422-a1c7-65c0fb814ed9"/>
+				<box rightPadding="5">
+					<pen lineStyle="Dashed"/>
+					<topPen lineStyle="Dashed"/>
+					<leftPen lineStyle="Dashed"/>
+					<bottomPen lineWidth="0.0" lineStyle="Dashed" lineColor="#A4A4A4"/>
+					<rightPen lineStyle="Dashed"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new Date()]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="227" width="254" height="1" uuid="36a7a631-d3a4-497a-adfb-a2bf8cbe186b"/>
+				<graphicElement>
+					<pen lineWidth="1.0"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement x="3" y="321" width="254" height="1" uuid="88861d90-6716-4b94-aa38-0392d3f3171a"/>
+				<graphicElement>
+					<pen lineWidth="1.0"/>
+				</graphicElement>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="101" y="55" width="156" height="38" uuid="418bfbab-a485-4d72-96e1-a4bee79b2ff5"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Top">
+					<font size="15" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{num_expediente}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="-2" y="340" width="260" height="35" uuid="8050ca1f-fcee-42f3-9e33-0581bea49c64"/>
+				<box topPadding="2" leftPadding="2" bottomPadding="2" rightPadding="2">
+					<topPen lineWidth="0.0" lineColor="#A4A4A4"/>
+				</box>
+				<textElement>
+					<font fontName="SansSerif" size="13" isBold="false"/>
+				</textElement>
+				<text><![CDATA[1.- Debe presentar este comprobante para su cita.]]></text>
+			</staticText>
+			<line>
+				<reportElement x="3" y="478" width="252" height="1" uuid="977b7f0f-423a-4747-9c3f-04f004f02dd0"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Dashed" lineColor="#848484"/>
+				</graphicElement>
+			</line>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="1" y="320" width="224" height="17" uuid="7a0fc5f3-f436-4475-baba-bd209ecff136"/>
+				<box topPadding="1" leftPadding="7" bottomPadding="1" rightPadding="5">
+					<topPen lineWidth="0.0" lineColor="#A4A4A4"/>
+				</box>
+				<textElement>
+					<font fontName="SansSerif" size="11" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Instrucciones:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="1" y="378" width="251" height="14" uuid="a7871ebd-ec6a-4230-9232-c3d8c2df5e95"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA["2.- Acuda en la fecha indicada con "+$F{tiempoprevioalacita}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="1" y="397" width="254" height="42" uuid="d79c81a2-a2ee-4f49-8366-e67b11f17753"/>
+				<textElement>
+					<font fontName="SansSerif" size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{minutoshoras}+" de anticipación, de lo contrario la perderá y deberá solicitar una nueva cita."]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="5" y="55" width="96" height="38" uuid="7160710b-0ce0-458a-9c58-6f011992cf78"/>
+				<textElement>
+					<font size="13"/>
+				</textElement>
+				<text><![CDATA[No. Expediente:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="139" width="258" height="16" uuid="9644e336-3a1e-4d7f-bd78-cd32743551c0"/>
+				<textElement textAlignment="Center">
+					<font size="13"/>
+				</textElement>
+				<text><![CDATA[Próxima Cita:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="190" width="96" height="36" uuid="19a035a1-4800-448b-9305-c25e05de2654"/>
+				<textElement>
+					<font size="13"/>
+				</textElement>
+				<text><![CDATA[Hora Cita:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="93" width="99" height="32" uuid="3305801f-b070-4d56-bdb2-485487b23fb1"/>
+				<textElement>
+					<font size="13"/>
+				</textElement>
+				<text><![CDATA[Nombre Paciente:]]></text>
+			</staticText>
+			<line>
+				<reportElement x="3" y="137" width="254" height="1" uuid="60b45cdd-bf7a-4666-ab05-78530bff7d8c"/>
+				<graphicElement>
+					<pen lineWidth="1.0"/>
+				</graphicElement>
+			</line>
+		</band>
+	</pageHeader>
+</jasperReport>

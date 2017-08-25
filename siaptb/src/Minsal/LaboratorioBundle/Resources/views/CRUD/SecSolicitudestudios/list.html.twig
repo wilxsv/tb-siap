@@ -1,0 +1,18 @@
+{% extends 'SonataAdminBundle:CRUD:list.html.twig' %}
+
+{% block sonata_header %}
+    {% if params.external == false %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block actions %}
+    {% if params.external == false %}
+        <li>{% include 'SonataAdminBundle:Core:create_button.html.twig' %}</li>
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/requestParameters.html.twig' %}
+{% endblock %}

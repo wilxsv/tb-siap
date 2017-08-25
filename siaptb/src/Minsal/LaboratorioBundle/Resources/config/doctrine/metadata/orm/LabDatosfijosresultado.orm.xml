@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabDatosfijosresultado" table="lab_datosfijosresultado">
+    <indexes>
+      <index name="IDX_3FFD4FF745BCCC8" columns="idarea"/>
+      <index name="IDX_3FFD4FF775BB31F7" columns="idestablecimiento"/>
+      <index name="IDX_3FFD4FF735F12240" columns="idexamen"/>
+      <index name="IDX_3FFD4FF76724C8DC" columns="idusuariomod"/>
+      <index name="IDX_3FFD4FF713B895A1" columns="idusuarioreg"/>
+      <index name="IDX_3FFD4FF78794B5D6" columns="idedad"/>
+      <index name="IDX_3FFD4FF7FFF6A732" columns="idsexo"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="unidades" type="string" column="unidades" length="20" nullable="true"/>
+    <field name="rangoinicio" type="float" column="rangoinicio" precision="10" scale="0" nullable="true"/>
+    <field name="rangofin" type="float" column="rangofin" precision="10" scale="0" nullable="true"/>
+    <field name="nota" type="string" column="nota" length="250" nullable="true"/>
+    <field name="fechaini" type="date" column="fechaini" nullable="true"/>
+    <field name="fechafin" type="date" column="fechafin" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+    <many-to-one field="idedad" target-entity="CtlRangoEdad">
+      <join-columns>
+        <join-column name="idedad" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idsexo" target-entity="CtlSexo">
+      <join-columns>
+        <join-column name="idsexo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuarioreg" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuarioreg" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuariomod" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuariomod" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idestablecimiento" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="idestablecimiento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idexamen" target-entity="CtlExamenServicioDiagnostico">
+      <join-columns>
+        <join-column name="idexamen" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idarea" target-entity="CtlAreaServicioDiagnostico">
+      <join-columns>
+        <join-column name="idarea" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

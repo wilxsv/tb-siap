@@ -1,0 +1,9 @@
+{% extends 'SonataAdminBundle:CRUD:base_list_field.html.twig' %}
+{% set idPrioridadCirugia = object.getIdPrioridadCirugia() ? object.getIdPrioridadCirugia().getId() : null %}
+{% set backgroundColor = idPrioridadCirugia != null ? ( idPrioridadCirugia == 5 ? 'bg-red' : ( idPrioridadCirugia == 4 ? 'bg-orange' : ( idPrioridadCirugia == 3 ? 'bg-yellow' : ( idPrioridadCirugia == 2 ? 'bg-green' : ( idPrioridadCirugia == 1 ? 'bg-blue' : 'bg-gray' ) ) ) ) ) : 'bg-gray' %}
+
+{% block field%}
+    <span class="label {{ backgroundColor }}">
+        {{ object.getIdPrioridadCirugia() }}
+    </span>
+{% endblock %}

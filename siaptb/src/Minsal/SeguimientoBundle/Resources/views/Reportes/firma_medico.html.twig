@@ -1,0 +1,20 @@
+{% set codeqr =  object.getIdEmpleado.nombreempleado~'\n J.V.P.M  No. '~ (object.getIdEmpleado.numeroJuntaVigilancia is not null ? object.getIdEmpleado.numeroJuntaVigilancia : '-') ~'\n'~ object.idAtenAreaModEstab.getNombreConsulta()%}
+<table width="100%" style="font-size:10 px;">
+    <tr>
+        <td rowspan="2">
+            <img src="{{ qrcode_data_uri(''~codeqr, size=250, padding=8) }}" height = '80px'/>
+        </td>
+        <td style="height: 85px;border-bottom: solid;border-width: 1px;"><label style="margin-top: 60px;"><strong>F.</label></span></td>
+
+    </tr>
+    <tr>
+        <td width="600px">
+            <center><strong><span style="font-size: 16px;">{{object.getIdEmpleado.nombreempleado}}</span></strong></center>
+            <center><strong>No. J.V.P.M: </strong>{{(object.getIdEmpleado.numeroJuntaVigilancia is not null ? object.getIdEmpleado.numeroJuntaVigilancia : '-')}}</center>
+
+        </td>
+        <td>
+
+        </td>
+    </tr>
+</table>

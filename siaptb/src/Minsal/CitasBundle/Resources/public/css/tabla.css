@@ -1,0 +1,9 @@
+.txtBuscar{
+  outline: none;
+  background-color:#FFFFFF;
+   padding: 10px 10px;
+width:200px;
+}
+txtBuscar:focus { 
+    background: #FFFFFF
+}

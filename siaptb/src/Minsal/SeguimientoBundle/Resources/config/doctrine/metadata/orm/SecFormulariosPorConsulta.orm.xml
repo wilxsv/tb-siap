@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecFormulariosPorConsulta" table="sec_formularios_por_consulta">
+    <indexes>
+      <index name="IDX_9A90E59C31827296" columns="id_historial_clinico"/>
+      <index name="IDX_9A90E59CA7C7EF6A" columns="id_formulario"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="estado" type="boolean" column="estado" nullable="true"/>
+    <many-to-one field="idFormulario" target-entity="FrmFormulario">
+      <join-columns>
+        <join-column name="id_formulario" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

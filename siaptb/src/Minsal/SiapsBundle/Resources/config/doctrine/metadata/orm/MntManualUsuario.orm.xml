@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntManualUsuario" table="mnt_manual_usuario">
+    <indexes>
+      <index name="IDX_81D591E6919ACD3C" columns="usuario_modifica"/>
+      <index name="IDX_81D591E6360577C5" columns="usuario_registra"/>
+      <index name="IDX_81D591E6CAC67ADB" columns="id_modulo"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="idRutaManual" type="string" column="id_ruta_manual" length="200" nullable="false"/>
+    <field name="fechaHoraRegistro" type="datetime" column="fecha_hora_registro" nullable="false"/>
+    <field name="fechaHoraModifica" type="datetime" column="fecha_hora_modifica" nullable="true"/>
+    <field name="activo" type="boolean" column="activo" nullable="true"/>
+    <many-to-one field="idModulo" target-entity="CtlModulo">
+      <join-columns>
+        <join-column name="id_modulo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="usuarioRegistra" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="usuario_registra" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="usuarioModifica" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="usuario_modifica" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

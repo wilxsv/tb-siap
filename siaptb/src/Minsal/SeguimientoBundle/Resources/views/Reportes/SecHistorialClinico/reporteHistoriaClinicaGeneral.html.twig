@@ -1,0 +1,150 @@
+<html>
+    <head>
+        <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        {% include 'MinsalSiapsBundle::standard_css_reportes.html.twig' %}
+
+        <style type="text/css">
+
+            html,body {
+                overflow: visible !important;
+            }
+
+            div .table-responsive {
+                overflow: visible !important;
+            }
+
+            .panel-info > .panel-heading,.titulo_vista {
+                background-color: white;
+                font-size: 12px;
+                border-color: black;
+                color: black;
+                font-weight: bold;
+                padding: 2px 5px;
+            }
+
+            .panel-body, .vista_paciente,.table.table-bordered.table-hover,.table-bordered {
+                font-size: 10px;
+            }
+
+            td,th {
+                padding: 2px 5px;
+            }
+
+            .panel-info{
+                border-color:black;
+                margin: 4px;
+            }
+
+            table {
+                width: 100%
+            }
+        </style>
+
+        <script type="text/javascript">
+            jQuery(document).ready(function ($) {
+                $('td.offset-color-gray').siblings().css('background-color', '#e8e8e8');
+                //$('tr:has(td.offset-color-gray) > th').css('background-color', '#e8e8e8');
+            });
+        </script>
+    </head>
+    <body>
+        <!-- DATOS DE LA CONSULTA -->
+        <div class="panel panel-info">
+            <div class="panel-heading"><b>Datos de la Consulta</b> {# Se imprime el nombre de la Seccion #}
+            </div>
+            <table class="{% if impresion != true %} table table-hover {% endif %} table-bordered">
+                <tr class="sonata-ba-view-container">
+                    <th >Fecha Consulta:</th>
+                    <td>{{ object.fechaconsulta | date ('d-m-Y') }}</td>
+                    <th >Especialidad:</th>
+                    <td><span> {{object.idAtenAreaModEstab.getNombreConsulta()}} </span></td>
+                    {% if object.getHistorialLugar() %}
+                    <th>Lugar de Realización:</th>
+                    <td>{{ object.getHistorialLugar() }}</td>
+                    {% endif %}
+                </tr>
+                <tr class="sonata-ba-view-container">
+                    <th style="min-width: 250px;">Consulta por:</th>
+                    <td colspan="3"><span>{{ object.getIdMotivoConsulta().consultaPor }}</span></td>
+                </tr>
+                <tr class="sonata-ba-view-container">
+                    <th style="min-width: 250px;">Presenta Enfermedad:</th>
+                    <td colspan="3"><span>{{ object.getIdMotivoConsulta().presentaEnfermedad}}</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+        <!-- Definir las secciones que no se desea imprimir -->
+        {% set sectionsAvoid = [ 'Atención por Violencia',
+                                 'Resultado de exámenes externos tomados'
+                                ] %}
+
+        <!-- Definir las secciones que se desea resaltar -->
+        {% set sectionsHighlight = [ 'Diagnóstico'
+                                   ] %}
+
+        {% include 'MinsalSeguimientoBundle:Reportes:SecHistorialClinico/mainBodySections.html.twig'%}
+
+        <!-- Consejería -->
+        <!-- {% if params.consejeriaBrindada %}
+            <div class="panel panel-info">
+                <div class="panel-heading"><b >Consejería</b> {# Se imprime el nombre de la Seccion #}
+                </div>
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="table-bordered">
+                        <tbody>
+                            {% if params.consejeriaBrindada %}
+                                {% for consejo in params.consejeriaBrindada %}
+                                    <tr class="sonata-ba-view-container">
+                                        <th>{{ consejo.getIdTipoConsejeria().getNombre() }}:</th>
+                                        <td colspan="3">{{ consejo.getConsejo() }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr class="sonata-ba-view-container"><td><p class="text-muted">No hay registros para mostrar.</p></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %} -->
+
+        <!-- Seguimiento de consulta -->
+        <!-- <div class="panel panel-info" id="seguimiento">
+            <div class="panel-heading"><b >Seguimiento de Consulta</b> {# Se imprime el nombre de la Seccion #}
+            </div>
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table table-bordered table-hover" >
+                    <tbody>
+                        <tr class="sonata-ba-view-container">
+                            <td>
+                                <span>
+                                    {% if citasAsignadas %}
+                                        <ul>
+                                            {% for citas in citasAsignadas %}
+                                                <li><span style="font-size: 13px;"><strong>{{'Cita de '~ citas.getIdTipoCitaSubsecuente().nombre}}</strong>: {{citas.getIdCitaDia().fecha|date('d-m-Y')}}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p class="text-muted">No hay registros para mostrar.</p>
+                                    {% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div> -->
+
+        {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/body_solicitudestudio.html.twig' %}
+        {% include 'MinsalFarmaciaBundle:FarmRecetas:body_plan_atencion.html.twig' %}
+        {% include 'MinsalSeguimientoBundle:Reportes:SecHistorialClinico/body_consejeria.html.twig' %}
+        {% include 'MinsalSeguimientoBundle:Reportes:SecHistorialClinico/body_datos_embarazo.html.twig' %}
+        {% include 'MinsalSeguimientoBundle:Reportes:SecHistorialClinico/body_plan_ingresos.html.twig' %}
+        {% include 'MinsalSeguimientoBundle:Reportes:SecHistorialClinico/body_seguimiento_consulta.html.twig' %}
+        {% include 'MinsalSeguimientoBundle:Reportes:firma_medico.html.twig'%}
+
+    </body>
+</html>

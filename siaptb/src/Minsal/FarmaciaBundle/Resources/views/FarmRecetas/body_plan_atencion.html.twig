@@ -1,0 +1,153 @@
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+            $('input[type="checkbox"]').iCheck({
+                checkboxClass: 'icheckbox_flat-blue'
+            });
+        });
+    </script>
+    <script  type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var idmedicinarecetadaimpresion = [];//Se utiliza para selecionar los medicamentos a los cuales se les imprimira receta
+
+            $("body").on('ifChecked', "input[id^='seleccionarMediciaImpresion_']", function () {//Si se han selecionado que se impriman todas las recetas se seleciona una por una
+                var item = $(this);
+                var valores = item.attr('id').split('_');
+                var id = valores[1];
+                var winParams = [];
+                idmedicinarecetadaimpresion.push(id);
+
+            });
+
+            $("body").on('ifUnchecked', "input[id^='seleccionarMediciaImpresion_']", function () {//Si se han selecionado que se impriman todas las recetas se seleciona una por una
+                var item = $(this);
+                var valores = item.attr('id').split('_');
+                var id = valores[1];
+                var index = idmedicinarecetadaimpresion.indexOf(id); //idsmedicamento es una variable global de tipo array que tiene los id de los medicamentos que se agregan a la receta
+                idmedicinarecetadaimpresion.splice(index, 1);
+
+            });
+
+
+            $("body").on('ifChecked', '#idTodasLasRecetas', function () {//Si se han selecionado que se impriman todas las recetas se seleciona una por una
+                $("input[id^='seleccionarMediciaImpresion_']").each(//Se recorre cada fila de receta para selecionar
+                        function () {
+                            $("input[id^='seleccionarMediciaImpresion_']").iCheck('check');
+                            var item = $(this);
+                            var valores = item.attr('id').split('_');
+                            var id = valores[1];
+                            idmedicinarecetadaimpresion.push(id);// se agrega al array
+                        });
+            });
+
+            $("body").on('ifUnchecked', '#idTodasLasRecetas', function () {//Si se han deseleccionado que se impriman todas las recetas se deseleciona una por una
+                $("input[id^='seleccionarMediciaImpresion_']").each(
+                        function () {
+                            $("input[id^='seleccionarMediciaImpresion_']").iCheck('uncheck');
+                            idmedicinarecetadaimpresion = [];//se borra todo el array
+                        });
+            });
+
+
+            $("body").on('click', "span[id='imprimir-receta']", function () {//Se envia el array de recetas que se desea imprimir
+                if (idmedicinarecetadaimpresion.length != 0) {//Pregunta si el array que contiene los id de las recetas esta vacio
+                    var winParams = [];
+                    winParams['method'] = "post";
+                    winParams['action'] = "{{ url('admin_minsal_farmacia_farmrecetas_imprimir_receta') }}";
+                    winParams['target'] = "Impresion de Receta";
+                    winParams['parameters'] = {'id_receta': idmedicinarecetadaimpresion};//Se envia un array que contiene las recetas ya sea una, varias o todas
+                    openPostPopUpWindows(winParams);
+                }
+                else {
+                    showDialogMsg('Recetario', 'Por favor selecionar la(s) recetas a imprimir', 'dialog-info');
+                }
+            });
+        }); //fin document ready
+    </script>
+{% endblock %}
+<!-- Plan de Atención -->
+{% if medicinaRecetada %}
+<div class="panel panel-info">
+    <div class="panel-heading"> <b >Plan de Atención</b>{# Se imprime el nombre de la Seccion #}
+    </div>
+    <div class="table-responsive" style="overflow-x: visible;">
+        <table class="{% if impresion != true %} table {% endif %} table-bordered" {% if impresion == true %}style="font-size: 12px;"{% endif %}>
+            <tbody>
+               {% if medicinaRecetada %} {# Por cada Seccion dentro de Saved Data #}
+                    {% if impresion != true %}
+                        <tr>
+                            <td colspan="3">
+                                Impresión Recetas
+                                <span class="glyphicon glyphicon-print mouse-pointer" id="imprimir-receta" style="font-size:20px;float: right" role="print">
+                                    <input type="checkbox" id="idTodasLasRecetas" name="idTodasLasRecetas">
+                                </span>
+                            </td>
+                        <tr>
+                        <tr class="sonata-ba-view-container">
+                            {% for medicamento in medicinaRecetada %} {# Por cada Seccion dentro de Saved Data #}
+                            <tr>
+                                <td colspan="2">
+                                    <ul>
+                                        <li><span><strong>Medicamento:</strong>{{ medicamento.idmedicina }} </li>
+                                        <li><span><strong>Total a dispensar :</strong>{{medicamento.totalMedicamento}}</li>
+                                        <li><strong>Dosis: </strong> {{medicamento.cantidadMedicamento ~' ' ~medicamento.idmedicina~' cada ' ~ medicamento.frecuencia ~' '~ medicamento.tiempoFrecuencia ~ ' durante ' ~ medicamento.durante ~ ' ' ~ medicamento.tiempoDurante}}</span></li>
+                                            {% if medicamento.distribucionEspecial%}
+                                            <li><strong>Distribuido de la siguiente manera:</strong></li>
+                                            <table class="table" style="width:20%">
+                                                <tbody>
+                                                    <tr>
+                                                        <th>Cantidad</th>
+                                                        <th>Descripción</th>
+                                                    </tr>
+                                                    {% for distribucion in medicamento.getDistribuciones()%}
+                                                        <tr><td>{{distribucion.getCantidadDistribucion()}}</td><td>{{distribucion.getIndicacion()}}</td></tr>
+                                                    {% endfor%}
+                                                </tbody>
+                                            </table>
+                                        {% endif %}
+                                        <li><span><strong>Fecha de entrega: </strong>{{ medicamento.idreceta.fecha | date('d-m-Y') }} </li>
+                                    </ul>
+                                </td>
+                                <td style="float: right">
+                                    {% set fechactual =  "now"|date("Y-m-d") %}
+                                    {% set fecharecetasum =  medicamento.idreceta.fecha|date_modify("+15 day") |date("Y-m-d") %}
+
+                                    {% if (medicamento.idreceta.idestado|trim == 'R' or medicamento.idreceta.idestado|trim == 'RE') and   fechactual <  fecharecetasum %}
+                                    <input type="checkbox" id="seleccionarMediciaImpresion_{{medicamento.id}}">
+                                    {% else %}
+                                    ---
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <th style="width: 30px !important;">Cantidad</th>
+                            <th>Medicamento</th>
+                            <th>Dosis</th>
+                            <th>Cantidad de Recetas</th>
+                        </tr>
+                        {% for medicamento in medicinaRecetada %}
+                            <tr>
+                                <td style="width: 30px !important;">{{medicamento.cantidad}}</td>
+                                <td>{{medicamento.medicina.nombre}}, {{medicamento.medicina.concentracion}}</td>
+                                <td>{{medicamento.dosis}}</td>
+                                <td>{{medicamento.cuantas}}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                {% else %}
+                    <tr class="sonata-ba-view-container"><td><p class="text-muted">No hay registros para mostrar.</p></td></tr>
+                {% endif %}
+                {% if object.IdOtrasObservaciones() %}
+                    <tr class="sonata-ba-view-container">
+                        <td colspan="4"><b>Recomendaciones Relacionadas con el Tratamiento: </b>
+                        {{ object.getIdOtrasObservaciones().indicacionObservacion }}</td>
+                    {% endif %}
+                </tr>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

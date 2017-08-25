@@ -1,0 +1,210 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="stylesheet" type="text/css" media="all"href="{{ asset('bundles/applicationcore/css/bootstrap3/css/bootstrap.min.css') }}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/sonataadmin/vendor/bootstrap/dist/css/bootstrap.min.css') }}"  />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/minsalsiaps/css/siaps.css') }}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/applicationcore/css/corelayout.css') }}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/sonataadmin/vendor/jqueryui/themes/base/jquery-ui.css') }}">
+        <link rel="stylesheet" type="text/css" media="all" href="{{asset('bundles/minsalsiaps/js/jquery.jqGrid-4.5.2/css/ui.jqgrid.css')}}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{asset('bundles/minsalsiaps/css/jqGrid.css')}}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/sonataadmin/vendor/AdminLTE/css/font-awesome.min.css') }}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/sonataadmin/vendor/AdminLTE/css/ionicons.min.css') }}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/sonataadmin/vendor/AdminLTE/css/AdminLTE.css') }}" />
+        <link rel="stylesheet" type="text/css" media="all" href="{{ asset('bundles/sonataadmin/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css') }}" />
+
+        <script type="text/javascript" src="{{ asset('bundles/sonataadmin/vendor/jquery/dist/jquery.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/minsalsiaps/js/funciones_generales.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/applicationcore/css/bootstrap3/js/bootstrap.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/sonatajquery/jquery-1.10.2.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/sonatajquery/jquery-ui-1.10.4.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/sonatajquery/jquery-ui-i18n.js') }}"></script>
+        <script type="text/javascript" src="{{asset('bundles/minsalsiaps/js/jquery.jqGrid-4.5.2/js/i18n/grid.locale-es.js')}}"></script>
+        <script type="text/javascript" src="{{asset('bundles/minsalsiaps/js/jquery.jqGrid-4.5.2/js/jquery.jqGrid.min.js')}}"></script>
+        <script type="text/javascript" src="{{ asset('/bundles/fosjsrouting/js/router.js') }}"></script>
+        <script type="text/javascript" src="{{ asset(app.request.getBaseUrl() ~ '/js/routing?callback=fos.Router.setData') }}"></script>
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                var msj = '<div class="alert alert-warning" role="alert">' +
+                            '<h4><strong>Error de Conexión.</strong></h4>';
+
+                {% if codeEnvironment is sameas('dev') %}
+                    $.ajaxSetup({
+                        error: function (jqXHR, exception) {
+                            msj += 'Lo sentimos, hubo un problema de conexión en la búsqueda del paciente, por favor intente nuevamente, si el problema persiste contacte con el administrador.';
+                            msj += '<br /><br />' +
+                                    '<strong>Error al ejecutar el ajax</strong><br />' +
+                                    'Detalle del Error: ';
+
+                            if (jqXHR.status === 0) {
+                                msj += 'No es posible establecer conexión, verificar Red.';
+                            } else if (jqXHR.status == 404) {
+                                msj += 'La página solicitada no ha sido encontrada. Error [404]';
+                            } else if (jqXHR.status == 500) {
+                                msj += 'Error interno del servidor: Error [500].';
+                            } else if (exception === 'parsererror') {
+                                msj += 'Fallo en la conversión del JSON.';
+                            } else if (exception === 'timeout') {
+                                msj += 'Tiempo de solicitud agotado.';
+                            } else if (exception === 'abort') {
+                                msj += 'Solicitud de Ajax abortada.';
+                            } else {
+                                msj += 'Error desconocido ' + jqXHR.responseText;
+                            }
+
+                            msj += '</div>';
+
+                            $('#messages').empty();
+                            $('#messages').append(msj);
+                        }
+                    });
+                {% endif %}
+
+                $.ajax({
+                    url: Routing.generate("get_listado_pacientes_sumeve") + '/{{ idPaciente }}',
+                    async: true,
+                    dataType: 'json'
+                }).done(function(object) {
+                    if(object.status) {
+                        if(object.data === '[]') {
+                            msj = '<div class="alert alert-info" role="alert">' +
+                                        '<h3><strong>No se han encontrado coincidencias.</strong></h3>' +
+                                        '<span style="font-size: 18px;">No se han encontrado concidencias del paciente en el sistema <strong>SUMEVE</strong>, por lo cu&aacute;l &eacute;ste ser&aacute; registrado como un <strong>PACIENTE NUEVO en el sistema SUMEVE.</strong></span>' +
+                                        '<button id="new-registry" type="button" class="btn btn-info" style="margin-left: 25px;"><span class="fa fa-plus-circle"></span> Aceptar</button>' +
+                                    '</div>';
+
+                            $('#messages').empty();
+                            $('#messages').append(msj);
+
+                            $('#btn-close').attr('disabled', 'disabled');
+
+                            $('body #new-registry').on('click', function() {
+                                window.opener.habilitarGuardar();
+                                window.close();
+                            });
+                        } else {
+                                $(' #fd_action_buttons').prepend('<button id="new-registry" type="button" class="btn btn-info" style="margin-left: 25px;"><span class="fa fa-plus-circle"></span> Paciente Nuevo</button>');
+
+                            msj = '<div class="alert alert-info" role="alert">' +
+                                        '<h3><span class="fa fa-exclamation-circle"></span> <strong>Se han encontrado posibles coincidencias.</strong></h3>' +
+                                        '<span style="font-size: 18px;"><strong>Indicaciones: </strong></span>' +
+                                        '<ol style="font-size: 16px;">' +
+                                            '<li>Realice una <strong>busqueda</strong> del paciente en la Lista de Posibles Coincidencias de pacientes que se muestra abajo.</li>' +
+                                            '<li><strong>Determine</strong>, segun su <strong>criterio</strong>, si alguna de las coincidencias corresponde al paciente que esta <strong>atendiendo</strong>.</li>' +
+                                            '<li>Si el paciente se encuentra en la Lista de Posibles Coincidencias y su Estado <strong>NO</strong> es Diagnosticado, haga click sobre el bot&oacute;n <strong>Seleccionar</strong>.</li>' +
+                                            '<li>Si el paciente se encuentra en la Lista de Posibles Coincidencias y su Estado <strong>SI</strong> es Diagnosticado, haga click sobre el bot&oacute;n <strong>Cerrar</strong> y posteriormente <strong>Cancele</strong> el Formulario para Solicitud y Confirmación de VIH (FVIH01).</li>' +
+                                            '<li>Si usted determina que el paciente que esta atendiendo, <strong>NO se encuentra</strong> en la Lista de Posibles Coincidencias, haga click sobre el bot&oacute;n <strong>Paciente Nuevo</strong>.</li>' +
+                                        '</ol>' +
+                                    '</div>';
+
+                            $('#messages').empty();
+                            $('#messages').append(msj);
+
+                            $("#tPacientes").jqGrid({
+                                datatype: "local",
+                                height: 300,
+                                //colNames: ['id', 'Nombres', 'Apellidos', 'Departamento', 'Municipio', 'Fecha_Nac', 'Dui', 'Sexo', 'Estado', 'Peso', ''],
+                                colNames: ['id', 'Nombres', 'Apellidos', 'Departamento', 'Municipio', 'Fecha_Nac', 'Dui', 'Sexo', 'Estado', ''],
+                                colModel: [
+                                    {name: 'idp', index: 'idp', width: 60, sorttype: "int"},
+                                    {name: 'nombres', index: 'name', width: 200},
+                                    {name: 'apellidos', index: 'name', width: 200},
+                                    {name: 'departamento', index: 'name', width: 100},
+                                    {name: 'municipio', index: 'name', width: 100},
+                                    {name: 'fecha_nac', index: 'name', width: 100},
+                                    {name: 'dui', index: 'name', width: 100},
+                                    {name: 'sexo', index: 'name', width: 100},
+                                    {name: 'estado_pac', index: 'name', width: 140},
+                                    //{name: 'total', index: 'name', width: 70},
+                                    {name: 'edit', index: 'edit', align: 'center', sortable: false, width: 120}
+
+                                ],
+                                caption: "Lista de Posibles Coincidencias en SUMEVE",
+                                data: jQuery.parseJSON(object.data),
+                                        afterInsertRow: function (id, currentData, jsondata) {
+                                            if (jsondata.estado_pac != 'DIAGNOSTICADO')
+                                            {
+                                                var button = "<a  data-id='" + jsondata.idp + "' href='#' class='btn btn-success'><span class='fa fa-list'></span>Seleccionar</a>";
+                                                $(this).setCell(id, "edit", button);
+                                            }
+                                        },
+                                loadComplete: function (data) {
+                                    $('#gbox_tPacientes').attr('style', 'margin-bottom: 30px;')
+
+                                    $(".btn-success").on('click', function (e) {
+                                        e.preventDefault();
+                                        window.opener.seleccionarIdp($(this).data("id"));
+                                        window.close();
+                                    });
+                                    $("#new-registry").on('click', function (e) {
+                                        e.preventDefault();
+                                        window.opener.habilitarGuardar();
+                                        window.close();
+                                    });
+                                }
+                            });
+                        }
+                    } else {
+                        msj += 'Lo sentimos, hubo un problema de conexión en la búsqueda del paciente.';
+
+                        {% if codeEnvironment is sameas('dev') %}
+                            msj += '<br /><br />' +
+                                'C&oacute;digo del Error: ' + object.errorCode + '<br />' +
+                                'Detalle del Error: ' + object.errorMessage;
+                        {% endif %}
+
+                        msj += '</div>';
+
+                        msj += '<div class="alert alert-info" role="alert">' +
+                                    '<h3><span class="fa fa-exclamation-circle"></span> <strong>Seleccione una Opci&oacute;n.</strong></h3>' +
+                                    '<span style="font-size: 18px;"><strong>Indicaciones: </strong></span>' +
+                                    'Debido a que no se pudo establecer conexi&oacute;n, usted dispone de las siguientes opciones:' +
+                                    '<ol style="font-size: 16px;">' +
+                                        '<li><strong>Reintentar: </strong>Seleccione esta opci&oacute;n para realizar la busqueda del paciente nuevamente.</li>' +
+                                        '<li><strong>Continuar: </strong>Seleccione esta opci&oacute;n para continuar <strong>sin la busqueda del paciente</strong>. Esto implica que la Solicitud ser&aacute; <strong>guardada de forma local</strong>, sin embargo, ' +
+                                            'el env&iacute;o autom&aacute;tico de la <strong>Solicitud FVIH01 al Sistema SUMEVE no ser&aacute; posible</strong>. Este paso debera realizarse posteriormente y completarse <strong>manualmente</strong>.</li>' +
+                                    '</ol>' +
+                                    '<button id="btn-reload" type="button" class="btn btn-info" style="margin-left: 25px;" onClick="window.location.reload();"><span class="fa fa-refresh"></span> Reintentar</button>' +
+                                    '<button id="new-registry" type="button" class="btn btn-primary" style="margin-left: 25px;"><span class="fa fa-arrow-circle-right"></span> Continuar</button>' +
+                                '</div>';
+
+                        $('#messages').empty();
+                        $('#messages').append(msj);
+
+                        $('body #new-registry').on('click', function() {
+                            window.opener.habilitarGuardar();
+                            window.close();
+                        });
+                    }
+                }).always(function() {
+                    $('#content-wrapper').removeClass('hidden');
+                    $('#loader-wrapper').addClass('hidden');
+                    window.opener.setVerificarSumeve('false');
+                });
+
+            });
+        </script>
+        <title>
+            MINSAL::SIAPS
+        </title>
+    </head>
+    <body>
+        <div id="content-wrapper" class="hidden" style="width:95%; margin: auto; padding: 35px;">
+            <div id="messages"></div>
+            <label id="lregistro"></label>
+            <table id="tPacientes"></table>
+            <div id="pagerpacientes"></div>
+            <div class="well well-small" id="fd_action_buttons">
+                <button id="btn-close" type="button" class="btn btn-default" onclick="window.close();"><i class="fa fa-fw fa-times-circle"></i> Cerrar</button>
+            </div>
+        </div>
+        <div id="loader-wrapper">
+            <div id="loader">
+                <div id="loader-img"></div>
+                <div id="loader-msj" style="font-size: larger;">Buscando coincidencias del paciente<br />en el Sistema SUMEVE.<br /><strong>Por favor espere ...</strong></div>
+            </div>
+        </div>
+    </body>
+</html>

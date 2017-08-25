@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf8"?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <!--ADMINISTRACION-->
+        <service id="sonata.admin.establecimiento" class="Minsal\SiapsBundle\Admin\CtlEstablecimientoAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Configurar Establecimiento"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\CtlEstablecimiento</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <service id="sonata.admin.modalidadestablecimiento" class="Minsal\SiapsBundle\Admin\MntModalidadEstablecimientoAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Modalidad del Establecimiento"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntModalidadEstablecimiento</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <service id="sonata.admin.areamodalidadestablecimiento" class="Minsal\SiapsBundle\Admin\MntAreaModEstabAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Áreas del Establecimiento"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntAreaModEstab</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <service id="sonata.admin.ambientes" class="Minsal\SiapsBundle\Admin\MntAtenAreaModEstabAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Servicios de Hospitalización"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntAtenAreaModEstab</argument>
+            <argument>MinsalSiapsBundle:MntAtenAreaModEstabAdmin</argument>
+        </service>
+        <service id="sonata.admin.manualusuario" class="Minsal\SiapsBundle\Admin\MntManualUsuarioAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Manuales de Usuario"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntManualUsuario</argument>
+            <argument>MinsalSiapsBundle:MntManualUsuarioAdmin</argument>
+        </service>
+        <service id="sonata.admin.conexion" class="Minsal\SiapsBundle\Admin\MntConexionAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Conexiones a bases regionales"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntConexion</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <!--IDENTIFICACION PACIENTE-->
+        <service id="sonata.admin.mntpaciente" class="Minsal\SiapsBundle\Admin\MntPacienteAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="IP-1-Identificación Paciente" label="Buscar Paciente"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntPaciente</argument>
+            <argument>MinsalSiapsBundle:MntPacienteAdmin</argument>
+        </service>
+        <service id="sonata.admin.secingreso" class="Minsal\SeguimientoBundle\Admin\SecIngresoAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="IP-1-Identificación Paciente" label="Consultar Ingresos"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecIngreso</argument>
+            <argument>MinsalSeguimientoBundle:SecIngresoAdmin</argument>
+        </service>
+        <service id="sonata.admin.secemergencia" class="Minsal\SeguimientoBundle\Admin\SecEmergenciaAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="IP-1-Identificación Paciente" label="Consultar Emergencias"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecEmergencia</argument>
+            <argument>MinsalSeguimientoBundle:SecEmergenciaAdmin</argument>
+        </service>
+        <!--REPORTES -->
+        <service id="sonata.admin.expediente" class="Minsal\SiapsBundle\Admin\MntExpedienteAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="RP-2-Identificación Paciente" label="Expedientes Creados"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntExpediente</argument>
+            <argument>MinsalSiapsBundle:MntExpedienteAdmin</argument>
+        </service>
+        <service id="sonata.admin.reporte.ingreso" class="Minsal\SeguimientoBundle\Admin\SecProcedenciaIngresoAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="RP-2-Identificación Paciente" label="Pacientes Ingresados por Fecha"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecProcedenciaIngreso</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <service id="sonata.admin.cie10" class="Minsal\SiapsBundle\Admin\MntCie10Admin">
+            <tag name="sonata.admin" manager_type="orm" group="RP-1-Reportes" label="Diágnosticos CIE10"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntCie10</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <service id="sonata.admin.ciq" class="Minsal\SiapsBundle\Admin\MntCiqAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="RP-1-Reportes" label="Prócedimientos Médicos CIE9"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntCiq</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <!--AGREGADO PARA PODER EDITAR EL FORMULARIO DE CREACIÓN DEL USUARIO-->
+        <service id="sonata.user.admin.user" class="Application\Sonata\UserBundle\Admin\UserAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="US-1-Usuario" label="Usuario" label_catalogue="SonataUserBundle" label_translator_strategy="sonata.admin.label.strategy.underscore" />
+            <argument />
+            <argument>Application\Sonata\UserBundle\Entity\User</argument>
+            <argument>%sonata.user.admin.user.controller%</argument>
+            <call method="setUserManager">
+                <argument type="service" id="fos_user.user_manager" />
+            </call>
+            <call method="setTranslationDomain">
+                <argument>%sonata.user.admin.user.translation_domain%</argument>
+            </call>
+        </service>
+      <service id="sonata.user.admin.group" class="Application\Sonata\UserBundle\Admin\GroupAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="US-1-Usuario" label="groups" label_catalogue="SonataUserBundle"  label_translator_strategy="sonata.admin.label.strategy.underscore" />
+            <argument />
+            <argument>%sonata.user.admin.group.entity%</argument>
+            <argument>%sonata.user.admin.group.controller%</argument>
+            <call method="setTranslationDomain">
+                <argument>%sonata.user.admin.group.translation_domain%</argument>
+            </call>
+        </service>
+        <service id="sonata.admin.empleado" class="Minsal\SiapsBundle\Admin\MntEmpleadoAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="US-1-Usuario" label="Médicos"/>
+            <argument />
+            <argument>Minsal\SiapsBundle\Entity\MntEmpleado</argument>
+            <argument>MinsalSiapsBundle:MntEmpleadoAdmin</argument>
+        </service>
+        <service id="sonata.admin.sechistorialclinico" class="Minsal\SeguimientoBundle\Admin\SecHistorialClinicoAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="HC-1-Historia Clinica" label="Consultar Historial"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecHistorialClinico</argument>
+            <argument>MinsalSeguimientoBundle:SecHistorialClinicoAdmin</argument>
+        </service>
+        <service id="sonata.admin.sechistoriallugar" class="Minsal\SeguimientoBundle\Admin\SecHistorialLugarAdmin">
+            <tag name="sonata.admin" manager_type="orm" show_in_dashboard="false" />
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecHistorialLugar</argument>
+            <argument>MinsalSeguimientoBundle:SecHistorialLugarAdmin</argument>
+        </service>
+        <service id="sonata.admin.secmotivoconsulta" class="Minsal\SeguimientoBundle\Admin\SecMotivoConsultaAdmin">
+            <tag name="sonata.admin" manager_type="orm" show_in_dashboard="false" />
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecMotivoConsulta</argument>
+            <argument>SonataAdminBundle:CRUD</argument>
+        </service>
+        <!--Test Generacion de Formularios-->
+        <service id="sonata.admin.frmformulario" class="Application\CoreBundle\Admin\FrmFormularioAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Generacion Formularios"/>
+            <argument />
+            <argument>Application\CoreBundle\Entity\FrmFormulario</argument>
+            <argument>ApplicationCoreBundle:FrmFormularioAdmin</argument>
+        </service>
+        <!--Tutorial de Usuario-->
+        <service id="sonata.admin.mntusertour" class="Application\CoreBundle\Admin\MntUserTourAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Tutorial de Usuario" show_in_dashboard="false"/>
+            <argument />
+            <argument>Application\CoreBundle\Entity\MntUserTour</argument>
+            <argument>ApplicationCoreBundle:MntUserTourAdmin</argument>
+        </service>
+         <!-- SEGUIMIENTO - ANTECEDENTES-->
+        <service id="sonata.admin.secantecedentes" class="Minsal\SeguimientoBundle\Admin\SecAntecedentesAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Antecedentes" show_in_dashboard="false"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecAntecedentes</argument>
+            <argument>MinsalSeguimientoBundle:SecAntecedentesAdmin</argument>
+        </service>
+        <!-- FIN SEGUIMIENTO - ANTECEDENTES-->
+        <!-- SEGUIMIENTO - fvih01-->
+        <service id="sonata.admin.tarsolicitudfvih" class="Minsal\SeguimientoBundle\Admin\TarSolicitudFvihAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="FVIH" show_in_dashboard="false"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\TarSolicitudFvih</argument>
+            <argument>MinsalSeguimientoBundle:TarSolicitudFvihAdmin</argument>
+        </service>
+        <!-- FIN SEGUIMIENTO - fvih01-->
+        <!-- SEGUIMIENTO - fvih05 Ficha Tar-->
+        <service id="sonata.admin.tarsectar" class="Minsal\SeguimientoBundle\Admin\TarSecTarAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Ficha Tar" show_in_dashboard="false"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\TarSecTar</argument>
+            <argument>MinsalSeguimientoBundle:TarSecTarAdmin</argument>
+        </service>
+        <!-- FIN SEGUIMIENTO - fvih05 Ficha Tar-->
+         <service id="sonata.admin.secremisionpaciente" class="Minsal\SeguimientoBundle\Admin\SecRemisionPacienteAdmin">
+            <tag name="sonata.admin" manager_type="orm" group="AD-1-Administración" label="Remision" show_in_dashboard="false"/>
+            <argument />
+            <argument>Minsal\SeguimientoBundle\Entity\SecRemisionPaciente</argument>
+            <argument>MinsalSeguimientoBundle:SecRemisionPacienteAdmin</argument>
+        </service>
+
+
+
+    </services>
+</container>

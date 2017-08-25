@@ -1,0 +1,288 @@
+<html>
+    <head>
+        <style>
+            .table-general {
+                //border: 1px solid black;
+                font-size:15px;
+                border-collapse: separate;
+                border-spacing: 10px 15px;
+            }
+            
+            .table-medicamento {
+                //border: 1px solid black;
+                font-size:15px;
+                border-collapse: separate;
+                border-spacing: 0px 0px;
+            }
+             .table-examenes {
+                //border: 1px solid black;
+                font-size:15px;
+                border-collapse: separate;
+                border-spacing:5px 5px;
+            }
+            .td-enca {
+                text-align:center;
+            }
+            label{
+                font-weight: bold;
+            }
+            .div-escudo {
+                position:absolute;
+                width:80px;
+                height: 80px;
+                left:50px;
+           }
+            .div-enca {
+                position:absolute;
+                left:250px;
+                font-size: 20px;
+                font-weight: bold;
+           }
+           .div-logo {
+                position:absolute;
+                width:80px;
+                height: 80px;
+                left:820px;
+           }
+            </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    </head>
+    <body onload="subst()">
+        {% for remision in remisiones %}
+        {% set i = 1 %}
+            <p style="page-break-after: always;"></p>
+            <table><tr><td>1/2</td></tr></table>
+            {% include 'MinsalSeguimientoBundle:SecRemisionPacienteAdmin:enca_referencia_reporte.html.twig' %}
+            <table width="100%" class = "table-general">
+                 <tr>
+                     <td colspan="3" ><label>Referencia No.: </label> {{remision.codigo}}</td>
+                 </tr>
+                 <tr>
+                     <td><label>Tipo:</label> {{remision.idTipoRemision.nombre}}</td>
+                     <td colspan="2"><label>Motivo:</label> {{remision.idMotivoRemision.nombre}} </td>
+                 </tr>
+                 <tr>
+                     <td colspan="3">
+                         <label>Fecha de llenado de formulario: </label>
+                         {{remision.fechaRemision|date('d-m-Y')}}
+                     </td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>Nombre del establecimiento:</label> {{remision.getIdEstablecimientoOrigen()}}</td>
+                 </tr>
+                 <tr>
+                     <td style="font-size:20px" colspan="3"><label>No. Expediente UCSF:</label> {{remision.numeroExpediente}}</td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>I. DATOS DEL PACIENTE</label></td>
+                 </tr>
+                 <tr>
+                     <td style="font-size:20px"  colspan="3">
+                         <label>Nombre Paciente: </label>
+                         {{ expediente.getIdPaciente().getNombrePaciente()}}
+                     </td>
+                <tr>
+                    <td><label>Conocido por:</label></td><td>{{expediente.getIdPaciente().getConocidoPor()}}</td>
+                </tr>
+                 </tr>
+                 <tr>
+                     <td>
+                         <label>Fecha de nacimiento:</label> {{expediente.getIdPaciente.getFechaNacimiento()|date('d-m-Y')}}
+                     </td>
+                     <td>
+                         <label>Edad:</label> {{edad}}
+                     </td>
+                     <td>
+                         <label>Sexo:</label> {{expediente.getIdPaciente().idSexo}}
+                     </td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>Dirección Completa:</label> {{expediente.getIdPaciente().direccion}}</td>
+                 </tr>
+                 <tr>
+                     <td>
+                         <label>Departamento:</label> {{expediente.getIdPaciente().idDepartamentoDomicilio}}
+                     </td>
+                     <td>
+                         <label>Municipio:</label> {{expediente.getIdPaciente().idMunicipioDomicilio}}
+                     </td>
+                     <td>
+                         <label>Area:</label> {{expediente.getIdPaciente().areaGeograficaDomicilio}}
+                     </td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>Impresión diagnóstica:</label> {{remision.impresionDiagnostica}}</td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>Motivo de referencia o interconsulta:</label> {{remision.justificacionRemision}} </td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>Nombre de establecimiento al que se refiere o interconsulta:</label> {{remision.idEstablecimientoDestino}} </td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>Especialidad a la que se refiere o interconsulta:</label> {{remision.idAtencionDestino}}</td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>II. EVALUACIÓN CLÍNICA DE PACIENTE</label></td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><label>Datos positivos al interrogatorio y examén físico:</label> {{remision.datosExamen}}</td>
+                 </tr>
+             </table>
+             
+            
+            <table width="100%" style="border: 1px solid black" >
+                <tr>
+                    <td colspan="4">
+                        <label>Signos Vítales</label>
+                   </td>
+                </tr>
+                <tr>
+                    <td><label>Temperatura:</label> {{signosvitales.temperatura}}</td>
+                    <td><label>FR:</label> {{signosvitales.frecuenciaRespiratoria}}</td>
+                    <td><label>FC:</label> {{signosvitales.frecuenciaCardiaca}}</td>
+                    <td><label>TA:</label></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><label>Pulso:</label></td>
+                    <td><label>Peso:</label> {{signosvitales.peso}}</td>
+                    <td><label>Talla:</label> {{signosvitales.talla}}</td>
+                    <td><label>AU:</label></td>
+                    <td><label>FCF:</label></td>
+                </tr>
+            </table>
+             <br/><br/>
+            <label>Tratamiento:</label> 
+            {% set auxtratamiento = '?¬¬?' in remision.Tratamiento %}
+            {% if auxtratamiento == 1 %}
+                {% set tratamiento = remision.Tratamiento|split('?¬¬?') %}
+                <br>{{ tratamiento[1] }}<br>
+                {% else %}
+            <br>{{remision.Tratamiento}}<br>
+            {% endif %}
+            {% if medicamentos|length > 0 %}
+            <table width="100%" border = "1" class="table-medicamento">
+                <thead style="text-align:left;">
+                    <tr>
+                        <th>Medicamento</th>
+                        <th>Dosis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for medicamento in medicamentos %}
+                        <tr>
+                            <td>{{ medicamento.nombre }}</td>
+                            <td>{{ medicamento.dosis }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    No Hay medicamentos recetados
+                {% endif %}
+                </tbody>
+            </table>
+                        
+             
+            <p style="page-break-after: always;"></p>
+            <table><tr><td>2/2</td></tr></table>
+            {% include 'MinsalSeguimientoBundle:SecRemisionPacienteAdmin:enca_referencia_reporte.html.twig' %}
+            <label>Información relevante de paciente (exámenes realizados y resultados):<br/></label> <br/>
+            {% set auxexamenes = '?¬¬?' in remision.ObservacionResultado %}
+            {% if auxexamenes == 1 %}
+                {% set tratamiento = remision.ObservacionResultado|split('?¬¬?') %}
+                <br>{{ tratamiento[1] }}<br>
+            {% else %}
+                <br>{{remision.ObservacionResultado}}<br>
+            {% endif %}
+            
+            
+            {% if labresultados.RC is defined %}
+                {% if labresultados.RC|length > 0 %}
+                    {% set html = "" %}
+                    {% for area in labresultados.RC %}
+                        {% if area.plantillas['A'] is defined and area.plantillas['A']|length > 0 %}
+                            {% for examen in area.plantillas['A'].examenes %}
+                                {% if examen.codigo_estado_detalle is sameas('RC') %}
+                                    {% set html = html ~ "<tr>" ~
+                                        "<td>" ~ examen.nombre ~ "</td>" ~
+                                        "<td>" %}
+                                            {% if examen.resultadoFinal.id_posible_resultado is not null or examen.resultadoFinal.id_posible_resultado != '' %}
+                                                {% set html = html ~ examen.resultadoFinal.nombre_posible_resultado %}
+                                            {% else %}
+                                                {% set html = html ~ examen.resultadoFinal.resultado %}
+                                            {% endif %}
+                                        {% set html = html ~ "</td>" ~
+                                        "<td>" ~ examen.resultadoFinal.unidad ~ "</td>" ~
+                                        "<td>" ~ examen.resultadoFinal.rango_inicio ~ "-" ~ examen.resultadoFinal.rango_fin ~ "</td>" ~
+                                        "<td>" ~ examen.resultadoFinal.observacion ~ "</td>" ~
+                                    "</tr>" %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if html is not sameas("") %}
+                        <table width="100%" class = "table-examenes"  >
+                            <thead style="text-align:left;">
+                                <tr>
+                                    <th>Nombre Examen</th>
+                                    <th>Resultado</th>
+                                    <th>Unidades</th>
+                                    <th>Rangos Normales</th>
+                                    <th>Observacion</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ html|raw }}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        No hay examenes recetados
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+            <br/><br/><br/> <br/><br/><br/>
+            <table>
+                 <tr>
+                     <td style="text-align: center">
+                        {{ idhistorialclinico.getIdEmpleado.nombreempleado}}<br/>
+                         _______________________________________________________<br/>
+                         <label>Nombre de persona que refiere o interconsulta</label>
+                     </td>
+                     <td style="text-align: center">
+                         <br/>__________________________<br/>
+                         <label>Cargo</label>
+                     </td>
+                     <td colspan="2" style="text-align: center">
+                         <br/>__________________________<br/>
+                         <label>Firma y Sello</label>
+                     </td>
+                 </tr>
+                <tr>
+                     <td colspan="3" style="text-align: center">
+                         <br/><br/>________________________________________________________________________________________________________<br>
+                         <label>Firma de visto bueno de Director del Establecimiento de Salud o Delegado del Director<br/></label>
+                     </td>
+                </tr>
+                </table>
+            {% if labresultados.RC is defined %}          
+                {% for area in labresultados.RC %}
+                    {% for plantilla in area.plantillas %}
+                        {% if plantilla.codigo is not sameas('A') %}
+                            <p style="page-break-after: always;"></p>
+                            <b>{{ expediente.getIdPaciente().primerApellido|default('') }}  {{ expediente.getIdPaciente().segundoApellido|default('') }} {{ expediente.getIdPaciente().segundoApellido|default('') }} {{ expediente.getIdPaciente().segundoNombre|default('') }} {{ expediente.getIdPaciente().tercerNombre|default('') }}</b><br/>
+                            <label>Referencia No.: </label> {{remision.codigo}}<br/>
+                            {% for examen in plantilla.examenes %}
+                                {% set examStatus = examen.codigo_estado_detalle %}
+                                {% if examStatus is sameas('RC') %}
+                                    <h5>Nombre del Examen: {{ examen.nombre }}</h5>
+                                    {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/layout' ~ plantilla.codigo ~ '.html.twig' %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </body>
+</html>

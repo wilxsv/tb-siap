@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabControlInterface" table="lab_control_interface">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="fechaRecibio" type="date" column="fecha_recibio" nullable="true"/>
+    <field name="mensaje" type="string" column="mensaje" nullable="true"/>
+    <field name="fechaProceso" type="date" column="fecha_proceso" nullable="true"/>
+    <field name="via" type="integer" column="via" nullable="true"/>
+    <field name="terminal" type="integer" column="terminal" nullable="true"/>
+    <field name="estandar" type="integer" column="estandar" nullable="true"/>
+    <field name="accion" type="integer" column="accion" nullable="true"/>
+  </entity>
+</doctrine-mapping>

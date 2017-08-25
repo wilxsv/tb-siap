@@ -1,0 +1,47 @@
+{% block javascripts %}
+<script type="text/javascript">
+    jQuery(document).ready(function ($) {
+        var tablaResultados=$('#tablaResultados');
+        var opcionesTable=setDataTableOptions(tablaResultados);
+        var now=moment();
+        opcionesTable['sort'] = false;
+        opcionesTable['displayLength']=15;
+        opcionesTable['filter']=false;
+        opcionesTable['dom']=
+                                  "<'row'<'col-sm-9'lf><'col-sm-3'B>>" +
+                                  "<'row'<'col-sm-12 table-toolbar'>>" +
+                                  "<'row'<'col-sm-12 table-responsive'tr>>" +
+                                  "<'row'<'col-sm-5'i><'col-sm-7'p>>";
+        opcionesTable['buttons'] = ['excel', 'pdf'];
+        // opcionesTable['buttons'] = ['copy', 'csv', 'excel', 'pdf', 'print'];
+        opcionesTable['lengthMenu']= [[15,20], [15,20]];
+        tablaResultados.DataTable(opcionesTable);
+    });
+</script>
+{% endblock javascripts %}
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th class="text-center"><strong>Procedimiento</strong></th>
+            <th class="text-center"><strong>Fecha Próxima Disponible</strong></th>
+            <th class="text-center"><strong>Días de Espera </strong></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for procedimiento,horario in horariosDisponibles %}
+            <tr>
+                <td>{{procedimiento}}</td>
+                {% if horario['cupos']|length > 0 %}
+                <td>
+                        {{ horario['cupos'][0]['fecha'] }} Con el horario {{ horario['cupos'][0]['rangoHora'] }}
+                        {% set diasEspera=horario['cupos'][0]['fechaObjeto'].diff(date().setTime(0,0)).format('%a')  %}
+                </td>
+                <td>{{ diasEspera | raw }}</td>
+                {% else %}
+                    <td>NO HAY DISTRIBUCIÓN ASIGNADA</td>
+                    <td>N/A</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

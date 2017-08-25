@@ -1,0 +1,519 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block sonata_breadcrumb %}
+{% endblock sonata_breadcrumb %}
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        jQuery(document).ready(function ($) {
+            /* Inicializar Selectores */
+            var formActionsDiv     = $('#formActionsDiv');
+            var formButtonsDiv     = $('#formButtonsDiv');
+            var fechaConsulta      = $('input[id$="_fechaconsulta"]');
+            var numExpNomPac       = $('#numExpNomPac');
+            var idEmpleado         = $('select[id$="_idEmpleado"]');
+            var idAtenAreaModEstab = $('select[id$="_idAtenAreaModEstab"]');
+            var idCitaDia          = $('input[id$="_idCitaDia"]');
+            var idRetroactiva      = $('input[id$="_idRetroactiva"]');
+            var superAdmin         = '{% if app.user.hasRole("ROLE_SUPER_ADMIN") %}true{% else %}false{% endif %}';
+            var waitDiv            = $('#waitDiv');
+            var buttonTitle        = '';
+            var createUrl          = '{{ url('admin_minsal_seguimiento_sechistorialclinico_create') }}';
+            var motivoHTML         = $('select[id$="_idMotivoRetroactivo"]').html();
+
+            $('#originMotivo').empty();
+
+            /* Accion de comportamiento para seleccion de Fecha que se brindo la consulta */
+            fechaConsulta.datepicker('setEndDate', moment().subtract(1, 'days').format('DD-MM-YYYY') );
+
+            fechaConsulta.datepicker().on('changeDate', function(e){
+                if( fechaConsulta.val().indexOf("_") == -1){
+                    if( /*e.format(0,'dd/mm/yyyy')*/ fechaConsulta.val() == getCurrentDate() ){
+                        showDialogMsg('Fecha Invalida','Debe seleccionar una fecha <b>anterior</b> a la fecha actual.','dialog-error');
+                        //fechaConsulta.datepicker('clearDates');
+                        fechaConsulta.val('');
+                    }
+                    else{
+                        if( fechaConsulta.val() && fechaConsulta.val().indexOf("_") == -1 && numExpNomPac.select2('val') && idEmpleado.select2('val') && idAtenAreaModEstab.select2('val') ){
+                            findMatchDate();
+                        }
+                        else{
+                            cancelHistory();
+                        }
+                    }
+                }
+                else{
+                    cancelHistory();
+                }
+            });
+
+            /* Inicializar select2 para busqueda de Pacientes por Numero de Exp. o Nombre */
+            numExpNomPac.select2({
+                allowClear: true,
+                placeholder: 'Seleccionar Expediente...',
+                minimumInputLength: 1,
+                dropdownAutoWidth: true,
+                ajax: {
+                    url: Routing.generate('citasexpedientepaciente'),
+                    dataType: 'json',
+                    quietMillis: 1000,
+                    data: function(term, page) {
+                        return {
+                            clue: term, //search term
+                            page_limit: 10, // page size
+                            page: page, // page number
+                        };
+                    },
+                    results: function(data, page) {
+                        var more = (page * 10) < data.data2;
+                        return {results: data.data1, more: more};
+                    }
+                }
+            }).on('change',function(e){
+                if( fechaConsulta.val() && fechaConsulta.val().indexOf("_") == -1 && numExpNomPac.select2('val') && idEmpleado.select2('val') && idAtenAreaModEstab.select2('val') ){
+                    findMatchDate();
+                }
+                else{
+                    cancelHistory();
+                }
+            });
+
+            /** Acciones de comportamiento para select de Medico y Especialidad **/
+            {% if (app.user.getIdEmpleado.getIdTipoEmpleado is not defined or app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo is not sameas("MED")) %}
+
+                initializeSelect2(idEmpleado, true, false, { placeholder: 'Seleccionar Medico...', allowClear: true, width: '100%' } );
+                initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%' } );
+                idAtenAreaModEstab.select2( 'readonly', true );
+
+
+                idEmpleado.on('change', function(e) {
+                    initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%'} );
+
+                    if ( idEmpleado.select2('val') ) {
+                        idAtenAreaModEstab.select2( 'readonly', false );
+                        setEspecialidadesEmpleado( idEmpleado.select2('val') );
+                    }
+                    else{
+                        idAtenAreaModEstab.select2( 'readonly', true );
+                        cancelHistory();
+                    }
+                });
+
+            {% else %}
+                idEmpleado.select2( 'val', {{ app.user.getIdEmpleado.getId }} );
+                idEmpleado.select2( 'readonly', true );
+
+                initializeSelect2(idAtenAreaModEstab, true, true, { placeholder: 'Seleccionar Especialidad...', allowClear: true, width: '100%'} );
+                setEspecialidadesEmpleado( idEmpleado.select2('val') );
+
+            {% endif %}
+
+            idAtenAreaModEstab.on('change', function(e){
+                if( fechaConsulta.val() && fechaConsulta.val().indexOf("_") == -1 && numExpNomPac.select2('val') && idEmpleado.select2('val') && idAtenAreaModEstab.select2('val') ){
+                    findMatchDate();
+                }
+                else{
+                    cancelHistory();
+                }
+            });
+
+            function setEspecialidadesEmpleado(id) {
+                $.ajax({
+                    url: Routing.generate('citasgetmedicoespecialidadestab') + '?idEmpleado=' + id,
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.result, function(indice, val) {
+                            if (superAdmin == 'true') {
+                                idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.nombre}));
+                            } else {
+                                if (val.idEstablecimiento == {% if app.user.getIdEmpleado %}{{ app.user.getIdEmpleado.getIdEstablecimiento.getId }}{% endif %}) {
+                                    idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.nombre }));
+                                }
+                            }
+                        });
+                    }
+                });
+            };
+
+            function findMatchDate(){
+                waitDiv.empty().append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+                $.ajax({
+                    url: Routing.generate('datehistorymatch') + '?fechaConsulta=' + fechaConsulta.val() + '&idExpediente=' + numExpNomPac.select2('val') + '&idEmpleado=' + idEmpleado.select2('val') + '&idAtenAreaModEstab=' + idAtenAreaModEstab.select2('val'),
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        waitDiv.empty();
+                        if( data.citas.length > 0 ){
+                            //Se asume que para una misma fecha solo existe una cita con el mismo idExediente para un mismo idEmpleado en una misma idAtenAreaModEstab
+                            idCitaDia.val(data.citas[0].id);
+                            //waitDiv.append('Se toma la Cita con Id: ' + data.citas[0].id + ' del Paciente con Exp: ' + data.citas[0].id_expediente + ' Programada el dia: ' + data.citas[0].fecha + ' a las ' + data.citas[0].hora_ini );
+                            if( data.history.length > 0 ){
+                                idRetroactiva.val(data.history[0].id);
+                                if( data.history[0].id_motivo_retroactivo != null ){
+                                    if( data.history[0].codigo == 'F' ){
+                                        waitDiv.append('<br/><div class="alert alert-block alert-error"><h4><i class="fa fa-fw fa-ban"></i> Ya Existe la Consulta Retroactiva.</h4>La Historia Clinica Restroactiva ha sido Registrada y Finalizada, no puede ser Modificada.</div>');
+                                    }
+                                    else{
+                                        waitDiv.append('<br/><div id="startDiv" class="alert alert-block alert-info"><h4><i class="fa fa-fw fa-mail-forward"></i> Consulta Retroactiva en Proceso</h4>Se continuar&aacute; con la Historia Retroactiva en proceso.</div>');
+                                        //waitDiv.append(' Id Historia: '+data.history[0].id);
+                                        buttonTitle = 'Continuar';
+                                        enableHistory();
+                                    }
+                                }else{
+                                    //Ya existe una Historia similar que no es retroactiva.
+                                    waitDiv.append('<br/><div class="alert alert-block alert-error"><h4><i class="fa fa-fw fa-warning"></i> La Consulta ya Existe.</h4>Ya existe una Historia Clinica registrada con los datos especificados. Por Favor, verifique la informaci&oacute;n proporcionada.</div>');
+                                    //waitDiv.append(' Id Historia: '+data.history[0].id);
+                                }
+                            }else{ //No hay Historia Asociada. Se creara una Nueva.
+                                idRetroactiva.val('');
+                                waitDiv.append('<br/><div id="startDiv" class="alert alert-block alert-info"><h4><i class="fa fa-fw fa-file-text"></i> Iniciar Consulta Retroactiva</h4>Se creara una <strong>nueva Consulta Retroactiva</strong>. Para Iniciar, <strong>complete los datos</strong> que se le piden a continuación, y luego de click en el Boton <strong>"Iniciar Consulta Retroactiva"</strong>.</div><br/><br/>');
+                                buttonTitle = 'Iniciar Consulta Retroactiva';
+                                enableHistory();
+                            }
+                        }
+                        else{ //No se ha encontrado una posible Cita asociada con los datos especificados. Se creara una nueva Cita y la Historia.
+                            idCitaDia.val('');
+                            idRetroactiva.val('');
+                            waitDiv.append('<br/><div id="startDiv" class="alert alert-block alert-info"><h4><i class="fa fa-fw fa-file-text"></i> Iniciar Consulta Retroactiva</h4>Se creara una <strong>nueva Consulta Retroactiva</strong>. Para Iniciar, <strong>complete los datos</strong> que se le piden a continuación, y luego de click en el Boton <strong>"Iniciar Consulta Retroactiva"</strong>.</div><br/><br/>');
+                            buttonTitle = 'Iniciar Consulta Retroactiva';
+                            enableHistory();
+                        }
+                    }
+                });
+            }
+
+            function enableHistory(){
+
+                loadContainerDiv();
+
+                if( ! idCitaDia.val()  ){
+                    loadHorary();
+                }
+
+                if( ! idRetroactiva.val() ){
+                    loadMotivo();
+                    $('#startDiv').append('<br/><a id="mainButton" class="btn btn-primary" disabled="disabled" href="'+createUrl+'?id_expediente='+numExpNomPac.select2('val')+'&id_empleado='+idEmpleado.select2('val')+'&id_aten_area_mod_estab='+idAtenAreaModEstab.select2('val')+'&rta=true'+'&id_cita='+idCitaDia.val()+'">'+buttonTitle+'</a><br/>');
+                }else{
+                    $('#startDiv').append('<a id="mainButton" class="btn btn-primary" href="'+createUrl+'?id_expediente='+numExpNomPac.select2('val')+'&id_empleado='+idEmpleado.select2('val')+'&id_aten_area_mod_estab='+idAtenAreaModEstab.select2('val')+'&id_cita='+idCitaDia.val()+'&rta=true">'+buttonTitle+'</a><br/>');
+                }
+
+                $('#mainButton').on('click', function(e){
+                    //e.preventDefault();
+                    if( ! idCitaDia.val()  ){
+                        $.ajax({
+                            method: "POST",
+                            url: '{{ url('admin_minsal_citas_citcitasdia_create') }}',
+                            async: false,
+                            dataType: 'json',
+                            data: { idEmpleado: idEmpleado.select2('val'), idEmpleadoEspecialidadEstab: idAtenAreaModEstab.select2('val'), horarioMedico: horarioMedico.select2('val'), numExpNomPac: numExpNomPac.select2('val'), date: fechaConsulta.val().replace(/\//g, "-"), jsonReturn: 'true', retroactive: 'true' }
+                        })
+                        .done( function(data, textStatus, jqXHR, e) {
+                            console.log(textStatus);
+                            $('#mainButton').attr('href', $('#mainButton').attr('href')+data['createdElement']+'&idMotivoRta='+$('#idMotivoRetroactivo').select2('val') +
+                                                          ( ( $('#idTipoLugar').length > 0 ) ? '&idTipoLugar=' + $('#idTipoLugar').select2('val') : '' ) +
+                                                          ( ( $('#nombreLugar').length > 0 ) ? '&nombreLugar=' + $('#nombreLugar').val() : '' )
+                                                 );
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            console.log(textStatus);
+                            $('#mainButton').attr('href', '#');
+                        });
+
+                    }
+                    else{
+                        if( ! idRetroactiva.val() ){
+                            $('#mainButton').attr('href', $('#mainButton').attr('href')+'&idMotivoRta='+$('#idMotivoRetroactivo').select2('val') +
+                                                  ( ( $('#idTipoLugar').length > 0 ) ? '&idTipoLugar=' + $('#idTipoLugar').select2('val') : '' ) +
+                                                  ( ( $('#nombreLugar').length > 0 ) ? '&nombreLugar=' + $('#nombreLugar').val() : '' )
+                                                );
+                        }
+                    }
+                    //e.preventDefault();
+                });
+            }
+
+            function cancelHistory(){
+                waitDiv.empty();
+                idCitaDia.val('');
+                formActionsDiv.hide();
+            }
+
+            function loadContainerDiv(){
+                $('#startDiv').append('\
+                    <div class="container-fluid" style="margin-top: 30px;">\
+                        <div class="row">\
+                            <div class="col-xs-12 col-md-4" id="divMotivoRetroactivo"></div>\
+                            <div class="col-xs-18 col-md-3" id="divHorarioMedico"></div>\
+                            <div class="col-xs-12 col-md-2" id="divTipoLugarRealizo"></div>\
+                            <div class="col-xs-12 col-md-3" id="divNombreLugarRealizo"></div>\
+                        </div>\
+                    </div>'
+                );
+            }
+
+            function loadHorary(){
+                $('#divHorarioMedico').append('\
+                    <label id="labelHorarioMedico" class="control-label">Horario de Atencion de Paciente</label>\
+                    <select id="horarioMedico" name="horarioMedico" required="required" class="form-control"></select>'
+                );
+
+                horarioMedico = $('#horarioMedico');
+                initializeSelect2(horarioMedico, true, true, { placeholder: 'Seleccionar Horario...', allowClear: true, width: '100%'} );
+
+                jQuery.ajax({
+                    url: Routing.generate('citashorariomedico') + '?idEmpleado=' + idEmpleado.select2('val') + '&idEmpleadoEspecialidadEstab=' + idAtenAreaModEstab.select2('val') + '&date=' + fechaConsulta.val().replace(/\//g, "-"),
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.data1, function(indice, val) {
+                            if(val.id_estado_distribucion==1){
+                                horarioMedico.append($('<option>', {value: val.id, text: val.rango_hora + ( val.id_tipo_distribucion ? ' - ' + val.nombre_tipo_distribucion : '') }));
+                            }
+                        });
+                    }
+                });
+
+                horarioMedico.on('change', function(){
+                    if( horarioMedico.select2('val') ){
+                        if( $('#idMotivoRetroactivo').length > 0 ){
+                            if( $('#idMotivoRetroactivo').select2('val') ){
+                                if( $('#idTipoLugar').length > 0 ){
+                                    if( $('#idTipoLugar').select2('val') ){
+                                        $('#mainButton').removeAttr('disabled');
+                                    }
+                                }
+                                else{
+                                    $('#mainButton').removeAttr('disabled');
+                                }
+                            }
+                        }
+                        else{
+                            $('#mainButton').removeAttr('disabled');
+                        }
+                    }else{
+                        $('#mainButton').attr('disabled', 'disabled');
+                    }
+                });
+
+
+            }
+
+            function loadMotivo(){
+                $('#divMotivoRetroactivo').append('\
+                    <label id="labelMotivoRetroactivo" class="control-label">Motivo por el cual no se realizo la consulta</label>\
+                    <select id="idMotivoRetroactivo" name="idMotivoRetroactivo" required="required" class="form-control">'+motivoHTML.replace(/\r?\n|\r/g, "")+'</select>'
+                );
+
+                var idMotivoRetroactivo = $('#idMotivoRetroactivo');
+                initializeSelect2( idMotivoRetroactivo, true, false, { placeholder: 'Seleccionar Motivo...', allowClear: true, width: '100%'} );
+
+                idMotivoRetroactivo.on('change', function(){
+                    if( idMotivoRetroactivo.select2('val') ){
+                        if( idMotivoRetroactivo.select2('val') == 12 ){
+                            loadTipoLugarRealizo();
+                            loadNombreLugarRealizo();
+                        }
+                        else {
+                            $('#divTipoLugarRealizo').empty();
+                            $('#divNombreLugarRealizo').empty();
+                            if( $('#horarioMedico').length > 0 ){
+                                if( $('#horarioMedico').select2('val') ){
+                                    $('#mainButton').removeAttr('disabled');
+                                }
+                            }
+                            else{
+                                $('#mainButton').removeAttr('disabled');
+                            }
+                        }
+                    }else{
+                        $('#divTipoLugarRealizo').empty();
+                        $('#divNombreLugarRealizo').empty();
+                        $('#mainButton').attr('disabled', 'disabled');
+                    }
+                });
+
+
+            }
+
+            function loadTipoLugarRealizo(){
+                $('#divTipoLugarRealizo').append('\
+                    <label id="labelTipoLugar" class="control-label">Lugar de Realización</label>\
+                    <select id="idTipoLugar" name="idTipoLugar" required="required" class="form-control"></select>'
+                );
+
+                var idLugar = $('#idTipoLugar');
+                initializeSelect2( idLugar, true, true, { placeholder: 'Tipo de Lugar...', allowClear: true, width: '100%'} );
+
+                jQuery.ajax({
+                    url: Routing.generate('tipolugartrabajo') + '?ids=4,5,6,8,9,10', //Por el momento se habilitan estas opciones, si se desean todas eliminar el parametro
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.data1, function(indice, val) {
+                            idLugar.append($('<option>', { value: val.id, text: val.nombre }));
+                        });
+                    }
+                });
+
+                idLugar.on('change', function(){
+                    if( idLugar.select2('val') ){
+
+                        if( $('#horarioMedico').length > 0 ){
+                            if( $('#horarioMedico').select2('val') && $('#nombreLugar').val() ){
+                                $('#mainButton').removeAttr('disabled');
+                            }
+                        }
+                        else{
+                            if( $('#nombreLugar').val() ){
+                                $('#mainButton').removeAttr('disabled');
+                            }
+                        }
+
+                    }else{
+                        $('#mainButton').attr('disabled', 'disabled');
+                    }
+                });
+            }
+
+            function loadNombreLugarRealizo(){
+                $('#divNombreLugarRealizo').append('\
+                    <label id="labelNombreLugar" class="control-label">Nombre del Lugar</label>\
+                    <input id="nombreLugar" name="nombreLugar" required="required" class="form-control"/>'
+                );
+
+                var nombreLugar = $('#nombreLugar');
+
+                nombreLugar.on('keyup', function(){
+                    if( nombreLugar.val() && nombreLugar.val().length >= 2 ){
+
+                        if( $('#horarioMedico').length > 0 ){
+                            if( $('#horarioMedico').select2('val') && $('#idTipoLugar').select2('val') ){
+                                $('#mainButton').removeAttr('disabled');
+                            }
+                        }
+                        else{
+                            if( $('#idTipoLugar').select2('val') ){
+                                $('#mainButton').removeAttr('disabled');
+                            }
+                        }
+
+                    }else{
+                        $('#mainButton').attr('disabled', 'disabled');
+                    }
+                });
+            }
+
+        });//fin document ready
+
+    </script>
+{% endblock %}
+{% block form %}
+    {{ sonata_block_render_event('sonata.admin.edit.form.top', { 'admin': admin, 'object': object }) }}
+
+    {% set url = admin.id(object) is not null ? 'edit' : 'create' %}
+
+    {% if not admin.hasRoute(url)%}
+        <div>
+            {{ "form_not_available"|trans({}, "SonataAdminBundle") }}
+        </div>
+    {% else %}
+        <form
+            {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+            role="form"
+            action="{{ admin.generateUrl(url, {'id': admin.id(object), 'uniqid': admin.uniqid, 'subclass': app.request.get('subclass')}) }}" {{ form_enctype(form) }}
+            method="POST"
+            {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+            >
+            {% if form.vars.errors|length > 0 %}
+                <div class="sonata-ba-form-error">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            {% block sonata_pre_fieldsets %}
+                <div class="row">
+                {% endblock %}
+
+                {% block sonata_tab_content %}
+                    {% for name, form_group in admin.formgroups %}
+                        <div class="{{ form_group.class|default('col-md-12') }}">
+                            <div class="box box-primary">
+                                <div class="box-header">
+                                    <h4 class="box-title">
+                                        Por Favor Ingrese los siguientes Datos:
+                                    </h4>
+                                </div>
+                                <div class="box-body">
+                                    <div class="sonata-ba-collapsed-fields">
+                                        <div class="container-fluid">
+                                            <div class="row">
+                                                <div class="col-xs-18 col-md-2">
+                                                    {{ form_row(form.fechaconsulta) }}
+                                                </div>
+                                                <div class="col-xs-12 col-md-4">
+                                                    <label id="labelNumExpNomPac" class="control-label">N° Expediente</label>
+                                                    <input type="text" id="numExpNomPac" name="numExpNomPac" required="required" class="form-control">
+                                                </div>
+                                                <div class="col-xs-12 col-md-3">
+                                                    {{ form_row(form.idEmpleado) }}
+                                                </div>
+                                                <div class="col-xs-12 col-md-3">
+                                                    {{ form_row(form.idAtenAreaModEstab) }}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-xs-18 col-md-6" id="originMotivo">
+                                                    {{ form_row(form.idMotivoRetroactivo) }}
+                                                </div>
+                                                <div class="col-xs-12 col-md-2">
+
+                                                </div>
+                                                <div class="col-xs-12 col-md-2">
+
+                                                </div>
+                                                <div class="col-xs-12 col-md-2">
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% if form_group.description != false %}
+                                            <p>{{ form_group.description|raw }}</p>
+                                        {% endif %}
+
+                                        {% for field_name in form_group.fields %}
+                                            {% if admin.formfielddescriptions[field_name] is defined %}
+                                                {% if form[field_name] is defined %}
+                                                    {{ form_row(form[field_name])}}
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <div id="waitDiv">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endblock %}
+
+                {% block sonata_post_fieldsets %}
+                </div>
+            {% endblock %}
+
+            {{ form_rest(form) }}
+
+            {% block formactions %}
+                <div id="formActionsDiv" style="display: none;">
+                    <div id="formButtonsDiv" class="well well-small form-actions">
+                        <!--<input type="submit" class="btn btn-primary" name="btn_create" value="Crear Consulta Retroactiva"/>-->
+                    </div>
+                </div>
+            {% endblock formactions %}
+        </form>
+    {% endif %}
+
+    {{ sonata_block_render_event('sonata.admin.edit.form.bottom', { 'admin': admin, 'object': object }) }}
+
+{% endblock %}

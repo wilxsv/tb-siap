@@ -1,0 +1,45 @@
+{#
+
+This file is part of the Sonata package.
+
+(c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+
+#}
+
+{% extends base_template %}
+
+{% block actions %}
+    <li>{% include 'SonataAdminBundle:Button:list_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:edit_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:create_button.html.twig' %}</li>
+{% endblock %}
+
+{% block tab_menu %}{{ knp_menu_render(admin.sidemenu(action), {'currentClass' : 'active'}, 'list') }}{% endblock %}
+
+{% block content %}
+    <div class="sonata-ba-sucess">
+
+        <div class="box box-sucess">
+            <div class="box-header">
+                <h2 class="box-title">Confirmar Activar Distribución</h2>
+            </div>
+            <div class="box-body">
+                <h4 class="text-info ">¿Está seguro que desea Activar la distribución de <strong>{{ object.getIdEmpleado() }} </strong>
+                    en el horario <strong>{{ object.getIdRangohora()}}</strong> los días <strong>{{ object.getDiaSemana()}}</strong>
+                        del Mes de <strong>{{ object.getNombreMes() }}</strong> del Año <strong>{{ object.getYrs() }}</strong>?</h4>
+            </div>
+            <div class="box-footer clearfix">
+                <form method="POST" action="{{ admin.generateObjectUrl('activar', object) }}">
+                    <input type="hidden" name="_method" value="ACTIVAR">
+                    <input type="hidden" name="_sonata_csrf_token" value="{{ csrf_token }}">
+
+                    <button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Sí, Activar</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

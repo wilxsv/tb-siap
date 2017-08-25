@@ -1,0 +1,545 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        var superAdmin = '{% if app.user.hasRole("ROLE_SUPER_ADMIN") %}true{% else %}false{% endif %}';
+
+        {% if citasProcesadas is defined and citasProcesadas|length > 0 %}
+            modal_elements.push({
+                id: 'resultado_reprogramacion_modal',
+                header: 'Estado de Reprogramacion de Citas',
+                func: 'bodyResultadoReprogramacion',
+                footer: '',
+                widthModal: '80%'
+            });
+
+            $citasProcesadas = {{ citasProcesadas|json_encode|raw }};
+
+            function bodyResultadoReprogramacion() {
+                var html = '';
+
+                if( Object.keys($citasProcesadas.mensaje).length > 0 ) {
+                    html +=
+                        '<div class="alert alert-'+$citasProcesadas.mensaje.tipo+'" role="alert" style="margin-left:0px;">'+
+                            $citasProcesadas.mensaje.descripcion+
+                        '</div>';
+                }
+
+                if( $citasProcesadas.reprogramadas.length > 0 ) {
+                    html +=
+                        '<div class="panel panel-success">'+
+                            '<div class="panel-heading" style="font-weight:bold;"><span class="fa fa-calendar"></span> Listado de Citas Reprogramadas</div>'+
+                            '<div class="table-responsive">'+
+                                '<table class="table table-bordered table-condensed td-vertical-align-middle">'+
+                                    '<thead>'+
+                                        '<tr>'+
+                                            '<th>NEC</th>'+
+                                            '<th>Nombre del Paciente</th>'+
+                                            '<th>Fecha y Hora de la Cita</th>'+
+                                            '<th>Tipo de Cita</th>'+
+                                            '<th></th>'+
+                                        '</tr>'+
+                                    '</thead>'+
+                                    '<tbody>';
+                                        $.each($citasProcesadas.reprogramadas, function(idxr, cita) {
+                                            html +=
+                                                '<tr>'+
+                                                    '<td>'+cita.numeroExpediente+'</td>'+
+                                                    '<td>'+cita.nombrePaciente+'</td>'+
+                                                    '<td>'+cita.fecha+' - '+cita.horaIni+'</td>'+
+                                                    '<td>'+cita.nombreTipoCita+'</td>'+
+                                                    '<td><a href="{{ url('citasgetcomprobante') }}?id='+cita.id+'" target="_blank" class="btn btn-info btn-sm"><span class="fa fa-print"> Imprimir</span></a></td>'+
+                                                '</tr>';
+                                        });
+                            html += '</tbody>'+
+                                '</table>'+
+                            '</div>'+
+                        '</div>';
+                }
+
+                if( $citasProcesadas.noReprogramadas.length > 0 ) {
+                    html +=
+                        '<div class="panel panel-warning">'+
+                            '<div class="panel-heading" style="font-weight:bold;"><span class="fa fa-calendar-o"></span> Listado de Citas No Reprogramadas</div>'+
+                            '<div class="table-responsive">'+
+                                '<table class="table table-bordered table-condensed td-vertical-align-middle">'+
+                                    '<thead>'+
+                                        '<tr>'+
+                                            '<th>NEC</th>'+
+                                            '<th>Nombre del Paciente</th>'+
+                                            '<th>Fecha y Hora de la Cita</th>'+
+                                            '<th>Tipo de Cita</th>'+
+                                        '</tr>'+
+                                    '</thead>'+
+                                    '<tbody>';
+                                        $.each($citasProcesadas.noReprogramadas, function(idxr, cita) {
+                                            html +=
+                                                '<tr>'+
+                                                    '<td>'+cita.numeroExpediente+'</td>'+
+                                                    '<td>'+cita.nombrePaciente+'</td>'+
+                                                    '<td>'+cita.fecha+' - '+cita.horaIni+'</td>'+
+                                                    '<td>'+cita.nombreTipoCita+'</td>'+
+                                                '</tr>';
+                                        });
+                            html += '</tbody>'+
+                                '</table>'+
+                            '</div>'+
+                        '</div>';
+                }
+
+                return html;
+            }
+        {% endif %}
+
+        jQuery(document).ready(function($) {
+            $idEmpleado        = $('#{{ admin.uniqid }}_idEmpleado');
+            $idEspecialidad    = $('#{{ admin.uniqid }}_idEmpEspecialidadEstab');
+            $rangoFecha        = $('#{{ admin.uniqid }}_rangoFecha');
+            $idJustificacion   = $('#{{ admin.uniqid }}_idJustificacion');
+            $btnResetear       = $('#btn-resetear');
+            $btnBuscar         = $('#btn-buscar');
+            $btnReprogramar    = $('#btn-reprogramar');
+            $resultadoBusqueda = $('#resultado-busqueda');
+
+            var select2Options = {
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                width: '100%'
+            }
+            var now = moment();
+            var localS2Options   = $.extend( {}, select2Options);
+            var dataTableOptions = setDataTableOptions($resultadoBusqueda);
+            var initAfterInsert  = {% if searchParameters|length > 0 %}true{% else %}false{% endif %};
+
+            {% if citasProcesadas is defined and citasProcesadas|length > 0 %}
+                callModal('resultado_reprogramacion_modal', { 'backdrop': 'static', 'keyboard': false }, true);
+
+                $('#myModalLabel').css({'color': '#5bc0de', 'font-weight': 'bold'});
+                $('#myModalLabel').css('text-align', 'center');
+                $('div.modal-content').css('background-color', '#f7f7f9');
+                $('div.modal-header').css('background-color', '#ffffff');
+                $('div.modal-body').css('background-color', '#f7f7f9');
+                $('div.modal-footer').css('background-color', '#ffffff');
+            {% endif %}
+
+            select2Options['placeholder'] = 'Seleccionar Médico...';
+            initializeSelect2($idEmpleado, true, false, select2Options);
+
+            select2Options['placeholder'] = 'Seleccionar Especialidad...';
+            initializeSelect2($idEspecialidad, true, true, select2Options);
+
+            localS2Options['placeholder'] = 'Seleccionar Justificacion...';
+            localS2Options['width'] = 'calc(100% - 200px)';
+            initializeSelect2($idJustificacion, true, false, localS2Options);
+
+            dataTableOptions['dom'] = "<'row'<'col-sm-6'l><'col-sm-6'f>>" +
+                                      "<'row'<'col-sm-12 table-toolbar'>>" +
+                                      "<'row'<'col-sm-12 table-responsive'tr>>" +
+                                      "<'row'<'col-sm-5'i><'col-sm-7'p>>";
+
+            dataTableOptions['columnDefs'] = [{ "width": "90px", "targets": 4 }];
+            dataTableOptions['order'] = [];
+
+            $resultadoBusqueda.DataTable(dataTableOptions);
+
+            $('.table-toolbar').append(
+                '<div class="row">'+
+                    '<div class="col-md-12 text-right">'+
+                        '<button id="btn-check-current" type="button" class="btn btn-link" data-action="check" data-type="current"><i class="fa fa-check-square-o"></i> Seleccionar Actual</button>'+
+                        '<button id="btn-uncheck-current" type="button" class="btn btn-link" data-action="uncheck" data-type="current"><i class="fa fa-square-o"></i> Deseleccionar Actual</button>'+
+                        '<button id="btn-check-all" type="button" class="btn btn-link" data-action="check" data-type="all"><i class="fa fa-check-square"></i> Seleccionar Todos</button>'+
+                        '<button id="btn-uncheck-all" type="button" class="btn btn-link" data-action="uncheck" data-type="all"><i class="fa fa-square"></i> Deseleccionar Todos</button>'+
+                    '</div>'+
+                '</div>'
+            ).hide();
+
+            $('body').on('click', '[id^="btn-check-"], [id^="btn-uncheck-"]', function() {
+                var action = $(this).attr('data-action');
+                var type   = $(this).attr('data-type');
+
+                callFunction(action+type.capitalLetter());
+            });
+
+            $.ajax({
+                url: Routing.generate("citasgetmedico"),
+                async: true,
+                dataType: 'json',
+                success: function(data) {
+                    $.each(data.data1, function(indice, val) {
+                        if (superAdmin == 'true') {
+                            $idEmpleado.append( $('<option>', {value: val.id, text: val.nombre, 'data-residente': val.residente} ) );
+                        } else {
+                            if(val.idEstablecimiento == {% if app.user.getIdEmpleado %}{{ app.user.getIdEmpleado.getIdEstablecimiento.getId }}{% else %}''{% endif %}) {
+                                $idEmpleado.append( $('<option>', {value: val.id, text: val.nombre, 'data-residente': val.residente} ) );
+                            }
+                        }
+                    });
+
+                    {% if searchParameters is defined and searchParameters|length > 0 and searchParameters.idEmpleado is defined %}
+                        if(initAfterInsert) {
+                            $idEmpleado.select2('val', {{ searchParameters.idEmpleado }}).trigger('change');
+                        }
+                    {% endif %}
+                }
+            });
+
+            $idEmpleado.on('change', function(e) {
+                select2Options['placeholder'] = 'Seleccionar Especialidad...';
+                initializeSelect2($idEspecialidad, true, true, select2Options);
+
+                if ($(this).select2('val') !== '') {
+                    empleadoChange($(this).select2('val'));
+                }
+            });
+
+            $( '#'+$idEmpleado.attr('id')+', #'+$idEspecialidad.attr('id') ).on('change', function(e) {
+                resetTable();
+            });
+
+            $rangoFecha.on('apply.daterangepicker', function(e) {
+                resetTable();
+            });
+
+            $.ajax({
+                url: Routing.generate("get_justificacion_reprogramacion"),
+                async: true,
+                dataType: 'json',
+                success: function(data) {
+                    $.each(data, function(indice, val) {
+                        $idJustificacion.append( $('<option>', {value: val.id, text: val.nombre} ) );
+                    });
+                }
+            });
+
+            {% if searchParameters is defined and searchParameters|length > 0 and searchParameters.rangoFecha is defined %}
+                {% set rangoFecha = searchParameters.rangoFecha|split(' - ') %}
+                $rangoFecha.data('daterangepicker').setStartDate('{{ rangoFecha[0] }}');
+                $rangoFecha.data('daterangepicker').setEndDate('{{ rangoFecha[1] }}');
+            {% endif %}
+
+
+            $btnResetear.on('click',function() {
+                $idEmpleado.select2('val','').trigger("change");
+                $rangoFecha.val(now.format('DD/MM/YYYY')+' - '+now.format('DD/MM/YYYY'));
+
+                resetTable();
+            });
+
+            $btnBuscar.on('click',function() {
+                var errorArray   = validarCamposBusqueda();
+                var errorMessage = '';
+
+                resetTable();
+
+                $resultadoBusqueda = $('#resultado-busqueda').DataTable();
+                $('#error-messages').empty();
+
+                if(errorArray.length > 0) {
+                    if(errorArray.length === 1) {
+                        errorMessage = 'El campo: '+errorArray[0].nombre+' no puede estar vacío.';
+                    } else {
+                        errorMessage = 'Los siguientes campos no han sido seleccionados o ingresados: ';
+                        errorMessage += '<ul>';
+
+                        errorArray.forEach(function(element, index, array) {
+                            errorMessage += '<li>'+element.nombre+'</li>';
+                        });
+
+                        errorMessage += '</ul>';
+                    }
+
+                    $('#error-messages').append(
+                        '<div class="alert alert-danger alert-dismissible" role="alert">'+
+                            '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
+                            '<h4><strong>Campos no seleccionados!</strong></h4>'+errorMessage+
+                        '</div>'
+                    );
+                } else {
+                    var rangoFecha = $rangoFecha.data('daterangepicker');
+                    $('#table-search').waitMe({ text: 'Buscando...' });
+
+                    $.ajax({
+                        url: Routing.generate("get_citas_info_rango"),
+                        data: { fechaInicial: rangoFecha.startDate.format('DD/MM/YYYY'), fechaFinal: rangoFecha.endDate.format('DD/MM/YYYY'), idEmpleado: $idEmpleado.select2('val'), idEspecialidad: $idEspecialidad.select2('val'), weekend: false, mostrarDetalleCitas: true, outputFormat: 'Y/m/d' },
+                        async: true,
+                        dataType: 'json',
+                        success: function(data) {
+                            var count = 0;
+                            if(Object.keys(data).length > 0) {
+                                $.each(data, function(key, value) {
+                                    if( value.totalAsignados > 0 ) {
+                                        if(Object.keys(value.horarios).length > 0) {
+                                            $.each(value.horarios, function(hindex, hvalue) {
+                                                if( hvalue.totalAsignados > 0 ) {
+                                                    if(Object.keys(hvalue.citas).length > 0) {
+                                                        $.each(hvalue.citas, function(cindex, cvalue) {
+                                                            count++;
+                                                            $resultadoBusqueda.row.add([cvalue.numeroExpediente, cvalue.nombrePaciente, value.format+' - '+hvalue.horaIni, cvalue.nombreTipoCita, ( parseInt(cvalue.idEstado) === 6 ? 'Programada' : cvalue.nombreEstado ), '<input id="cita_'+cvalue.id+'" name="cita['+cvalue.id+']" type="checkbox" data-switch-enabled="true" />' ]);
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+
+                            if(count > 0) {
+                                $resultadoBusqueda.draw();
+                                $('input:checkbox', $resultadoBusqueda.rows().nodes()).each(function() {
+                                    $(this).iCheck({checkboxClass: 'icheckbox_square-blue position-relative',radioClass: 'iradio_square-blue'});
+                                });
+
+                                $('td:contains("Reprogramada")', $resultadoBusqueda.rows().nodes()).parent().css({'color': '#8a6d3b !important', 'background-color': '#fcf8e3 !important'});
+
+                                $('.table-toolbar').show();
+                                $('#justificacion-toolbar').removeClass('hidden');
+                            } else {
+                                $('.table-toolbar').hide();
+                                $('#justificacion-toolbar').addClass('hidden');
+                            }
+
+                            {% if citasProcesadas is defined and citasProcesadas.noReprogramadas is defined and citasProcesadas.noReprogramadas|length > 0 %}
+                                if(initAfterInsert) {
+                                    var idSearch = '';
+                                    $.each($citasProcesadas.noReprogramadas, function(idxr, cita) {
+                                        idSearch += '#cita_'+cita.id+',';
+                                    });
+                                    idSearch = idSearch.slice(0, -1);
+
+                                    $(idSearch, $resultadoBusqueda.rows().nodes()).iCheck('check');
+                                    initAfterInsert = false;
+                                }
+                            {% endif %}
+                        }
+                    }).
+                    always(function() {
+                        $('#table-search').waitMe('hide');
+                    });
+                }
+            });
+
+            $btnReprogramar.on('click',function() {
+                var errorArray      = [];
+                var errorMessage    = '';
+                var idJustificacion = $idJustificacion.select2('val');
+                var citas           = $('input:checkbox:checked', $resultadoBusqueda.rows().nodes());
+
+                if(idJustificacion === '') {
+                    errorArray.push({id: 'idJustificacion', nombre: 'Justificación'});
+                    errorMessage = '<li>La justificación de transferencia no ha sido seleccionada.</li>';
+                }
+
+                if(citas.length === 0) {
+                    errorArray.push({id: 'citas', nombre: 'Citas'});
+                    errorMessage += '<li>Ninguna cita ha sido seleccionada para ser transferida.</li>';
+                }
+
+                if(errorArray.length > 0) {
+                    var tmpMsj = '';
+                    if(errorArray.length === 1) {
+                        tmpMsj = '<p>La reprogramación de la cita no se ha podido realizar debido al siguiente motivo:</p>';
+                    } else {
+                        tmpMsj = '<p>La reprogramación de las citas no se han podido realizar debido a los siguientes motivos:</p>';
+                    }
+
+                    errorMessage = tmpMsj + '<ul>' + errorMessage + '</ul>';
+
+                    showDialogMsg('Error en la reprogramación...', errorMessage, 'dialog-error');
+                } else {
+                    $('form.form-reprogramar').append('<input type="hidden" name="action" value="reprogramar" />');
+                    $('form.form-reprogramar').append('<input type="hidden" name="searchParameters[idEmpleado]" value="'+$idEmpleado.select2('val')+'" />');
+                    $('form.form-reprogramar').append('<input type="hidden" name="searchParameters[idEspecialidad]" value="'+$idEspecialidad.select2('val')+'" />');
+                    $('form.form-reprogramar').append('<input type="hidden" name="searchParameters[rangoFecha]" value="'+$rangoFecha.val()+'" />');
+
+                    citas.each(function(idx) {
+                        var idCita = $(this).attr('id').replace('cita_','');
+                        $('form.form-reprogramar').append('<input type="hidden" name="citas['+idx+']" value="'+idCita+'" />');
+                    });
+
+                    $('form.form-reprogramar').submit();
+                }
+            });
+
+            function resetTable() {
+                $resultadoBusqueda = $('#resultado-busqueda').DataTable();
+                $resultadoBusqueda.clear().draw();
+                $('.table-toolbar').hide();
+                $('#justificacion-toolbar').addClass('hidden');
+            }
+
+            function empleadoChange(id) {
+                $.ajax({
+                    url: Routing.generate('citasgetmedicoespecialidadestab') + '?idEmpleado=' + id,
+                    async: true,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.result, function(indice, val) {
+                            if (superAdmin == 'true') {
+                                $idEspecialidad.append($('<option>', {value: val.id, text: val.nombre}));
+                            } else {
+                                if(val.idEstablecimiento == {% if app.user.getIdEmpleado() %}{{ app.user.getIdEmpleado().getIdEstablecimiento().getId() }}{% else %}''{% endif %}) {
+                                    $idEspecialidad.append($('<option>', {value: val.id, text: val.nombre }));
+                                }
+                            }
+
+                            {% if searchParameters is defined and searchParameters|length > 0 %}
+                                {% if searchParameters.idEspecialidad is defined %}
+                                    if(initAfterInsert) {
+                                        $idEspecialidad.select2('val', {{ searchParameters.idEspecialidad }});
+
+                                        var errorArray = validarCamposBusqueda();
+
+                                        if(errorArray.length === 0) {
+                                            $btnBuscar.trigger( "click" );
+                                        }
+                                    }
+                                {% else %}
+                                    initAfterInsert = false;
+                                {% endif %}
+                            {% endif %}
+                        });
+                    }
+                });
+            }
+
+            function validarCamposBusqueda() {
+                var errorArray = [];
+
+                if(!$idEmpleado.select2('val')) {
+                    errorArray.push({id: 'idEmpleado', nombre: 'Médico'});
+                }
+
+                if(!$idEspecialidad.select2('val')) {
+                    errorArray.push({id: 'idEmpleadoEspecialidadEstab', nombre: 'Especialidad del Médico'});
+                }
+
+                if(!$rangoFecha.val()) {
+                    errorArray.push({id: 'rangoFecha', nombre: 'Rango de Fecha'});
+                }
+
+                return errorArray;
+            }
+
+            window.checkCurrent = function() {
+                $('body input[id^="cita_"]').iCheck('check');
+            }
+
+            window.uncheckCurrent = function() {
+                $('body input[id^="cita_"]').iCheck('uncheck');
+            }
+
+            window.checkAll = function() {
+                // $('input:checkbox', $resultadoBusqueda.rows().nodes()).iCheck('check');
+                $('input:checkbox', $resultadoBusqueda.rows( {search:'applied'} ).nodes()).iCheck('check');
+            }
+
+            window.uncheckAll = function() {
+                // $('input:checkbox', $resultadoBusqueda.rows().nodes()).iCheck('uncheck');
+                $('input:checkbox', $resultadoBusqueda.rows( {search:'applied'} ).nodes()).iCheck('uncheck');
+            }
+
+        });
+    </script>
+{% endblock %}
+
+{% block actions %}{% endblock %}
+
+{% block content %}
+    <h3 class="text-center">Reprogramación de Citas</h3>
+    <img src="{{ asset('bundles/minsalcitas/imagenes/reprogramar-512.png') }}" alt="imagen_reprogramar" style="width: 300px; margin: 20px auto; display:block;" />
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-10 col-lg-8 center-block">
+            <div class="box box-primary">
+                <div class="box-header">
+                    <h4 class="box-title">Filtros de Búsqueda</h4>
+                </div>
+                <div class="box-body">
+                    <div id="error-messages"></div>
+                    <div class="sonata-ba-collapsed-fields">
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_idEmpleado">
+                                    <label class="control-label required" for="{{ admin.uniqid }}_idEmpleado">Médico</label>
+                                    <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+                                        <select id="{{ admin.uniqid }}_idEmpleado" name="{{ admin.uniqid }}[idEmpleado]" class="form-control"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_idEmpEspecialidadEstab">
+                                    <label class="control-label required" for="{{ admin.uniqid }}_idEmpEspecialidadEstab">Especialidad</label>
+                                    <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+                                        <select id="{{ admin.uniqid }}_idEmpEspecialidadEstab" name="{{ admin.uniqid }}[idEmpEspecialidadEstab]" class="form-control"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_rangoFecha">
+                            <label class="control-label required" for="{{ admin.uniqid }}_rangoFecha">Rango de Fecha</label>
+                            <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="basic-addon1"><i class="fa fa-calendar"></i></span>
+                                    <input type="text" class="form-control bootstrap-daterangepicker" id="{{ admin.uniqid }}_rangoFecha" name="{{ admin.uniqid }}[rangoFecha]"
+                                           data-mask="99/99/9999 - 99/99/9999" placeholder="dd/mm/yyyy - dd/mm/yyyy" value="" style="text-align:center; background-color: #FFFFFF;" data-date-start-date="{{ "now"|date("d/m/Y") }}"
+                                           data-date-min-date="{{ "now"|date("d/m/Y") }}" data-date-show-dropdowns="true" readonly="readonly" data-date-opens="center" data-date-auto-apply="true";
+                                     />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-right">
+                            <button type="button" id="btn-buscar" name="btn-buscar" class="btn btn-primary"><i class="fa fa-filter"></i> Filtrar</button>
+                            <button type="button" id="btn-resetear" name="btn-resetear" class="btn btn-default"><i class="fa fa-refresh"></i> Resetear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-success">
+                <div class="box-header">
+                    <h4 class="box-title">Resultados de Búsqueda</h4>
+                </div>
+                <div class="box-body">
+                    <div class="row hidden" id="justificacion-toolbar">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-6 pull-right">
+                            <div class="form-group">
+                                <label for="{{ admin.uniqid }}_idJustificacion" class="required">Justificación</label>
+                                <select id="{{ admin.uniqid }}_idJustificacion" name="{{ admin.uniqid }}[idJustificacion]" class="form-control"></select>
+                                <button type="button" id="btn-reprogramar" name="btn-reprogramar" class="btn btn-success btn-sm" style="height: 28px; margin-left: 7px;"><i class="fa fa-share"></i> Reprogramar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="table-search">
+                        <table id="resultado-busqueda" class="table table-condensed table-bordered" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>NEC</th>
+                                    <th>Nombre del Paciente</th>
+                                    <th>Fecha y Hora de la Cita</th>
+                                    <th>Tipo de Cita</th>
+                                    <th>Estado Cita</th>
+                                    <th>Reprogramar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form class="form-reprogramar" action="{{ url('admin_minsal_citas_citcitasdia_reprogramar') }}" method="post"></form>
+{% endblock %}

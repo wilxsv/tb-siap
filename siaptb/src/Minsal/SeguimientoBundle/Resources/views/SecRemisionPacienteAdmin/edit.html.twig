@@ -1,0 +1,310 @@
+{#
+
+This file is part of the Sonata package.
+
+(c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+
+#}
+{% extends 'SonataAdminBundle:CRUD:base_edit.html.twig' %}
+
+{% block sonata_header %}
+
+{% endblock sonata_header %}
+
+{% block actions %}
+
+{% endblock %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" media="all" />
+    <link rel="stylesheet" href="{{ asset('bundles/minsalseguimiento/css/seguimiento.css') }}" type="text/css" media="all" />
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+
+    <script  type="text/javascript">
+        jQuery(document).ready(function ($) {
+
+        {% if cerrar is defined %}
+            {% if cerrar  %}
+                
+                {% if respuesta is defined %}
+                       
+                    {% if problema %}
+                           var title = 'Problema de conexion!!!';
+                    var body = '<p><span class="fa fa-warning"></span> \
+                                Hubo problema al enviar la referencia';
+                    var clase = 'dialog-warning';
+                   var arrayBtns = [{
+                                        text: 'Cerrar', click: function() {
+                                           window.opener.reloadPage();
+                                           window.close();
+                                           jQuery( this ).dialog( "close" );
+                                        }
+                                    }];
+                    showDialogMsg(title, body, clase, null, arrayBtns,false);
+                    {% else %}
+                        var title = 'Proceso completado!!!';
+                    var body = '<p><span class="fa fa-success"></span> \
+                                Los datos se han enviado satisfactoriamente';
+                    var clase = 'dialog-success';
+                   var arrayBtns = [{
+                                        text: 'Cerrar', click: function() {
+                                           window.opener.reloadPage();
+                                           window.close();
+                                           jQuery( this ).dialog( "close" );
+                                        }
+                                    }];
+                    showDialogMsg(title, body, clase, null, arrayBtns,false);
+                    {% endif %}
+                {% endif %}
+                        //window.opener.reloadPage();
+                        //window.close();
+                        
+                         
+            {% endif %}
+
+        {% endif %}
+        {% if (idestable) is not defined %}
+                $('input[id$="_nombreEspecialidadDestino"]').attr("readonly", false);
+        {% endif %}
+            
+            $('select[id$="_idAtencionOrigen"]').select2('readonly',true);
+            $('select[id$="_idAtencionDestino"]').select2('readonly',true);
+            $('input[id$="_idAtendAreaModEstabDestino"]').hide();
+            
+            });//fin document ready
+    </script>
+    
+    <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                {% if createdElement is defined and createdElement !="" and createdElement is not null %}
+                    window.addEventListener("beforeunload", function (e) {
+                        if (window.opener != null && !window.opener.closed) {
+                            try {
+                                window.opener.updateIdReferencia({% if createdElement > 0 %}"{{ createdElement }}"{% else %}null{% endif %});
+                            } catch (err) {
+                                alert(err.description || err) //or console.log or however you debug
+                            }
+                        }
+                    });
+                {% endif %}
+            });
+        </script>
+{% endblock %}
+{% block content %}
+
+{% endblock %}
+
+
+
+{% block form %}
+    {{ sonata_block_render_event('sonata.admin.edit.form.top', { 'admin': admin, 'object': object }) }}
+
+    {% set url = admin.id(object) is not null ? 'edit' : 'createespe' %}
+
+    {% if not admin.hasRoute(url)%}
+        <div>
+            {{ "form_not_available"|trans({}, "SonataAdminBundle") }}
+        </div>
+    {% else %}
+        <form
+            {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+            role="form"
+                {% set url='createsolo' %}
+                action="{{ admin.generateUrl(url, {'idhistoria':idhistoria, 'estadoEnviar':estadoEnviar, 'idespe':idespe, 'idestable':idestable,'id': admin.id(object), 'uniqid': admin.uniqid, 'subclass': app.request.get('subclass')}) }}" {{ form_enctype(form) }}
+   
+            method="POST"
+            {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+            >
+            {% if form.vars.errors|length > 0 %}
+                <div class="sonata-ba-form-error">
+
+                    {{ form_errors(form.idTipoRemision) }}
+                    {{ form_errors(form.idMotivoRemision)}}
+                    {{ form_errors(form.numeroExpediente)}}
+                    {{ form_errors(form.nombreEspecialidadOrigen)}}
+                    {{ form_errors(form.nombreEspecialidadDestino)}}
+
+
+                    {# render any "global" errors #}
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            {% block sonata_pre_fieldsets %}
+                <div class="row">
+                {% endblock %}
+
+                {% block sonata_tab_content %}
+                    {% for name, form_group in admin.formgroups %}
+                        <div class="{{ form_group.class|default('col-md-12') }}">
+                            <div class="box box-success">
+                                <div class="box-header">
+                                    <h4 class="box-title">
+                                        {# admin.trans(name, {}, form_group.translation_domain) #}
+                                    </h4>
+                                </div>
+                                {#<div class="box{% if loop.first %} in{% endif %}" id="{{ admin.uniqid }}_{{ loop.index }}">#}
+                                <div class="box-body">
+
+                                    {% include 'MinsalSeguimientoBundle:SecRemisionPacienteAdmin:encabezado_paciente.html.twig' %}
+                                    <div class="sonata-ba-collapsed-fields">
+
+                                        {# form_row(form.form_form_i366_s104)#}
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-3">{{ form_label(form.idTipoRemision)}}</div>
+                                                    <div class="col-md-3">{{ form_widget(form.idTipoRemision)}}</div>
+                                                    <div class="col-md-3">{{ form_label(form.idMotivoRemision)}}</div>
+                                                    <div class="col-md-3">{{ form_widget(form.idMotivoRemision)}}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-3">{{ form_label(form.numeroExpediente)}}</div>
+                                                    <div class="col-md-3">{{ form_widget(form.numeroExpediente)}}</div>
+                                                    <div class="col-md-3"><label>Fecha Remision</label></div>
+                                                    <div class="col-md-3">{{ "now"|date("d/m/Y") }}</div>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-3">{{ form_label(form.idAtencionOrigen)}}</div>
+                                                    <div class="col-md-9">{{ form_widget(form.idAtencionOrigen)}}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-3">{{ form_label(form.idAtencionDestino)}}</div>
+                                                    <div class="col-md-9">{{ form_widget(form.idAtencionDestino)}}</div>
+                                                    {{ form_widget(form.idAtendAreaModEstabDestino)}}
+                                                </div>
+                                            </div>
+                                        </div>  
+                                    </div>
+                                </div>
+                                {#</div>#}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endblock %}
+
+            {% block sonata_post_fieldsets %}
+                </div>
+            {% endblock %}
+            <br/>
+            {{ form_label(form.impresionDiagnostica)}}
+            {{ form_widget(form.impresionDiagnostica)}}
+            <br/>
+            {{ form_label(form.justificacionRemision)}}
+            {{ form_widget(form.justificacionRemision)}}
+            <br/>
+            {{ form_label(form.datosExamen)}}
+            {{ form_widget(form.datosExamen)}}
+            <br/>
+            
+            {{ form_label(form.observacionResultado)}}
+            {% set html = "" %}
+            {% if labresultados.RC is defined %}
+            {% if labresultados.RC|length > 0 %}
+                {% for area in labresultados.RC %}
+                    {% if area.plantillas['A'] is defined and area.plantillas['A']|length > 0 %}
+                        {% for examen in area.plantillas['A'].examenes %}
+                            {% if examen.codigo_estado_detalle is sameas('RC') %}
+                                {% set html = html ~ "<tr>" ~
+                                    "<td>" ~ examen.nombre ~ "</td>" ~
+                                    "<td>" %}
+                                        {% if examen.resultadoFinal.id_posible_resultado is not null or examen.resultadoFinal.id_posible_resultado != '' %}
+                                            {% set html = html ~ examen.resultadoFinal.nombre_posible_resultado %}
+                                        {% else %}
+                                            {% set html = html ~ examen.resultadoFinal.resultado %}
+                                        {% endif %}
+                                    {% set html = html ~ "</td>" ~
+                                    "<td>" ~ examen.resultadoFinal.unidad ~ "</td>" ~
+                                    "<td>" ~ examen.resultadoFinal.rango_inicio ~ "-" ~ examen.resultadoFinal.rango_fin ~ "</td>" ~
+                                    "<td>" ~ examen.resultadoFinal.observacion ~ "</td>" ~
+                                "</tr>" %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if html is not sameas("") %}
+                    <table width="100%" class="table table-bordered table-striped">
+                        <thead style="text-align:left;">
+                            <tr>
+                                <th>Nombre Examen</th>
+                                <th>Resultado</th>
+                                <th>Unidades</th>
+                                <th>Rangos Normales</th>
+                                <th>Observacion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{ html|raw }}
+                        </tbody>
+                    </table>
+                {% set html = "<table width='100%'><thead style='text-align:left;'><tr><th>Nombre Examen</th><th>Resultado</th><th>Unidades</th><th>Rangos Normales</th><th>Observacion</th></tr></thead>
+                               <tbody>"~html~"</tbody></table>" %}
+                {% endif %}
+            {% endif %}
+            {% endif %}
+            
+            <input name="examenesReferidos" type="text" value="{{ html|raw }}" style="display: none"/>
+            <br/>
+            {{ form_widget(form.observacionResultado)}}
+            <br/>
+            
+            {{ form_label(form.tratamiento) }}
+            <br/>
+            {% set htmlmedicamento = "" %}
+            {% if medicamentos|length > 0 %}
+                {% for medicamento in medicamentos %}
+                    {% set htmlmedicamento = htmlmedicamento ~ "<tr>" ~
+                            "<td>" ~ medicamento.nombre ~ "</td>" ~
+                            "<td>" ~ medicamento.dosis  ~ "</td>" ~ 
+                     "</tr>" %}
+                {% endfor %}
+            {% endif %}
+            
+            {% if htmlmedicamento is not sameas("") %}
+                <table width="100%"  class="table table-bordered table-striped">
+                    <thead style="text-align:left;">
+                        <tr>
+                            <th>Medicamento</th>
+                            <th>Dosis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ htmlmedicamento|raw }}
+                    </tbody>
+                </table>
+                    
+                {% set htmlmedicamento = "<table width='100%'><thead style='text-align:left;'><tr><th>Nombre Examen</th><th>Resultado</th><th>Unidades</th><th>Rangos Normales</th><th>Observacion</th></tr></thead>
+                                            <tbody>"~htmlmedicamento~"</tbody></table>" %}
+            {% endif %}
+            <input name="recetaReferidos" type="text" value="{{htmlmedicamento|raw }}" style="display: none"/>
+            
+           
+            
+            {{ form_widget(form.tratamiento, {'attr': {'placeholder': 'Si desea agregar informacion sobre tratamiento especifique aqui'} })  }}
+           
+            {% block formactions %}
+                <div class="well well-small form-actions">
+                    <input  class="btn btn-primary" type="submit" value="Enviar y Cerrar"/>
+                </div>
+            {% endblock formactions %}
+            {{form_rest(form)}}
+        </form>
+    {% endif %}
+    {{ sonata_block_render_event('sonata.admin.edit.form.bottom', { 'admin': admin, 'object': object }) }}
+{% endblock %}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntFarmacia" table="mnt_farmacia">
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="farmacia" type="string" column="farmacia" length="50" nullable="false"/>
+    <field name="habilitadofarmacia" type="string" column="habilitadofarmacia" nullable="false"/>
+  </entity>
+</doctrine-mapping>

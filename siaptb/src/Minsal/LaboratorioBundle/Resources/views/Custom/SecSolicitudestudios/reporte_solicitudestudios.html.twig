@@ -1,0 +1,57 @@
+{# Definición de Variables #}
+{% set nombreReporte = 'BOLETA DE SOLICITUD DE PRUEBAS DE LABORATORIO' %}
+{% set lab_section   = true %}
+<html>
+<head>
+    <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    {% include 'MinsalSiapsBundle::standard_css_reportes.html.twig' %}
+    <link href="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" rel="stylesheet">
+    <style type="text/css">
+
+    html,body {overflow: visible !important;}
+    div .table-responsive {overflow: visible !important;}
+    .panel-info > .panel-heading,.titulo_vista {
+        background-color: white;
+        font-size: 14px;
+        border-color: black;
+        color: black;
+        font-weight: bold;
+    }
+    .panel-body, .vista_paciente,.table.table-bordered.table-hover,.table-bordered {font-size: 12px;}
+    td,th {padding: 5px 10px;}
+    .table-header td, .table-header th {padding: 2px 5px;}
+    .panel-info{border-color:black;}
+    table {width: 100%}
+
+    </style>
+</head>
+<body >
+    {% if params.solicitudEstudio.laboratorio|length > 0 %}
+        {% if params.singlePrint == true %}
+            {% include 'MinsalSeguimientoBundle:Reportes:encabezado.html.twig' %}
+            {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente_reporte.html.twig' %}
+            {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/body_solicitudestudio.html.twig'%}
+            {% include 'MinsalSeguimientoBundle:Reportes:firma_medico.html.twig'%}
+        {% else %}
+            {% for area in params.solicitudEstudio.laboratorio %}
+                {% include 'MinsalSeguimientoBundle:Reportes:encabezado.html.twig' %}
+                {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente_reporte.html.twig' %}
+                {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/body_solicitudestudio_impresion.html.twig'%}
+                {% include 'MinsalSeguimientoBundle:Reportes:firma_medico.html.twig'%}
+
+                {% if loop.last == false %}
+                    <!-- <div style="width: 100%;border-bottom: 1px dashed #000000;margin-top:5px;margin-bottom: 15px;"><span class="fa fa-scissors" aria-hidden="true"></span></div> -->
+                    <p style="page-break-after: always;"></p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% else %}
+        {% include 'MinsalSeguimientoBundle:Reportes:encabezado.html.twig' %}
+        {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente_reporte.html.twig' %}
+        <div class="panel panel-info" style="padding:10px;">
+            No se encontró ningún examen asociado a la solicitud de Laboratorio...
+        </div>
+    {% endif %}
+</body>
+</html>

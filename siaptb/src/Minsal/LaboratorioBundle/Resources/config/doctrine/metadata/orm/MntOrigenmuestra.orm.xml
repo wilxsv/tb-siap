@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntOrigenmuestra" table="mnt_origenmuestra">
+    <indexes>
+      <index name="IDX_8B9FA3D16724C8DC" columns="idusuariomod"/>
+      <index name="IDX_8B9FA3D113B895A1" columns="idusuarioreg"/>
+      <index name="IDX_8B9FA3D1DAB57264" columns="idtipomuestra"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="origenmuestra" type="string" column="origenmuestra" length="60" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+    <field name="habilitado" type="boolean" column="habilitado" nullable="false"/>
+    <many-to-one field="idtipomuestra" target-entity="LabTipomuestra">
+      <join-columns>
+        <join-column name="idtipomuestra" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuarioreg" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuarioreg" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuariomod" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuariomod" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

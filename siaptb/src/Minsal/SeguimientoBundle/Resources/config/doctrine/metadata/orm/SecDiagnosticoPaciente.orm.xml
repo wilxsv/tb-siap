@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecDiagnosticoPaciente" table="sec_diagnostico_paciente">
+    <indexes>
+      <index name="IDX_76DABF20F7B24431" columns="id_cie10_medico"/>
+      <index name="IDX_76DABF2031827296" columns="id_historial_clinico"/>
+      <index name="IDX_76DABF204D5E2788" columns="id_snomed"/>
+      <index name="IDX_76DABF20CE13B472" columns="id_tipo_consulta"/>
+      <index name="IDX_76DABF204D3FAF61" columns="id_tipo_diagnostico"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="idCie10Estadista" type="integer" column="id_cie10_estadista" nullable="true"/>
+    <field name="especificacion" type="text" column="especificacion" nullable="true"/>
+    <field name="confirmado" type="boolean" column="confirmado" nullable="true"/>
+    <many-to-one field="idTipoDiagnostico" target-entity="CtlTipoDiagnostico">
+      <join-columns>
+        <join-column name="id_tipo_diagnostico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idTipoConsulta" target-entity="CtlTipoConsulta">
+      <join-columns>
+        <join-column name="id_tipo_consulta" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idSnomed" target-entity="MntSnomedCie10">
+      <join-columns>
+        <join-column name="id_snomed" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idCie10Medico" target-entity="MntCie10">
+      <join-columns>
+        <join-column name="id_cie10_medico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

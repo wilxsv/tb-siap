@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabElementos" table="lab_elementos">
+    <indexes>
+      <index name="fki_establecimiento_elementos" columns="idestablecimiento"/>
+      <index name="IDX_668316CA6724C8DC" columns="idusuariomod"/>
+      <index name="IDX_668316CA13B895A1" columns="idusuarioreg"/>
+      <index name="IDX_668316CA271DEBD7" columns="id_conf_examen_estab"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="subelemento" type="string" column="subelemento" length="1" nullable="true"/>
+    <field name="elemento" type="string" column="elemento" length="150" nullable="true"/>
+    <field name="unidadelem" type="string" column="unidadelem" length="30" nullable="true"/>
+    <field name="observelem" type="string" column="observelem" length="250" nullable="true"/>
+    <field name="fechaini" type="date" column="fechaini" nullable="true"/>
+    <field name="fechafin" type="date" column="fechafin" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+    <many-to-one field="idConfExamenEstab" target-entity="LabConfExamenEstab">
+      <join-columns>
+        <join-column name="id_conf_examen_estab" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuarioreg" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuarioreg" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuariomod" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuariomod" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idestablecimiento" target-entity="CtlEstablecimiento">
+      <join-columns>
+        <join-column name="idestablecimiento" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

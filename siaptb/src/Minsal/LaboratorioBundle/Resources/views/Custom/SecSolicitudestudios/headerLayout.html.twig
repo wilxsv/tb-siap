@@ -1,0 +1,28 @@
+<h4>
+    <div class="row">
+        <div class="col-md-4 col-sm-4 header-exam-name">
+            <strong>{{ examen.nombre }}</strong>
+        </div>
+        <div class="col-md-4 col-sm-4 header-default-color">
+            Estado: <strong>{{ examen.nombre_estado_detalle }}</strong>
+        </div>
+        {% if examen.fecha_toma_muestra is not null and examen.fecha_toma_muestra is not sameas('') %}
+            <div class="col-md-4 col-sm-4 header-default-color">
+                Fecha de Toma de Muestra: <strong>{{ examen.fecha_toma_muestra|date("m/d/Y") }}</strong>
+            </div>
+        {% endif %}
+    </div>
+    <div class="row" style="margin-top: 10px;">
+        {% if examStatus is sameas('RC') %}
+            <div class="col-md-4 col-sm-4 header-default-color">
+                Validado por: <strong>{{ examen.resultadoFinal.nombre_empleado }}</strong>
+            </div>
+            <div class="col-md-4 col-sm-4 header-default-color">
+                Fecha de Resultado: <strong>{{ examen.resultadoFinal.fecha_resultado }}</strong>
+            </div>
+            <div class="col-md-4 col-sm-4 header-default-color">
+                Urgente: <strong>{{ examen.resultadoFinal.urgente }}</strong>
+            </div>
+        {% endif %}
+    </div>
+</h4>

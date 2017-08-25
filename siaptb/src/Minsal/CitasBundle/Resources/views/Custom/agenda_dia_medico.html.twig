@@ -1,0 +1,191 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% set codigoEmpleado = app.user.getIdEmpleado.getIdTipoEmpleado is defined ? app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo : 'N/A' %}
+
+{% block actions %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <!--link rel="stylesheet" href="{{ asset('bundles/minsalcitas/css/CitasBundle.css') }}" type="text/css" media="all" /-->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% include 'MinsalCitasBundle:Custom:agenda_dia.html.twig' %}
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            {% if codigoEmpleado is not sameas("MED") %}
+                $idEmpleado = $('#idEmpleado');
+                $idEmpleadoEspecialidadEstab = $('#idEmpleadoEspecialidadEstab');
+                var superAdmin = '{% if app.user.hasRole("ROLE_SUPER_ADMIN") %}true{% else %}false{% endif %}';
+
+                $idEmpleado.prepend('<option/>').val(function() {
+                    return $('[selected]', this).val();
+                });
+                $idEmpleado.select2({
+                    placeholder: 'Seleccionar Medico...',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                $('#resultado').append(
+                    '<div class="alert alert-info" role="alert">'+
+                        '<i class="fa fa-info-circle"></i> Por favor <strong>seleccione un médio y una especialidad</strong> para ver el detalle de la agenda del día.'+
+                    '</div>'
+                );
+
+                $.ajax({
+                    url: Routing.generate("citasgetmedico"),
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.data1, function(indice, val) {
+                            if (superAdmin == 'true') {
+                                $idEmpleado.append( $('<option>', {value: val.id, text: val.nombre, 'data-residente': val.residente} ) );
+                            } else {
+                                if(value.idEstablecimiento == {% if app.user.getIdEmpleado %}{{ app.user.getIdEmpleado.getIdEstablecimiento.getId }}{% else %}''{% endif %}) {
+                                    $idEmpleado.append( $('<option>', {value: val.id, text: val.nombre, 'data-residente': val.residente} ) );
+                                }
+                            }
+                        });
+                    }
+                });
+
+                $idEmpleadoEspecialidadEstab.prepend('<option/>').val(function() {
+                    return $('[selected]', this).val();
+                });
+                $idEmpleadoEspecialidadEstab.select2({
+                    placeholder: 'Seleccionar Especialidad...',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                $idEmpleado.on('change', function(e) {
+                    $idEmpleadoEspecialidadEstab.children().remove();
+
+                    $idEmpleadoEspecialidadEstab.prepend('<option/>').val(function() {
+                        return $('[selected]', this).val();
+                    });
+                    $idEmpleadoEspecialidadEstab.select2({
+                        placeholder: 'Seleccionar Especialidad...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+
+                    if (e.val) {
+                        empleadoChange(e.val);
+                    }
+                });
+
+                $('#idEmpleadoEspecialidadEstab').on('change', function(e) {
+                    generarAgendaDia(true);
+                });
+            {% else %}
+                generarAgendaDia(false);
+            {% endif %}
+
+            function empleadoChange(id) {
+                $.ajax({
+                    url: Routing.generate('citasgetmedicoespecialidadestab') + '?idEmpleado=' + id,
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.result, function(indice, val) {
+                            if (superAdmin == 'true') {
+                                $idEmpleadoEspecialidadEstab.append($('<option>', {value: val.id, text: val.nombre}));
+                            } else {
+                                if(value.idEstablecimiento == {% if app.user.getIdEmpleado %}{{ app.user.getIdEmpleado.getIdEstablecimiento.getId }}{% else %}''{% endif %}) {
+                                    $idEmpleadoEspecialidadEstab.append($('<option>', {value: val.id, text: val.nombre}));
+                                }
+                            }
+                        });
+                    }
+                });
+
+                $('#resultado').empty();
+                $('#resultado').append(
+                    '<div class="alert alert-info" role="alert">'+
+                        '<i class="fa fa-info-circle"></i> Por favor <strong>seleccione una especialidad</strong> para ver el detalle de la agenda del día.'+
+                    '</div>'
+                );
+            }
+
+            function generarAgendaDia(choice) {
+                medicData              = getMedicData();
+                parameters             = [];
+                today                  = new Date();
+                today.setHours(0, 0, 0, 0);
+                parameters['date']     = today;
+                parameters['external'] = true;
+
+                $('#resultado').empty();
+
+                if(medicData.idEmpleadoEspecialidadEstab !== '') {
+                    $.ajax({
+                        url: Routing.generate('citashorariomedico') + '?date=' + today + '&idEmpleado=' + medicData.idEmpleado + '&idEmpleadoEspecialidadEstab=' + medicData.idEmpleadoEspecialidadEstab,
+                        async: false,
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.data1.length == 0) {
+                                $('#resultado').append(
+                                    '<div class="alert alert-info" role="alert">'+
+                                        '<i class="fa fa-info-circle"></i> <h4><strong>Sin distribución para mostrar</strong></h4>'+
+                                        'El médico no posee una distribución para este día.'+
+                                        (choice === true ? ' Por favor seleccione otra especialidad y/u otro médico.' : '')+
+                                    '</div>'
+                                );
+                            } else {
+                                $.each(data.data1, function(indice, aux) {
+                                    parameters['url'] = Routing.generate('citasdetallehora') + '?idEmpleado=' + medicData.idEmpleado + '&idEmpleadoEspecialidadEstab=' + medicData.idEmpleadoEspecialidadEstab + '&date=' + today + '&hora=' + aux.id;
+                                    var detalleAgenda = buildDetailAgendaMedica(parameters);
+
+                                    $('#resultado').append('<h3>' + aux.rango_hora + ( aux.id_tipo_distribucion ? ' - ' + aux.nombre_tipo_distribucion : '') + '</h3>');
+                                    if(Object.keys(detalleAgenda).length === 0 || detalleAgenda.content === '') {
+                                        detalleAgenda.warningMessage = '';
+                                        detalleAgenda.content = '<div class="alert alert-block alert-error">\
+                                                    <h4>Error al construir la agenda m&eacute;dica</h4>\
+                                                    Lo sentimos, hubo un error al construir el detalle de la agenda m&eacute;dica, por favor intentelo nuevamente, si el problema persiste contacte con el administrador del sistema...\
+                                                </div>';
+                                    }
+
+                                    $('#resultado').append(detalleAgenda.content);
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    $('#resultado').append(
+                        '<div class="alert '+( choice === true ? 'alert-info' : 'alert-error')+'" role="alert">'+
+                            ( choice === true ?
+                                '<i class="fa fa-info-circle"></i> Por favor <strong>seleccione una especialidad</strong> para ver el detalle de la agenda del día.' :
+                                '<i class="fa fa-exclamation-triangle"></i> <h4><strong>Especialidad no detectada</strong></h4>.'+
+                                'Hubo un problema al obtener la especialidad con la que se ha logueado el médico, por favor recargue la página, si el problema persiste contacte con el Administrador'
+                            )+
+                        '</div>'
+                    );
+                }
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <h1>Agenda del {{ "now"|localizeddate('long', 'none', 'es_SV')}}</h1>
+    {% block sonata_page_content_nav %}
+    {% endblock %}
+    <div class="col-md-3">
+        <div class="col-md-12" style="margin-bottom: 20px;">
+            {% if app.user.getIdEmpleado.getIdTipoEmpleado is not defined or app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo is not sameas("MED") %}
+                <label class="col-md-12 label-filters">Medico:</label>
+                <select id="idEmpleado"></select>
+                <label class="col-md-12 label-filters">Sub-especialidad:</label>
+                <select id="idEmpleadoEspecialidadEstab"></select>
+            {% endif %}
+            <img  src={{ asset('bundles/minsalsiaps/imagenes/agenda.png') }} />
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div id="resultado" ></div>
+    </div>
+{% endblock %}

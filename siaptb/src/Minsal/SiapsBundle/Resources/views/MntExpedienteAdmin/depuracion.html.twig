@@ -1,0 +1,215 @@
+{# src/Minsal/SiapsBundle/Resources/views/MntExpedienteAdmin/list.html.twig #}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntPacienteAdmin/list.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block title %}
+Eliminación Física de Expediente
+{% endblock  %}
+{% block javascripts %}
+    {{parent()}}
+    <script src="{{ asset('bundles/minsalsiaps/js/maskedinput/jquery.maskedinput.js') }}" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#dui').mask("99999999-9");
+            $("#fecha_nacimiento").mask("99/99/9999");
+            $("#limpiar").click(function () {
+              $('#resultadoBusqueda').empty();
+              $('#buscarForm')[0].reset();
+              $("#buscar").show();
+
+              return false;
+            });
+            //PASANDO A MAYUSCULAS LOS ELEMENTOS
+            $('input.nombres, input.nombresLargos').blur(function () {
+                $(this).val(limpiar_nombres($(this).val()))
+            });
+
+            $("#buscar").click(function (e) {
+              regexp = /^[0-9]{1,}$/;
+              if ($("#nec").val() != '') {
+                var valores = $("#nec").val().split('-');
+                if (valores.length > 2) {
+                  /*PARA MOSTRAR MENSAJE DE ERROR DE FORMATO DE EXPEDIENTE
+                  * PRIMERO SE CREA O ELIMINA EL ELEMENTO
+                  * LUEGO SE CREA CON EL MENSAJE ADECUADO Y SE COLOCA
+                  * LUEGO DEL FORMULARIO PARA ABRIRSE.
+                  * */
+                  var title='Error de Formato de Expediente';
+                  var body="El formato del número de expediente no es el adecuado.";
+                  var clase='dialog-error';
+                  var arrayBtns = [{text: 'Cerrar',
+                              click: function( event, ui) {
+                              jQuery( this ).dialog( "close" );
+                              $("#nec").val('');
+                              $("#nec").focus();
+                            }}
+                          ];
+                  showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                  e.preventDefault();
+                } else {
+                  if (!regexp.test(valores[0])) {
+                    if (valores[0].charAt(0).toLowerCase() == 't') {
+                      if (!regexp.test(valores[0].substring(1, valores[0].length))) {
+                        var title='Error de escritura';
+                        var body="El Número de Expediente no puede contener letras";
+                        var clase='dialog-error';
+                        var arrayBtns = [{text: 'Cerrar',
+                                    click: function( event, ui) {
+                                    jQuery( this ).dialog( "close" );
+                                    $("#nec").val('');
+                                    $("#nec").focus();
+                                  }}
+                                ];
+                        showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                        e.preventDefault();
+                      } else {
+                        cargarResultados();
+                      }
+                    } else {
+                      /*PARA MOSTRAR MENSAJE DE ERROR DE FORMATO DE EXPEDIENTE
+                      * PRIMERO SE CREA O ELIMINA EL ELEMENTO
+                      * LUEGO SE CREA CON EL MENSAJE ADECUADO Y SE COLOCA
+                      * LUEGO DEL FORMULARIO PARA ABRIRSE.
+                      * */
+                      var title='Error de escritura';
+                      var body="El Número de Expediente no puede contener letras";
+                      var clase='dialog-error';
+                      var arrayBtns = [{text: 'Cerrar',
+                                  click: function( event, ui) {
+                                  jQuery( this ).dialog( "close" );
+                                  $("#nec").val('');
+                                  $("#nec").focus();
+                                }}
+                              ];
+                      showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                      e.preventDefault();
+                    }
+                  } else {
+                    if (valores.length > 1) {
+                      if (!regexp.test(valores[1])) {
+                        /*PARA MOSTRAR MENSAJE DE ERROR DE FORMATO DE EXPEDIENTE
+                        * PRIMERO SE CREA O ELIMINA EL ELEMENTO
+                        * LUEGO SE CREA CON EL MENSAJE ADECUADO Y SE COLOCA
+                        * LUEGO DEL FORMULARIO PARA ABRIRSE.
+                        * */
+                        var title='Error de escritura';
+                        var body="El Número de Expediente no puede contener letras";
+                        var clase='dialog-error';
+                        var arrayBtns = [{text: 'Cerrar',
+                                    click: function( event, ui) {
+                                    jQuery( this ).dialog( "close" );
+                                    $("#nec").val('');
+                                    $("#nec").focus();
+                                  }}
+                                ];
+                        showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                        e.preventDefault();
+                      } else {
+                        cargarResultados();
+                      }
+                    } else {
+                        cargarResultados();
+                    }
+                  }
+                }
+              } else {
+                if ($("#dui").val() != '') {
+                  cargarResultados();
+                } else {
+                  if ($("#fecha_nacimiento").val() != '') {
+                    cargarResultados();
+                  }
+                  else {
+                    if ($("#primer_apellido").val() == '' && $("#primer_nombre").val() == '') {
+                      //SE LE ASIGNA VALOR AL ELEMENTO
+                      var title='Campos Obligatorios';
+                      var body="Los campos:\n\
+                      <ul><li> <strong>Primer Apellido</strong> </li><li><strong>Primer Nombre</strong></li></ul>";
+                      var clase='dialog-error';
+                      var arrayBtns = [{text: 'Cerrar',
+                                  click: function( event, ui) {
+                                  jQuery( this ).dialog( "close" );
+                                    $("#primer_apellido").focus();
+                                }}
+                              ];
+                      showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                      e.preventDefault();
+                    } else {
+                     cargarResultados();
+                    }
+                  }
+                }
+              }
+              e.preventDefault();
+            });
+
+            window.cargarResultados=function(){
+                $('#resultadoBusqueda').empty();
+                $('#resultadoBusqueda').waitMe({'text':'Buscando'});
+                $('#resultadoBusqueda').load(Routing.generate('buscar_paciente',{'datos':$('#buscarForm').serialize(),'eliminar_expediente':'TRUE','tipo_busqueda':'l'}));
+            }
+        });
+    </script>
+{% endblock %}
+{% block sonata_admin_content -%}
+    <div style="text-align: center;">
+        <h2 style="text-align: left;">
+            <img style="height: 70px; width: 70px;" src={{ asset('bundles/minsalsiaps/imagenes/EliminarExpediente.png') }} />
+            Eliminación Física de Expediente
+        </h2>
+        <form id="buscarForm" method="post" >
+            <table class="table table-bordered cuadro">
+                <tbody>
+                    <tr>
+                        <td class="sonata-ba-list-field-header "><strong>NEC</strong></td>
+                        <td><input id="nec" name="nec" type="text" class="fecha form-control"  maxlength="15" /></td>
+                        <td class="sonata-ba-list-field-header "><strong>Primer Apellido:*</strong></td>
+                        <td><input id="primer_apellido" name="primer_apellido" class="nombres form-control" type="text"  maxlength="25"/></td>
+                        <td class="sonata-ba-list-field-header "><strong>Segundo Apellido:</td>
+                        <td><input id="segundo_apellido" name="segundo_apellido" class="nombres form-control" type="text"  maxlength="25"/></td>
+                    </tr>
+                    <tr>
+                        <td class="sonata-ba-list-field-header "><strong>Primer Nombre: *</strong></td>
+                        <td><input id="primer_nombre" name="primer_nombre" type="text" class="nombres form-control"  maxlength="25"/></td>
+                        <td class="sonata-ba-list-field-header "><strong>Segundo Nombre:</strong></td>
+                        <td><input id="segundo_nombre" name="segundo_nombre" type="text" class="nombres form-control"  maxlength="25"/></td>
+                        <td class="sonata-ba-list-field-header "><strong>Tercer Nombre:</strong></td>
+                        <td><input id="tercer_nombre" name="tercer_nombre" type="text" class="nombres form-control"  maxlength="25"/></td>
+                    </tr>
+                    <tr>
+                        <td class="sonata-ba-list-field-header "><strong>Fecha Nacimiento:</strong></td>
+                        <td><input id="fecha_nacimiento" name="fecha_nacimiento" type="text" class="fecha form-control bootstrap-datepicker now" /></td>
+                        <td class="sonata-ba-list-field-header"><strong>Nombre de la Madre:</strong></td>
+                        <td colspan="3"><input id="nombre_madre" name="nombre_madre" class="nombresLargos form-control" type="text" maxlength="80" /></td>
+                    </tr>
+                    <tr>
+                        <td class="sonata-ba-list-field-header "><strong>DUI: </strong></td>
+                        <td><input id="dui" name="dui" type="text" class="fecha form-control" /></td>
+                        <td class="sonata-ba-list-field-header "><strong>Conocido por:</strong></td>
+                        <td colspan="3">
+                            <input id="conocido_por" name="conocido_por" type="text"  class="nombresLargos form-control"  maxlength="20" /></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" class="no-bottom-border">
+                            <div class="pull-right">
+                                <button id="buscar" class="btn btn-primary" type="submit">
+                                    <span class="glyphicon glyphicon-search"></span>
+                                    Buscar
+                                </button>
+                                <a id="limpiar" class="btn btn-primary" href="#">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                    Limpiar
+                                </a>
+                                <input id="procedencia" name="procedencia" value="c" type="hidden"/>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
+    <div id="resultadoBusqueda" style="min-height: 150px" ></div>
+{% endblock -%}

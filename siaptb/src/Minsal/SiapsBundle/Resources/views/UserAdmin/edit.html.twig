@@ -1,0 +1,89 @@
+{% extends 'SonataAdminBundle:CRUD:edit.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+	<script type="text/javascript">
+  $(document).ready(function() {
+
+      var grupos = $('select[id$="_groups"]');
+      var lastName = $('input[id$="_lastname"]');
+      var firstName = $('input[id$="_firstname"]');
+      var username = $('input[id$="_username"]');
+      var idAreaModEstab = $('select[id$="_idAreaModEstab"]');
+
+      grupos.select2({
+          placeholder:'Seleccione...',
+          width: '50%'
+      });
+
+      initializeSelect2(idAreaModEstab, true, false, {
+          placeholder: 'Seleccionar...',
+          allowClear: true,
+          width: '50%'
+      });
+
+      $('input.limpiar').blur(function () {
+          $(this).val(limpiar_nombres($(this).val()));
+      });
+
+
+
+      $(":submit").click(function(event) {
+          if ( grupos.select2('val').length < 1 ) {
+            var title='Grupo no seleccionado';
+            var body='<p>Debe de seleccionar un rol para el usuario</p>';
+            var clase='dialog-error';
+            var arrayBtns = [{text: 'Cerrar',
+                                    click: function( event, ui) {
+                                        jQuery( this ).dialog( "close" );
+                                        grupos.select2('open');
+                                    }}
+                            ];
+            showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+            event.preventDefault();
+          }
+
+
+      });
+      username.attr('readonly','readonly');
+
+      username.focusout(function(){
+          $('input[id$="_email"]').val(username.val()+'@salud.gob.sv');
+          $('input[id$="_plainPassword_first"]').focus();
+      });
+
+      {% if action == 'create' %}
+        $('input[id$="_enabled"]').iCheck('check');
+        firstName.focusout(function(){
+            obtenerUsername();
+        });
+
+        lastName.focusout(function(){
+            obtenerUsername()
+        });
+
+        function obtenerUsername(){
+            if(lastName.val()!='' && firstName.val()!= ''){
+                $.ajax({
+                    url:  Routing.generate("obtener_username",{'nombres': firstName.val(),'apellidos':lastName.val()}),
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        username.val(data.username);
+                        username.trigger('focusout');
+                    }
+                });
+
+            }
+        }
+      {% endif %}
+  });
+
+
+  </script>
+{% endblock %}
+
+{% block form %}
+
+	{{ parent() }}
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+
+{% endblock%}
+
+{% block javascripts %}
+    {{parent()}}
+    <script type="text/javascript">
+        var select2_options={
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                containerCss: {
+                    'width': '100%'
+                }
+        };
+
+        $(document).ready(function () {
+            var idAreaModEstab = $('#idAreaModEstab');
+            var idTipoevento = $('#idTipoevento');
+            var idEmpleado = $('#idEmpleado');
+            var idProcedimiento = $('#idProcedimiento');
+            var rango_fechas = $('#rango_fechas');
+            var claseEvento = $('#claseEvento');
+
+            select2_options['placeholder']='seleccione tipo de evento...';
+            initializeSelect2(idTipoevento, true, false,select2_options);
+
+            select2_options['placeholder']='seleccione área de atención...';
+            initializeSelect2(idAreaModEstab, true, false,select2_options);
+
+            select2_options['placeholder']='seleccione médico...';
+            initializeSelect2(idEmpleado, true, true,select2_options);
+
+            select2_options['placeholder']='seleccione procedimiento...';
+            initializeSelect2(idProcedimiento, true, false,select2_options);
+
+            rango_fechas.val('');
+
+            idAreaModEstab.on('change', function () {
+                $.ajax({
+                    url: Routing.generate("obtener_procedimientos_por_area_medico"),
+                    async: false,
+                    dataType: 'json',
+                    data: {
+                        'objetoRequerido': 'procedimiento', //si cambia se consultan los procedimientos de esa área de atención
+                        'idEmpleado': $('#idEmpleado').val(),
+                        'idAreaModEstab': $('#idAreaModEstab').val()
+                    },
+                    success: function (data) {
+                        select2_options['placeholder']='seleccione procedimiento...';
+                        initializeSelect2(idProcedimiento, true, true,select2_options);
+
+                        $.each(data.resultados, function (indice, val) {
+                            idProcedimiento.append($('<option>', {value: val.id, text: val.text}));
+                        });
+                    }
+                });
+
+                if ($(this).val()) {
+                    $.ajax({
+                        url: Routing.generate("obtener_medicos_por_area", {'idAreaModEstab': $(this).val()}),
+                        async: false,
+                        dataType: 'json',
+                        success: function (data) {
+                            select2_options['placeholder']='seleccione médico...';
+                            initializeSelect2(idEmpleado, true, true,select2_options);
+
+                            $.each(data.resultados, function (indice, val) {
+                                idEmpleado.append($('<option>', {value: val.id, text: val.text}));
+                            });
+                        }
+                    });
+                } else {
+                    select2_options['placeholder']='seleccione médico...';
+                    initializeSelect2(idEmpleado, true, true,select2_options);
+                    $('#resultado').empty();
+                }
+            });
+
+            {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+                idAreaModEstab.parent().parent().hide();
+                idAreaModEstab.select2('val',{{idAreaModEstab.getId()}} );
+                idAreaModEstab.change();
+            {% endif %}
+
+            claseEvento.on('change', function () {
+
+                $('#resultado').empty();
+            });
+
+            rango_fechas.on('change',function(){
+                $('#resultado').empty();
+            });
+
+            idTipoevento.on('change', function () {
+                $('#resultado').empty();
+            });
+
+            idEmpleado.on('change', function () {
+                if ($(this).val()) {
+                    $.ajax({
+                        url: Routing.generate("obtener_procedimientos_por_area_medico"),
+                        async: false,
+                        dataType: 'json',
+                        data: {
+                            'objetoRequerido': 'procedimiento', //se obtienen los procedimientos en los que ese médico tiene distribución
+                            'idEmpleado': $('#idEmpleado').val(),
+                            'idAreaModEstab': $('#idAreaModEstab').val()
+                        },
+                        success: function (data) {
+                            select2_options['placeholder']='seleccione procedimiento...';
+                            initializeSelect2(idProcedimiento, true, true,select2_options);
+
+                            $.each(data.resultados, function (indice, val) {
+                                idProcedimiento.append($('<option>', {value: val.id, text: val.text}));
+                            });
+                        }
+                    });
+
+                    $('#resultado').empty();
+                } else {
+                    $.ajax({
+                        url: Routing.generate("obtener_procedimientos_por_area_medico"),
+                        async: false,
+                        dataType: 'json',
+                        data: {
+                            'objetoRequerido': 'procedimiento', //Se obtienen todos los procedimientos con distribución en el área de atención(opcional)
+                            'idEmpleado': $('#idEmpleado').val(),
+                            'idAreaModEstab': $('#idAreaModEstab').val()
+                        },
+                        success: function (data) {
+                            select2_options['placeholder']='seleccione procedimiento...';
+                            initializeSelect2(idProcedimiento, true, true,select2_options);
+
+                            $.each(data.resultados, function (indice, val) {
+                                idProcedimiento.append($('<option>', {value: val.id, text: val.text}));
+                            });
+                        }
+                    });
+
+                    $('#resultado').empty();
+                }
+            });
+
+            $('#mostrar').on('click', function (e){
+                $('#resultado').load(Routing.generate("cargar_eventos"), {'datos': $('#formEvento').serialize()});
+            });
+            $('#resultado').load(Routing.generate("cargar_eventos"), {'datos': $('#formEvento').serialize()});
+        });
+    </script>
+{% endblock%}
+
+{% block notice %}
+    {% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+
+{% block list_filters %}
+{% endblock %}
+
+{% block list_table -%}
+    <div class="container-fluid">
+        <div class="row">
+            <form id="formEvento" method="post" >
+                <div class="col-md-7 col-md-offset-2">
+                    <h2><img class="icono" src={{ asset('bundles/minsalsiaps/imagenes/agenda.png') }} />Eventos M&eacute;dicos y de Procedimientos</h2>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th style="width: 300px;">Eventos:</th>
+                                <td><select id="claseEvento" name="claseEvento" style="width:400px !important;">
+                                        <option value='med' selected="selected">Médicos</option>
+                                        <option value='proc'>De procedimientos</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th style="width: 300px;">Tipo de evento:</th>
+                                <td><select id="idTipoevento" name="idTipoevento" style="width:400px !important;">
+                                        {% for tipo in tipo_eventos %}
+                                            <option value="{{ tipo.id }}">{{ tipo }}</option>
+                                        {% endfor %}
+                                    </select></td>
+                            </tr>
+                            <tr>
+                                <th style="width: 300px;">&Aacute;rea de atenci&oacute;n:</th>
+                                <td><select id="idAreaModEstab" name="idAreaModEstab" style="width:400px !important;">
+                                        {% for area in areas %}
+                                            <option value="{{ area.id }}">{{ area }}</option>
+                                        {% endfor %}
+                                    </select></td>
+                            </tr>
+                            <tr>
+                                <th>Médico:</th>
+                                <td><select id="idEmpleado" name="idEmpleado" style="width:400px !important;"></select></td>
+                            </tr>
+                            <tr>
+                                <th>Procedimiento:</th>
+                                <td><select id="idProcedimiento" name="idProcedimiento" style="width:400px !important;">
+                                    {% for procedimiento in procedimientos %}
+                                        <option value="{{ procedimiento.id }}">{{ procedimiento }}</option>
+                                    {% endfor %}
+                                </select></td>
+                            </tr>
+                            <tr>
+                                <th>Rango de fechas:</th>
+                                <td><input type="text" id="rango_fechas" name="rango_fechas" class="bootstrap-daterangepicker" data-mask="99/99/9999 - 99/99/9999" placeholder='dd/mm/yyyy - dd/mm/yyyy' ></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="col-md-7 col-md-offset-2">
+                        <a id="agregar" style="width: 160px; margin-top: 5px;" class="btn btn-info" href="{{ path('admin_minsal_siaps_mntevento_create')}}"><i class="fa  fa-plus-circle"></i>&nbsp; Agregar Nuevo</a>
+                        <button type='button' id="mostrar" style="width: 160px; margin-top: 5px;" class="btn btn-info"><i class="glyphicon glyphicon-zoom-in"></i>&nbsp; Mostrar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <br/>
+        <div class="row">
+            <div id="resultado" class="col-md-9 center-block">
+            </div>
+        </div>
+    </div>
+{% endblock -%}

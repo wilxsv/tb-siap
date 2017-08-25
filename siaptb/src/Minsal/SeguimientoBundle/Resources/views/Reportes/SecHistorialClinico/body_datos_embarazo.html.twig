@@ -1,0 +1,29 @@
+<!-- Seguimiento de consulta -->
+{% if datosEmbarazo %}
+<div class="panel panel-info" id="seguimiento">
+    <div class="panel-heading"><b>Datos del Embarazo</b> {# Se imprime el nombre de la Seccion #}
+    </div>
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="{% if impresion != true %} table table-hover {% endif %} table-bordered">
+            <tbody>
+                <tr class="sonata-ba-view-container">
+                    <td ><strong>Semanas de amenorrea:</strong></td>
+                    <td >{{ datosEmbarazo.semanaAmenorrea }}</td>
+                    <td ><strong>Fecha de última mestruación:</strong></td>
+                    <td >{{ datosEmbarazo.fechaUltimaMestruacion | date('d/m/Y') }}</td>
+                </tr>
+                <tr class="sonata-ba-view-container">
+                    <td ><strong>Fecha probable de parto:</strong></td>
+                    <td >{{ datosEmbarazo.fechaProblableParto | date('d/m/Y') }}</td>
+                    <td ><strong>Establecimiento de control:</strong></td>
+                    <td >{{ datosEmbarazo.idEstablecimientoControl }}</td>
+                </tr>
+                <tr class="sonata-ba-view-container">
+                    <td ><strong>Formula Obstetrica:</strong></td>
+                    <td colspan="3">{{ datosEmbarazo.formulaObstetricaConsulta | replace({'{':'','}':''}) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

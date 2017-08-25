@@ -1,0 +1,158 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block sonata_header %}
+    {% if expediente is defined %}
+        {{ parent() }}
+    {% endif %}
+{% endblock sonata_header %}
+
+{% block actions %}
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('bundles/minsalsiaps/js/maskedinput/jquery.maskedinput.js') }}" type="text/javascript"></script>
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+    </script>
+    <script type="text/javascript">
+
+        var idInputsYearCalc = ['form_i417_s141','form_i421_s141','form_i424_s141'];
+
+        jQuery(document).ready(function($) {
+
+            $.each( idInputsYearCalc, function( index, value ){
+                addAuxYearCalc($('#'+value));
+            });
+
+            {% if cerrar is defined %}
+                {% if cerrar  %}
+                        window.close();
+                {% endif %}
+            {% endif %}
+
+            /*** No permitir que seleccione determinadas identidades sexuales segun sexo ***/
+            {% if paciente is defined %}
+                {% if paciente.getIdSexo().getAbreviatura() == 'F' %}
+                    var idenSexDisable = [1,4,6];
+                {% else %}
+                    var idenSexDisable = [2];
+
+                    $('select[id$="_i497_s154"]').on('change',function(){
+                        if( $(this).val() ){
+                            if( $(this).val() == 2 || $(this).val() == 3 ){
+                                $('select[id$="_i498_s154"] option[value=5]').prop( "disabled", true );
+                            }
+                            else{
+                                $('select[id$="_i498_s154"] option[value=5]').prop( "disabled", false );
+                            }
+                        }
+                    });
+
+                {% endif %}
+
+                for( disableId in idenSexDisable ){
+                    $('select[id$="_i498_s154"] option[value='+idenSexDisable[disableId]+']').prop( "disabled", true );
+                }
+
+            {% endif %}
+
+
+            /* Seleccion por Defecto de Pais El Salvador, y bloquear Depto al seleccionar otros paises CentroAmericanos*/
+            var doit;
+            var rowsAdded = [];
+            var prototypeCode = $('div[id="form_collectionSection142"]').attr('data-prototype');
+
+            $('div[id="form_collectionSection142"]').attr('data-prototype', prototypeCode.replace('option value="68"','option value="68" selected="selected"') );
+
+            $('div[id="form_collectionSection142"] a[class*="sonata-collection-add"]').on('click', function(){
+                    clearTimeout(doit);
+                    doit = setTimeout(function() {
+                        addRowDomEvent();
+                    }, 100);
+            });
+
+            function addRowDomEvent(){
+                $('body select[id$=_i546_s142]').each(function(){
+                    var actualRowId = $(this).attr('id');
+                    if( jQuery.inArray( actualRowId , rowsAdded ) < 0 ){
+                        $('#'+actualRowId).on('change', function(){
+                            var depto = actualRowId.slice( 0 , actualRowId.lastIndexOf("_i") ) + '_i496_s142' ;
+                            if( $(this).val() != 68 ){
+                                $('#'+depto).select2('val','');
+                                $('#'+depto).select2("readonly", true);
+                            }
+                            else{
+                                $('#'+depto).select2("readonly", false);
+                            }
+                        });
+                        rowsAdded.push(actualRowId);
+                    }
+                });
+            };
+
+            addRowDomEvent();
+
+        });//fin document ready
+
+        function lastDayOfMonth(year, month)
+        {
+            return(new Date((new Date(parseInt(year), (parseInt(month) + 1), 1)) - 1)).getDate();
+            // OR:
+            // var lastDay = new Date(parseInt(year), (parseInt(month)+1), 0);
+            // return lastDay;
+        }
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {# {{ form_start(form) }} #}
+    {% if expediente is not defined %}
+        <div class="container-fluid">
+            <div class="row">
+                <div class="pull-right">
+                    <button type="button" class="btn btn-info" onclick="window.history.back();"><i class="fa fa-fw fa-arrow-circle-left"></i> Regresar</button>
+                    <button type="button" class="btn btn-default" onclick="window.close();"><i class="fa fa-fw fa-times-circle"></i> &nbsp;Cerrar&nbsp;</button>
+                </div>
+            </div>
+        </div><br/>
+    {% endif %}
+    {% block sonata_tab_content %}
+    <div class="row">
+	   <div class="col-md-12">
+            <div class="box box-success">
+                <div class="box-header">
+                    <h3 class="box-title form-title-success">
+                        Formulario de Incripci&oacute;n/Antecedentes VICITS
+                    </h3>
+                </div>
+                <div class="box-body">
+                    {% if expediente is defined %}
+                        {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                        {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                    {% endif %}
+                    <!-- <div class="alert alert-info alert-dismissible fade in" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                        <span class="glyphicon glyphicon-info-sign" aria-hidden="true" style="color: #3B9646;"></span> <strong>Indicación:</strong> Chequear las casillas de opciones si la respuesta del paciente es afirmativa (Sí). En caso contrario, no chequear la casilla.
+                    </div> -->
+                    <br/>
+                    <div class="sonata-ba-collapsed-fields">
+                        {{ form(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {# {{ form_end(form) }}
+    {{ form_rest(form) }} #}
+{% endblock %}

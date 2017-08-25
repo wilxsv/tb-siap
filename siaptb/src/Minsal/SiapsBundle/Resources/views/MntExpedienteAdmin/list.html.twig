@@ -1,0 +1,131 @@
+{# src/Minsal/SiapsBundle/Resources/views/MntExpedienteAdmin/list.html.twig #}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+
+{% block javascripts %}
+    {{parent()}}
+    <script src="{{ asset('bundles/minsalsiaps/js/maskedinput/jquery.maskedinput.js') }}" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#fecha_inicio").datepicker().mask("99/99/9999");
+            $("#fecha_fin").datepicker().mask("99/99/9999");
+
+            $("#emitir_informe").click(function (event) {
+                if (($("#fecha_inicio").val() == '' || $("#fecha_fin").val() == '') && $('#nec').val() == '') {
+                       var title='Error de Llenado';
+                       var body="Debe de seleccionar ambas fechas o Digital el número de Expediente para generar el reporte.";
+                       var clase='dialog-error';
+                       var arrayBtns = [{text: 'Cerrar',
+                                               click: function( event, ui) {
+                                                   jQuery( this ).dialog( "close" );
+                                                   if ($("#fecha_inicio").val() == '')
+                                                       $("#fecha_inicio").focus();
+                                                   else
+                                                       $("#fecha_fin").focus();
+                                               }}
+                                       ];
+                       showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                       event.preventDefault();
+                } else if ($('#nec').val() == '') {
+                    if ($("#fecha_inicio").val() == '' || $("#fecha_fin").val() == '') {
+                      var title='Error de Llenado';
+                      var body="Debe de seleccionar ambas fechas para generar el reporte.";
+                      var clase='dialog-error';
+                      var arrayBtns = [{text: 'Cerrar',
+                                              click: function( event, ui) {
+                                                  jQuery( this ).dialog( "close" );
+                                                  if ($("#fecha_inicio").val() == '')
+                                                      $("#fecha_inicio").focus();
+                                                  else
+                                                      $("#fecha_fin").focus();
+                                              }}
+                                      ];
+                      showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                      event.preventDefault();
+                    } else if ($("#fecha_inicio").datepicker("getDate") > $("#fecha_fin").datepicker("getDate")) {
+                      var title='Error de Llenado';
+                      var body="La fecha de inicio debe de ser menor que la fecha fin.";
+                      var clase='dialog-error';
+                      var arrayBtns = [{text: 'Cerrar',
+                                              click: function( event, ui) {
+                                                  jQuery( this ).dialog( "close" );
+                                                  $("#fecha_inicio").val('');
+                                                  $("#fecha_fin").val('');
+                                                  $("#fecha_inicio").focus();
+                                              }}
+                                      ];
+                      showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+                      event.preventDefault();
+                    } else {
+                        cargarPacientes();
+                    }
+                } else {
+                    cargarPacientes();
+                }
+                event.preventDefault();
+            });
+
+            function cargarPacientes(){
+                $('#resultado').empty();
+                $('#resultado').waitMe({'text':'Buscando'});
+                $('#resultado').load(Routing.generate('expedientes_creados',{'datos':$('#expedientes_creados').serialize()}));
+            }
+
+            $field = $('#area');
+            $field.prepend('<option/>').val(function () {
+                return
+                $('[selected]', this).val();
+            })
+            $field.select2({
+                placeholder: 'Seleccione...',
+                allowClear: true,
+                width: '90%'
+            });
+            $.getJSON(Routing.generate('obtener_area_creacion_archivo'),
+                    function (data) {
+                        $.each(data.areas, function (indice, aux) {
+                            $field.append($('<option>', {value: aux.id, text: aux.area}));
+                        });
+                    });
+        });
+
+
+    </script>
+{% endblock %}
+
+{% block content -%}
+    <div style="text-align: center;">
+
+        <form  id="expedientes_creados" method="post" >
+            <table class="table table-bordered ">
+                <tbody>
+                    <tr>
+                        <td colspan="4" id="titulo_parametro" class="sonata-ba-list-field-header"><strong>Opciones de Contenido</strong></td>
+                    </tr>
+                    <tr>
+                        <td class=""><strong>Fecha Inicial</strong></td>
+                        <td><input id="fecha_inicio" name="fecha_inicio" type="text" class="fecha form-control bootstrap-datepicker now form-control" /></td>
+                        <td class=" "><strong>Fecha Final</strong></td>
+                        <td><input id="fecha_fin" name="fecha_fin" type="text" class="fecha form-control bootstrap-datepicker now form-control" /></td>
+                    </tr>
+                    <tr>
+                        <td class=""><strong>Número de Expediente</strong></td>
+                        <td><input id="nec" name="nec" type="text" class="form-control" style="width: 200px;" /></td>
+                        <td><strong>Área de Creación del Expediente</strong></td>
+                        <td><select  class="span3" id="area" name="area"></select></td>
+
+                    </tr>
+                </tbody>
+            </table>
+            <div class="well form-actions">
+                <input type="submit" class="btn btn-primary" id="emitir_informe" name="btn_generate" value="Emitir Informe"/>
+                <input type="submit" class="btn btn-info" name="btn_cancel" value="Cancelar"/>
+            </div>
+        </form>
+        <div id="resultado" style="min-height:150px;" ></div>
+    </div>
+{% endblock -%}

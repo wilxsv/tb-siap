@@ -1,0 +1,90 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+{{ parent() }}
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+
+    var select2Options = {
+        placeholder: 'Seleccionar...',
+        allowClear: true,
+        containerCss: {
+            'width': '100%'
+        }
+    };
+    var especialidad=$('#idAtenAreaModEstab');
+    $('#fecha_consulta').mask('99/99/9999').attr('style','width:100px');
+
+    initializeSelect2(especialidad, true, false, select2Options);
+
+    $('#limpiar').on('click',function(e){
+        especialidad.select2('val','');
+        $('#resultado').empty();
+    });
+
+    $('#emitir_informe').on('click',function(e){
+        if(especialidad.select2('val') != '' && $('#fecha_consulta').val()!=''){
+            $('#resultado').empty();
+            $('#resultado').append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+            $('#resultado').load(Routing.generate('consulta_recibida',{'datos':$('#buscarForm').serialize()}));
+        } else{
+            var title='Error de Llenado';
+            var body="Debe de seleccionar la fecha de consulta y la especialidad para generar el reporte.";
+            var clase='dialog-error';
+            var arrayBtns = [{text: 'Cerrar',
+                                    click: function( event, ui) {
+                                        jQuery( this ).dialog( "close" );
+                                        if(especialidad.select2('val')=='')
+                                            especialidad.focus();
+                                        else
+                                            $('#fecha_consulta').focus();
+                                    }}
+                            ];
+            showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+        }
+        e.preventDefault()
+    });
+
+});
+</script>
+{% endblock %}
+{% block notice %}
+{% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+{% block list_table -%}
+<div class="container-fluid">
+    <form  id="buscarForm" method="post" >
+
+    <div class="row">
+        <div class="col-md-7 col-md-offset-2">
+            <h2><img class="icono" src={{ asset('bundles/minsalsiaps/imagenes/calendario.png') }} />Detalle de Consultas Atendidas</h2>
+            <table class="table table-bordered">
+                    <tr>
+                        <th style="width: 300px;">Especialidad:</th>
+                        <td><select id="idAtenAreaModEstab" name="idAtenAreaModEstab" style="width:400px !important;">
+                            <!-- <option value="T">Todas las especiaidades</option> -->
+                            {% for especialidad in especialidades %}
+                            <option value="{{ especialidad.id }}">{{ especialidad.getNombreConsulta() }}</option>
+                            {% endfor %}
+                        </select></td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de Consulta:</th>
+                        <td><input id="fecha_consulta" name="fecha_consulta" type="text" class="fecha bootstrap-datepicker now form-control" /></td>
+                    </tr>
+            </table>
+            <div class="well form-actions">
+                <center>
+                <input type="submit" class="btn btn-primary" id="emitir_informe" value="Emitir Informe"/>
+                <input type="reset" class="btn btn-info" id="limpiar" value="Limpiar"/>
+                </center>
+            </div>
+        </div>
+    </div>
+</form>
+</div>
+<div id="resultado"></div>
+{% endblock %}

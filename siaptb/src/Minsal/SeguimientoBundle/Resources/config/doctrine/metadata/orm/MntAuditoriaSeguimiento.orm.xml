@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntAuditoriaSeguimiento" table="mnt_auditoria_seguimiento">
+    <indexes>
+      <index name="IDX_CD87EB89FCF8192D" columns="id_usuario"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="idTipoAccionBitacora" type="string" column="id_tipo_accion_bitacora" length="2" nullable="false"/>
+    <field name="tablaAfectada" type="text" column="tabla_afectada" nullable="true"/>
+    <field name="idRegistroAfectado" type="integer" column="id_registro_afectado" nullable="true"/>
+    <field name="camposAfectados" type="text" column="campos_afectados" nullable="true"/>
+    <field name="fechaHoraRegistro" type="datetime" column="fecha_hora_registro" nullable="false"/>
+    <many-to-one field="idUsuario" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="id_usuario" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,115 @@
+{% block javascripts %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['displayLength']=15;
+            opcionesTable['filter']=false;
+            opcionesTable['dom'] = "<'row'<'col-sm-6'l><'col-sm-6'p>>" +
+                                      "<'row'<'col-sm-12 table-toolbar'>>" +
+                                      "<'row'<'col-sm-12 table-responsive'tr>>" +
+                                      "<'row'<'col-sm-5'i><'col-sm-7'>>";
+
+            // opcionesTable['dom']='<"top"flp>rt<"bottom"i>';
+            opcionesTable['lengthMenu']= [[15,25, 50, 75, -1], [15,25, 50, 75, "Todos"]];
+            tablaResultados.DataTable(opcionesTable);
+            $('.table-toolbar').append(
+                '<div class="accordion" id="accordion2" style="background-color:white;">'+
+                    '<div class="accordion-group">'+
+                        '<div class="accordion-heading">'+
+                            '<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">'+
+                                '<div style="font-size: 15px;font-weight:bold;">Código de Colores</div>'+
+                            '</a>'+
+                        '</div>'+
+                        '<div id="collapseOne" class="accordion-body collapse in">'+
+                            '<div class="accordion-inner">'+
+                                '<div style="text-align:left;">'+
+                                    '<table>'+
+                                        '<tr><td style="background-color:#f56954;width:16px;height:36px;"></td><td style="padding-left:10px;padding-right: 10px; border-bottom: 1px solid #DDDDDD;">Expediente Temporal</td>'+
+                                        '<td style="background-color:#00c0ef;width:16px;height:36px;"></td><td style="padding-left:10px;padding-right: 10px; border-bottom: 1px solid #DDDDDD;">Expediente Sin Historial Clínico</td>'+
+                                        '<td style="background-color:#f39c12;width:16px;height:36px;"></td><td style="padding-left:10px;padding-right: 10px; border-bottom: 1px solid #DDDDDD;">Expediente Con Historial Clínico</td>'+
+                                        '<td style="background-color:#00a65a;width:16px;height:36px;"></td><td style="padding-left:10px;padding-right: 10px; border-bottom: 1px solid #DDDDDD;">Expediente Eliminado Físicamente del Archivo</td></tr>'+
+                                    '</table>'+
+                                '</div>'+
+                            '</div>'+
+                        '</div>'+
+                    '</div>'+
+                '</div>'
+            );
+
+            $('#resultadoBusqueda').waitMe('hide');
+        });
+    </script>
+{% endblock javascripts %}
+<div class="row">
+  <div class="col-md-offset-1 col-md-10">
+
+  </div>
+</div>
+<br/>
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>Acciones</th>
+            <th>NEC</th>
+            <th>Apellidos</th>
+            <th>Nombres</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Documento</th>
+            <th>Nombre Madre</th>
+            <th>Conocido por</th>
+            {% if establecimiento.getIdTipoEstablecimiento().getId() in [1,30,31,14] %}
+              <th>Fecha de Ultimo Ingreso</th>
+              <th>Servicio</th>
+              <th>Diagnóstico</th>
+            {% else %}
+              <th>Última Consulta</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% if procedencia == 'citas' %}
+            {% if origenCita == '1' %}
+                {% set url = 'admin_minsal_citas_citcitasdia_asignar' %}
+            {% elseif origenCita == '2' %}
+                {% set url = 'admin_minsal_citas_citcitasprocedimientos_list' %}
+            {% endif %}
+            {% set etiqueta = 'Seleccionar'  %}
+        {% else %}
+            {% set url = 'admin_minsal_siaps_mntpaciente_edit' %}
+            {% set etiqueta = 'Detalle'  %}
+        {% endif %}
+        {% for paciente in pacientes %}
+            <tr>
+              <td>
+                    {% if paciente['numero_temporal'] or paciente['numero'] is sameas ('EM') %}
+                        {% if paciente['expediente_fisico_eliminado'] %}
+                            <a style="color: #FFFFFF" href="{{ path (url,{'id': paciente['id'], 'procedencia': procedencia,'clasificacion':0,'idEstablecimientoReferencia': idEstablecimientoReferencia,'expedienteReferencia': expedienteReferencia})}}" class="btn btn-success"><span class="glyphicon glyphicon-folder-open"></span> {{ etiqueta }} </a>
+                        {% else %}
+                            <a style="color: #FFFFFF" href="{{ path (url,{'id': paciente['id'], 'procedencia': procedencia,'clasificacion':0,'idEstablecimientoReferencia': idEstablecimientoReferencia,'expedienteReferencia': expedienteReferencia})}}" class="btn btn-danger"><span class="glyphicon glyphicon-folder-open"></span> {{ etiqueta }} </a>
+                        {% endif %}
+                    {% elseif paciente['historias'] > 0 or paciente['ambiente'] is not null %}
+                          <a style="color: #FFFFFF" href="{{ path (url,{'id': paciente['id'], 'procedencia': procedencia,'clasificacion':1,'idEstablecimientoReferencia': idEstablecimientoReferencia,'expedienteReferencia': expedienteReferencia})}}" class="btn btn-warning"><span class="glyphicon glyphicon-folder-open"></span> {{etiqueta}} </a>
+                    {% else %}
+                            <a style="color: #FFFFFF" href="{{ path (url,{'id': paciente['id'], 'procedencia': procedencia,'clasificacion':0,'idEstablecimientoReferencia': idEstablecimientoReferencia,'expedienteReferencia': expedienteReferencia})}}" class="btn btn-info"><span class="glyphicon glyphicon-folder-open"></span> {{etiqueta}} </a>
+                    {% endif %}
+              </td>
+              <td >{{ paciente['numero'] }}</td>
+              <td>{{ paciente['primer_apellido']~' '~paciente['segundo_apellido']~' '~paciente['apellido_casada'] }}</td>
+              <td>{{ paciente['primer_nombre']~' '~paciente['segundo_nombre']~' '~paciente['tercer_nombre'] }}</td>
+              <td>{{ paciente['fecha_nacimiento']|date('d/m/Y')}}</td>
+              <td>{{ (paciente['nombre']?paciente['nombre']~':'~(paciente['numero_doc_ide_paciente']?paciente['numero_doc_ide_paciente']:'-'):'')}}</td>
+              <td>{{ paciente['nombre_madre']}}</td>
+              <td>{{ paciente['conocido_por']}}</td>
+              {% if establecimiento.getIdTipoEstablecimiento().getId() in [1,30,31,14] %}
+                  <td>{{ paciente['fecha_hora_ingreso']}}</td>
+                  <td>{{ paciente['ambiente']}}</td>
+                  <td>{{ paciente['diagnostico']}}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<input hidden="hidden" value="{{ tipo_busqueda}}" id="tipo"/>

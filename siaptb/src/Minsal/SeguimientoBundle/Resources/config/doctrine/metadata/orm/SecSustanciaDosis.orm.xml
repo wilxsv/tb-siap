@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecSustanciaDosis" table="sec_sustancia_dosis">
+    <indexes>
+      <index name="fki_sustancia_detalle_sustancia_dosis" columns="id_sustancia_detalle"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="consumoDiario" type="integer" column="consumo_diario" nullable="false"/>
+    <field name="frecuenciaSemanal" type="integer" column="frecuencia_semanal" nullable="false"/>
+    <field name="fecha" type="date" column="fecha" nullable="false"/>
+    <many-to-one field="idSustanciaDetalle" target-entity="SecSustanciaDetalle">
+      <join-columns>
+        <join-column name="id_sustancia_detalle" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <style>
+            .table-general {
+                //border: 1px solid black;
+                font-size:17px;
+                border-collapse: separate;
+                border-spacing: 10px 15px;
+            }
+            .td-enca {
+                text-align:center;
+            }
+            label{
+                font-weight: bold;
+            }
+            .div-escudo {
+                position:absolute;
+                width:80px;
+                height: 80px;
+                left:50px;
+           }
+            .div-enca {
+                position:absolute;
+                left:250px;
+                font-size: 20px;
+                font-weight: bold;
+           }
+           .div-logo {
+                position:absolute;
+                width:80px;
+                height: 80px;
+                left:820px;
+           }
+            </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    </head>
+    <body onload="subst()">
+            <table width="100%" class = "table-general">
+                 <tr>
+                     <td class ="td-enca" colspan="3">
+                        <div class="div-escudo">
+                            <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/Reporte-Escudo.png') }}" style="width: 100%"/>
+                        </div>
+                        <div class="div-enca">
+                            MINISTERIO DE SALUD <br/>
+                            SISTEMA NACIONAL DE SALUD<br/>
+                            HOJA DE REFERENCIA E INTERCONSULTA
+                        </div>
+                        <div class="div-logo">
+                            <img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/minsal_2014.png') }}" style="width: 180px; height: auto;"/>
+                        </div>
+                    </td>
+                 </tr>
+                 <tr>
+                     <td colspan="3"><br/><br/><br/><br/><hr/></td>
+                 </tr>
+            </table>
+    </body>
+</html>

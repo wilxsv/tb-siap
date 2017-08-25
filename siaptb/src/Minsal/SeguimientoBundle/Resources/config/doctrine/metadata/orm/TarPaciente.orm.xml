@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="TarPaciente" table="tar_paciente">
+    <indexes>
+      <index name="IDX_317D9829961045CB" columns="id_paciente"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="idSumeve" type="integer" column="id_sumeve" nullable="true"/>
+    <field name="idx" type="integer" column="idx" nullable="true"/>
+    <field name="fechaIdx" type="date" column="fecha_idx" nullable="true"/>
+    <many-to-one field="idPaciente" target-entity="MntPaciente">
+      <join-columns>
+        <join-column name="id_paciente" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

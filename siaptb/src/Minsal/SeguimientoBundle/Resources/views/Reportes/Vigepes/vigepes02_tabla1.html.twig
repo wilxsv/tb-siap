@@ -1,0 +1,211 @@
+<div class="table-responsive" style="overflow-x: auto; border:0px; ">
+    <table  style="font-size: 12px;border:0px;">
+        <tbody>
+            <tr>
+                <td><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/Reporte-Escudo.png') }}" style="width: 50px;"/></td>
+                <td>
+                    <center>MINISTERIO DE SALUD <br/>
+                        SISTEMA NACIONAL DE SALUD/COMISION INTERSECTORIAL DE SALUD (CISALUD)<br/>
+                        FORMULARIO PARA SOLICITUD DE EXAMEN POR ENFERMEDAD OBJETO DE VIGILANCIA SANITARIA (VIGEPES-02)<br/>
+                    </center>
+                </td>
+                <td><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/minsal_2014.png') }}" style="width: 65px;float:right;"/></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<table>
+    <tbody>
+        <tr>
+            <td> <strong>Nombre del establecimiento</strong></td>
+            <td>{{ app.user.getIdEstablecimiento()|upper }} </td>
+            <td><strong>Fecha de Consulta: </strong></td>
+            <td>{{object.fechaconsulta | date('d-m-Y')}}</td>
+        </tr>
+        <tr>
+            <td><strong>No. Expediente/No. de Afiliación:</strong></td>
+            <td style="font-size: 12px;">{{expediente.numero}}</td>
+        </tr>
+        <tr>
+            <td><strong>No. DUI o pasaporte:</strong></td>
+            <td>{% if expediente.idPaciente.idDocPaciente.id == 1%} {{expediente.idPaciente.numeroDocIdePaciente}} {%else%} - {% endif %}</td>
+        </tr>
+        <tr> 
+            <td><strong>Edad: </strong></td>
+            <td>{{edad}}</td>
+            <td ><strong>Sexo: </strong></td>
+            <td >{{expediente.idPaciente.idSexo}}</td>
+        </tr>
+        <tr style="font-size: 12px">
+            <td ><strong>Nombre:</strong></td>
+            <td colspan="3" >
+                {{expediente.idPaciente.primerApellido ~ ' '~ expediente.idPaciente.segundoApellido ~ ' '~ expediente.idPaciente.apellidoCasada}}   
+                {{expediente.idPaciente.primerNombre ~ ' '~ expediente.idPaciente.segundoNombre ~ ' '~ expediente.idPaciente.tercerNombre}}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2"><strong>Nombre de responsable si es menor de edad:</strong></td>
+            <td colspan="2">{% set var=edad|split('año')%}
+                {% if var|length == 2 %}
+                    {% if var[0] <18 %}
+                        {{expediente.idPaciente.nombreResponsable}}
+                    {% endif %}
+                {% else %}
+                    {{expediente.idPaciente.nombreResponsable}}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Dirección completa:</strong></td>
+            <td>{{expediente.idPaciente.direccion}}</td>
+            <td><strong>Departamento: </strong>{{expediente.idPaciente.idDepartamentoDomicilio}}</td>
+            <td><strong>Municipio: </strong>{{expediente.idPaciente.idMunicipioDomicilio}}</td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <strong>Embarazada:&nbsp;&nbsp;SI&nbsp;</strong> 
+                        &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                <strong>&nbsp;&nbsp;NO&nbsp;&nbsp;</strong> 
+                        &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+            </td>
+            <td colspan="2">
+                <br>
+                Semana de amenorrea:&nbsp; _______________
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                Dianóstico clínico/ Sospecha diagnóstica:____________________________________________________________________________________
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">Fecha de inicio de síntoma: ______ / ______ / ______</td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <strong>Condición:
+                        &nbsp;&nbsp;VIVO&nbsp;</strong> 
+                        &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                <strong>&nbsp;&nbsp;MUERTO&nbsp;&nbsp;</strong> 
+                        &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+            </td>
+            <td colspan="2">
+                Fecha de defunción: ______ / ______ / ______
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="font-size: 12px">
+                <strong>Nombre del médico que notifica:&nbsp;&nbsp;&nbsp;&nbsp;</strong>{{object.getIdEmpleado()}}<br>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="text-align: right">
+                <strong>Firma y Sello: _________________________________</strong>
+            </td>
+        </tr>
+
+    </tbody>
+</table> 
+
+<table style="border: 1px solid;">
+    <tbody>
+        <tr>
+            <td colspan="3"><strong>USO EXCLUSIVO DEL NIVEL LOCAL QUE COLECTA MUESTRA</strong></td>
+            <td>No. ID VIGEPES: ______________</td>
+        <tr>
+        <tr>
+            <td colspan="3"><br><strong>Nombre del establecimiento: </strong>________________________________________________ </td>
+            <td><strong>Fecha: </strong> ______ / ______ / ______</td>
+        </tr>
+        <tr>
+            <td valign="top" style="border: 1px solid !important;">
+                <strong>Tipo de vigilancia: </strong><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Brote<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Por enfermedad objeto de vigilancia<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Vigilancia cetinela Integral<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Otro
+            </td>
+            <td style="border-bottom: 1px solid !important;">
+                <strong>Tipo de muestra: </strong><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Sangre<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Suero<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Orina<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Heces<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;LCR
+            </td>
+            <td style="border-bottom: 1px solid !important;">
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Aspirado/hisopado nasofaringeo<br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Hisopado de la gargante<br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Hisopado rectal<br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Tejido<br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Otro: ______________
+            </td>
+            <td valign="top" style="border: 1px solid !important;">
+                <strong>Número de muestra: </strong><br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Primera muestra<br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Segunda muestra<br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Tercera muestra(si se justifica)<br><br>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Otro
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Motivo de analisis: </strong>&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Para estudio&nbsp;
+            </td>
+            <td>
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Para confirmacion
+            </td>
+            <td colspan="2">
+                &nbsp;&nbsp;<img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/cuadrado_impresion.jpg') }}" style="width: 12px; height: 12px;"/>
+                &nbsp;&nbsp;Por seguimiento de caso&nbsp;
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4"><br><strong>Observaciones: </strong>_____________________________________________________________________________________________________ </td>
+        </tr>
+        <tr>
+            <td colspan="2"> <strong>Número de ID  de la muestra: </strong>___________________________ </td>
+            <td colspan="2"><strong>Fecha de toma de muestra: </strong> ______ / ______ / ______</td>
+        </tr>
+        <tr>
+            <td colspan="4"><strong>Fecha de envío de muestra: </strong> ______ / ______ / ______</td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <center>
+                <strong>
+                    <br>____________________________ 
+                    <br>Firma y  sello del profesional de laboratorio
+                </strong>
+                </center>
+            </td>
+            <td colspan="2">
+                <center>
+                <br>____________________________________
+                <br><strong>Sello de laboratorio</strong>
+                </center>
+            </td>
+        </tr>
+    </tbody>
+</table>

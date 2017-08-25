@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="FarmRecetas" table="farm_recetas">
+    <indexes>
+      <index name="IDX_E9C07BE845BCCC8" columns="idarea"/>
+      <index name="IDX_E9C07BE8947B0200" columns="idfarmacia"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="idhistorialclinico" type="integer" column="idhistorialclinico" nullable="false"/>
+    <field name="fecha" type="date" column="fecha" nullable="false"/>
+    <field name="idestado" type="string" column="idestado" nullable="false"/>
+    <field name="idpersonal" type="integer" column="idpersonal" nullable="true"/>
+    <field name="numeroreceta" type="integer" column="numeroreceta" nullable="true"/>
+    <field name="idpersonalintro" type="integer" column="idpersonalintro" nullable="true"/>
+    <field name="correlativo" type="integer" column="correlativo" nullable="true"/>
+    <field name="correlativoanual" type="string" column="correlativoanual" length="100" nullable="true"/>
+    <field name="idpersonaldespacho" type="integer" column="idpersonaldespacho" nullable="true"/>
+    <field name="idestablecimiento" type="integer" column="idestablecimiento" nullable="true"/>
+    <field name="idmodalidad" type="integer" column="idmodalidad" nullable="true"/>
+    <many-to-one field="idfarmacia" target-entity="MntFarmacia">
+      <join-columns>
+        <join-column name="idfarmacia" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

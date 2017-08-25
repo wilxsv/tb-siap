@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabExamenTipoLab" table="lab_examen_tipo_lab">
+    <indexes>
+      <index name="IDX_1D62E109271DEBD7" columns="id_conf_examen_estab"/>
+      <index name="IDX_1D62E1094B9316FF" columns="id_tipo_laboratorio"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <many-to-one field="idTipoLaboratorio" target-entity="CtlTipoLaboratorio">
+      <join-columns>
+        <join-column name="id_tipo_laboratorio" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idConfExamenEstab" target-entity="LabConfExamenEstab">
+      <join-columns>
+        <join-column name="id_conf_examen_estab" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

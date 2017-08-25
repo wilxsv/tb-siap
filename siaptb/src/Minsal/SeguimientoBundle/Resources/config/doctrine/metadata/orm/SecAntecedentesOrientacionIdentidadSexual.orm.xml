@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecAntecedentesOrientacionIdentidadSexual" table="sec_antecedentes_orientacion_identidad_sexual">
+    <indexes>
+      <index name="IDX_290682CA1CCD41FE" columns="id_antecedentes"/>
+      <index name="IDX_290682CAD9E84C3C" columns="id_identidad_sexual"/>
+      <index name="IDX_290682CA31AFB3AD" columns="id_orientacion_sexual"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <many-to-one field="idOrientacionSexual" target-entity="CtlOrientacionSexual">
+      <join-columns>
+        <join-column name="id_orientacion_sexual" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="identidadSexual" target-entity="CtlIdentidadGenero">
+      <join-columns>
+        <join-column name="id_identidad_sexual" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idAntecedentes" target-entity="SecAntecedentes">
+      <join-columns>
+        <join-column name="id_antecedentes" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

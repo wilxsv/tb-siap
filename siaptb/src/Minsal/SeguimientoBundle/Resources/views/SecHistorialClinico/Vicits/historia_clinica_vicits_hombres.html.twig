@@ -1,0 +1,107 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+
+        {{ itemsActionJs|raw }}
+
+    </script>
+    <script type="text/javascript">
+
+        jQuery(document).ready(function($) {
+
+            var tipoDiag1 = $('select[id^="form_i375_s"]');
+            var tipoDiag2 = $('select[id^="form_i379_s"]');
+            var tipoDiag3 = $('select[id^="form_i383_s"]');
+
+            var diag1 = $('input[id^="form_i376_s"]');
+            var diag2 = $('input[id^="form_i380_s"]');
+            var diag3 = $('input[id^="form_i384_s"]');
+
+            var espec1 = $('textarea[id^="form_i377_s"]');
+
+            tipoDiag1.select2("val", 1);
+            tipoDiag2.select2("val", 2);
+            tipoDiag3.select2("val", 3);
+
+            tipoDiag1.select2("readonly", true);
+            tipoDiag2.select2("readonly", true);
+            tipoDiag3.select2("readonly", true);
+
+            var labelDiag1  = $('label[for^="form_i376_s"]');
+            //var labelDiag1e = $('label[for^="form_i377_s"]');
+            labelDiag1.append('*');
+
+            initDiagnosticoSearch(diag1,'Seleccione el Diagnostico Principal...');
+            initDiagnosticoSearch(diag2,'Seleccione el Diagnostico Secundario...');
+            initDiagnosticoSearch(diag3,'Seleccione la Causa Externa...');
+
+            $('form').on('submit', function(e){
+                if( ! diag1.select2('val') ){
+                    showDialogMsg('Establecer Diagnostico Principal','<span class="glyphicon glyphicon-remove"></span> Debe establecer el Diagnostico Principal para continuar.','dialog-error');
+                    e.preventDefault();
+                    diag1.focus();
+                }
+                /*En VICITS solicitaron que no fuera obligatorio
+                else if ( espec1.val() == ''){
+                    showDialogMsg('Brinde una Observación','Debe agregar alguna especificación u observación sobre el Diagnostico Principal.','dialog-error');
+                    e.preventDefault();
+                    espec1.focus();
+                }*/
+            });
+
+        });//fin document ready
+
+        function repoFormatSelection(repo) {
+            console.log(repo);
+            /*if(repo.text.length > 0)
+                return repo.data1[0].text;
+            else*/
+                return repo.data1[0].text;
+        }
+
+
+
+        //Calcula indice de masa corporal
+
+
+
+    </script>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block form %}
+    {# {{ form_start(form) }} #}
+
+    {% block sonata_tab_content %}
+    <div class="row">
+	   <div class="col-md-12">
+            <div class="box box-success">
+                <div class="box-header">
+                    <h3 class="box-title form-title-success">
+                        Formulario de Historia Cl&iacute;nica VICITS
+                    </h3>
+                </div>
+                <div class="box-body">
+                    {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                    {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                    <!--<div class="alert alert-info alert-dismissible fade in" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                        <span class="glyphicon glyphicon-info-sign" aria-hidden="true" style="color: #3B9646;"></span> <strong>Indicación:</strong> Chequear las casillas de opciones si la respuesta del paciente es afirmativa (Sí). En caso contrario, no chequear la casilla.
+                    </div>-->
+                    <div class="sonata-ba-collapsed-fields">
+                        {{ form(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {# {{ form_end(form) }}
+    {{ form_rest(form) }} #}
+{% endblock %}

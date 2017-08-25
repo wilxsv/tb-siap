@@ -1,0 +1,173 @@
+{% block javascripts %}
+    {% if cuposDisponibles | length > 0 %}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            var tablaResultados=$('#tablaResultados');
+            var opcionesTable=setDataTableOptions(tablaResultados);
+            opcionesTable['bSort']=false;
+            opcionesTable['iDisplayLength']=15;
+            opcionesTable['bFilter']=false;
+            opcionesTable['sDom']='<"top">rt<"bottom">';
+            opcionesTable['aLengthMenu']= [[15,20], [15,20]];
+            tablaResultados.DataTable(opcionesTable);
+
+            window.darCita=function(idDistribucion){
+                var elemento='#cita_submit_'+idDistribucion;
+                var comprobante='#comprobante_'+idDistribucion;
+                var botones='#botones_'+idDistribucion;
+                var valorJustificacion=0;
+                var valorEstado=1;
+                var justificacion='#justificacion_'+idDistribucion;
+                if($(elemento).attr('justificacion')=='1'){
+                    valorJustificacion=$(justificacion).select2('val');
+                    valorEstado=6;
+                }
+
+                if($(justificacion).length==0 || valorJustificacion!=''){
+                    $('#cargar').waitMe({'text':'Procesando'});
+                    $.ajax({
+                        url: Routing.generate("dar_cita_medica", {'idEmpleado':{{ idEmpleado }},
+                        'idExpediente'  : {{ idExpediente }},
+                        'idEspecialidad'  : {{ idEspecialidad }},
+                        'fecha'  : $(elemento).attr('fecha'),
+                        'idRangoHora'  : $(elemento).attr('id_rangohora'),
+                        'idDistribucion'  : $(elemento).attr('id_distribucion'),
+                        'idEstadoCita'  : valorEstado,
+                        'idTipoCita' : {{ idTipoCita }},
+                        'idJustificacion': valorJustificacion,
+                        'idEstablecimientoReferencia': '{{idEstablecimientoReferencia}}',
+                        'numeroExpedienteReferencia': '{{numeroExpedienteReferencia}}'
+                    }),
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        $('button[id^="cita_submit_"]').each(function(){
+                            $(this).hide();
+                        });
+                        $('#cargar').waitMe('hide');
+                        if(data.estado == true){
+                            $(botones).append("<a href='{{ url('citasgetcomprobante')}}?id="+data.idCita+"' target='_blank' class='btn btn-primary'>\
+                            <span class='glyphicon glyphicon-print mouse-pointer'></span>Imprimir Comprobante</a>");
+                            $('#cancelar').hide();
+                            $('#otroExpediente').show();
+                            $('#mensajes').empty();
+                            $('#mensajes').append('<div class="alert alert-success" role="alert">La cita fue insertada satisfactoriamente</div>')
+                        }else{
+                            $(botones).append("<h2 style='color: red;'><strong>"+"<br\>Error</strong></h2>");
+                            $('#mensajes').empty();
+                            $('#mensajes').append('<div class="alert alert-danger" role="alert">La cita no pudo se insertada ya que se acaba de llenar el cupo.<br/>\
+                            Favor Buscar un nuevo cupo para este paciente</div>')
+                        }
+
+                    }
+                });
+            }else{
+                var title='Error de llenado';
+                var body="No puede dar esta cita ya que debe de seleccionar una justificación de porque esta agregando la cita";
+                var width='500px'
+                var clase='dialog-error';
+                var arrayBtns = [];
+                showDialogMsg(title, body, clase, 'Aceptar', arrayBtns, false, width, true);
+            }
+
+        }
+
+        });
+    </script>
+    {% endif %}
+{% endblock javascripts %}
+<div class="bs-callout bs-callout-info">
+    <div class="row">
+        <div class="col-sm-5">
+            <p style="font-size:16px"><strong>No. Expediente: </strong> {{expedienteObject.getNumero() }} </p>
+        </div>
+        <div class="col-sm-7">
+            <p style="font-size:16px"><strong>Nombre Paciente: </strong> {{expedienteObject.getIdPaciente() }} </p>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col-sm-5">
+            <p style="font-size:16px"><strong>Médico: </strong> {{ nombreMedico }} </p>
+        </div>
+        <div class="col-sm-5">
+            <p style="font-size:16px"><strong>Especialidad: </strong> {{ nombreEspecialidad}} </p>
+        </div>
+    </div>
+    {% if otrasCitasMismoDia| length > 0 %}
+    <br/>
+    <div class="row">
+        <div class="col-sm-10">
+            <p style="font-size:16px">Este paciente ya tiene citas para este día en las siguientes especialidades:</p>
+            <ul>
+                {% for cita in otrasCitasMismoDia %}
+                   <li>{{ cita['especialidad'] }} con {{ cita['medico'] }} a las {{ cita['rango_hora'] }}</li>
+                {% endfor %}
+            </ul>
+
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% if cuposDisponibles | length > 0 %}
+<div id='mensajes'></div>
+    <h3>Se encontro cupo en la fecha: <strong>{{ cuposDisponibles[0]['fechaObjeto'] | localizeddate('full', 'none', 'es_SV')| title }}</strong></h3>
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true">
+    <thead>
+        <tr>
+            <th>Horario</th>
+            <th>Consultorio</th>
+            <th>Cantidad Cupos Disponibles</th>
+            <th>Justificación</th>
+            <th width="60px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cupos in cuposDisponibles %}
+        {% set idDistribucion=cupos['idDistribucion'] %}
+            <tr>
+            <td>{{ cupos['rangoHora'] }}
+                    {% if cupos['distribucionMedica']['nombreTipoDistribucion'] %}
+                     <strong> {{ 'Horario para '~ cupos['distribucionMedica']['nombreTipoDistribucion']}} </strong>
+                    {% endif %}
+                </td>
+            <td>{{ cupos['distribucionMedica']['nombreConsultorio']}}</td>
+            <td>Cupos Disponibles: {{ cupos['disponible']}} <br/>
+                {% if  cupos['disponibleAg'] > 0  %}
+                    Agregados Disponibles: {{ cupos['disponibleAg']}}
+                {% endif %}
+            </td>
+            <td>
+                {% if cupos['disponible']==0 and cupos['disponibleAg']>0 %}
+                {% set justificacion=true %}
+                   <select id='justificacion_{{ idDistribucion }}' name='justificacion_{{ idDistribucion }}'>
+                    {% for justi in justificacionAgregados %}
+                        <option value='{{ justi.id}}'>{{ justi.nombre}}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                {% set justificacion=false %}
+                    -
+                {% endif %}
+            </td>
+            <td>
+                <div id="botones_{{ idDistribucion }}" >
+                    <button id='cita_submit_{{ idDistribucion}}' onclick="darCita({{ idDistribucion }})" class="btn btn-primary"
+                    id_distribucion='{{ idDistribucion}}' id_rangohora='{{ cupos['idRangoHora']}}' fecha='{{ cupos['fecha'] }}'  justificacion='{{ justificacion }}'>
+                    <span class="label"><span class="glyphicon glyphicon-plus-sign"></span> Dar Cita</span></button>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-danger" role="alert">
+    <p>No se encontro cupo por alguna de las siguientes razones:</p>
+    <ul>
+        <li>El Médico <strong> {{ nombreMedico }}</strong> ya no tiene cupos disponible en las distribuciones creadas para la Especialidad: <strong>{{ nombreEspecialidad}}</strong></li>
+        <li>Ninguna distribución ha sido creada para el Médico <strong>{{ nombreMedico}}</strong></li>
+        <li>No se encontró ningun cupo disponible para los dias intermedios entre citas configurados</li>
+    </ul>
+</div>
+{% endif %}

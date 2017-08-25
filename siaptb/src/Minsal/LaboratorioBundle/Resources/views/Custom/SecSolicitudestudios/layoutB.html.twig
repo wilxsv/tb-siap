@@ -1,0 +1,53 @@
+<table class="table">
+    <thead>
+        <tr>
+            <th colspan="2"></th>
+            <th colspan=>Resultado</th>
+            <th colspan=>Unidades</th>
+            <th>Rangos de Referencia</th>
+            <th>Control Normal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for elemento in examen.elementos %}
+            <tr>
+                {% if examen.codigo is sameas('H50') %}
+                    <td colspan="2" class="pb-element">{{ elemento.nombre }}</td>
+                    <td>
+                        {% if elemento.id_posible_resultado is not null or elemento.id_posible_resultado != '' %}
+                            {{ elemento.nombre_posible_resultado }}
+                        {% else %}
+                            {{ elemento.resultado }}
+                        {% endif %}
+                    </td>
+                    <td>{{ elemento.unidad }}</td>
+                    <td>-</td>
+                    <td>{{ elemento.control_normal ~ ' ' ~ elemento.unidad }}</td>
+                {% else %}
+                    <td colspan="6" class="pb-element">{{ elemento.nombre }}</td>
+                {% endif %}
+            </tr>
+            {% for subelemento in elemento.subelementos %}
+                <tr>
+                    <td></td>
+                    <td class="pb-subelement">{{ subelemento.nombre }}</td>
+                    <td>
+                        {% if subelemento.id_posible_resultado is not null or subelemento.id_posible_resultado != '' %}
+                            {{ subelemento.nombre_posible_resultado }}
+                        {% else %}
+                            {{ subelemento.resultado }}
+                        {% endif %}
+                    </td>
+                    <td>{{ subelemento.unidad }}</td>
+                    {% if examen.codigo is sameas('H50') %}
+                        <td>-</td>
+                        <td>{{ subelemento.control_normal ~ ' ' ~ elemento.unidad }}</td>
+                    {% else %}
+                        <td>{{ subelemento.rango_inicio ~ ' - ' ~ subelemento.rango_fin }}</td>
+                        <td>-</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>

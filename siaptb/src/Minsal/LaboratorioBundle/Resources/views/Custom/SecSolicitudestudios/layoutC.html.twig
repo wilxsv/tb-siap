@@ -1,0 +1,65 @@
+<div class="row" style="font-size: 17px;padding-top: 20px;padding-bottom: 20px;">
+    <div class="col-md-12 col-sm-12">
+        Resultado: <strong>{% if examen.resultadoFinal.id_posible_resultado is not null or examen.resultadoFinal.id_posible_resultado != '' %}
+            {{ examen.resultadoFinal.nombre_posible_resultado }}
+        {% else %}
+            {{ examen.resultadoFinal.resultado }}
+        {% endif %}</strong>
+    </div>
+    {% if examen.resultadoFinal.id_observacion is not sameas(null) %}
+        <div class="col-md-12 col-sm-12">
+            Observacion: <strong>{{ examen.resultadoFinal.nombre_observacion }}</strong>
+        </div>
+    {% endif %}
+</div>
+
+{% if examen.bacterias|length > 0 %}
+    <table class="table">
+        <tbody>
+            {% for bacteria in examen.bacterias %}
+                <tr>
+                    <td colspan="4">
+                        <div class="row">
+                            <div class="col-md-12 col-sm-12">
+                                <table class="heading-bact-pc">
+                                    <tbody>
+                                        <tr>
+                                            <td>Organismo:</td>
+                                            <td style="padding-left:15px;"><strong>{{ bacteria.nombre }}</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Cultivo con cuenta de Colonias:</td>
+                                            <td style="padding-left:15px;"><strong>{{ bacteria.cantidad }}</strong></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr style="font-weight: bold;">
+                    <td></td>
+                    <td>Antibiotico</td>
+                    <td>Lectura</td>
+                    <td>Interpretacion</td>
+                </tr>
+                {% for tarjeta in bacteria.tarjetas %}
+                    {% for antibiotico in tarjeta.antibioticos %}
+                        <tr>
+                            <td></td>
+                            <td>{{ antibiotico.nombre }}</td>
+                            <td>{{ antibiotico.lectura }}</td>
+                            <td>
+                                {% if antibiotico.id_posible_resultado is not null or antibiotico.id_posible_resultado != '' %}
+                                    {{ antibiotico.nombre_posible_resultado }}
+                                {% else %}
+                                    {{ antibiotico.resultado }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}

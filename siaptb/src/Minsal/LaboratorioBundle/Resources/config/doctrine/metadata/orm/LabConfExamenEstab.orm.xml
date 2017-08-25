@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="LabConfExamenEstab" table="lab_conf_examen_estab">
+    <indexes>
+      <index name="IDX_3DE90D9412C7E9A0" columns="idestandarrep"/>
+      <index name="IDX_3DE90D948865BA6" columns="idplantilla"/>
+      <index name="IDX_3DE90D9413B895A1" columns="idusuarioreg"/>
+      <index name="IDX_3DE90D946724C8DC" columns="idusuariomod"/>
+      <index name="IDX_3DE90D9435F12240" columns="idexamen"/>
+      <index name="IDX_3DE90D94FFF6A732" columns="idsexo"/>
+      <index name="IDX_3DE90D94CFE47287" columns="idformulario"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="condicion" type="string" column="condicion" nullable="false"/>
+    <field name="urgente" type="integer" column="urgente" nullable="true"/>
+    <field name="impresion" type="string" column="impresion" nullable="true"/>
+    <field name="ubicacion" type="smallint" column="ubicacion" nullable="true"/>
+    <field name="codigosumi" type="string" column="codigosumi" length="8" nullable="true"/>
+    <field name="fechahorareg" type="datetime" column="fechahorareg" nullable="true"/>
+    <field name="fechahoramod" type="datetime" column="fechahoramod" nullable="true"/>
+    <field name="nombreExamen" type="string" column="nombre_examen" length="250" nullable="true"/>
+    <field name="codigoExamen" type="string" column="codigo_examen" length="10" nullable="true"/>
+    <many-to-one field="idsexo" target-entity="CtlSexo">
+      <join-columns>
+        <join-column name="idsexo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idformulario" target-entity="MntFormulariosxestablecimiento">
+      <join-columns>
+        <join-column name="idformulario" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idexamen" target-entity="MntAreaExamenEstablecimiento">
+      <join-columns>
+        <join-column name="idexamen" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuariomod" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuariomod" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idplantilla" target-entity="LabPlantilla">
+      <join-columns>
+        <join-column name="idplantilla" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idusuarioreg" target-entity="FosUserUser">
+      <join-columns>
+        <join-column name="idusuarioreg" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idestandarrep" target-entity="CtlExamenServicioDiagnostico">
+      <join-columns>
+        <join-column name="idestandarrep" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

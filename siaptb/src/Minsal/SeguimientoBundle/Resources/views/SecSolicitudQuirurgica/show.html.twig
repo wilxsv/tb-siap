@@ -1,0 +1,72 @@
+{% extends base_template %}
+
+{% block actions %}
+    <li>{% include 'SonataAdminBundle:Button:edit_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:history_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:list_button.html.twig' %}</li>
+    <li>{% include 'SonataAdminBundle:Button:create_button.html.twig' %}</li>
+{% endblock %}
+
+{% block tab_menu %}{{ knp_menu_render(admin.sidemenu(action), {'currentClass' : 'active'}, 'list') }}{% endblock %}
+
+{% block show %}
+    <div class="sonata-ba-view">
+
+        {{ sonata_block_render_event('sonata.admin.show.top', { 'admin': admin, 'object': object }) }}
+
+        {% for name, view_group in admin.showgroups %}
+            <table class="table table-bordered">
+                {% if name %}
+                    <thead>
+                        <tr class="sonata-ba-view-title">
+                            <th colspan="2">
+                                {{ admin.trans(name) }}
+                            </th>
+                        </tr>
+                    </thead>
+                {% endif %}
+
+                <tbody>
+                    {% for field_name in view_group.fields %}
+                        <tr class="sonata-ba-view-container">
+                            {% if elements[field_name] is defined %}
+                                {{ elements[field_name]|render_view_element(object) }}
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+
+        {{ sonata_block_render_event('sonata.admin.show.bottom', { 'admin': admin, 'object': object }) }}
+
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr class="sonata-ba-view-title">
+                    <th colspan="5">
+                        Historial de Aptitud del Paciente
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Evaluado Por</th>
+                    <th>Especialidad</th>
+                    <th>Fecha de Evaluación</th>
+                    <th>Aptitud del Paciente</th>
+                    <th>Consulta</th>
+                <tr/>
+                {% for corr, apt in aptitudes  %}
+                    <tr class="{{ apt.getIdAptitudQuirurgica().getId() == 1 ? 'success' : apt.getIdAptitudQuirurgica().getId() == 2 ? 'danger' : apt.getIdAptitudQuirurgica().getId() == 3 ? 'warning' : 'active' }}">
+                        <td>{{ apt.getIdEmpleado() }}</td>
+                        <td>{{ apt.getIdHistorialClinico() ? apt.getIdHistorialClinico().getIdAtenAreaModEstab() : '--' }}</td>
+                        <td>{{ apt.getFechaHoraRegistro()|date('d-m-Y') }}</td>
+                        <td>{{ apt.getIdAptitudQuirurgica() }}</td>
+                        <td><a onClick="openPostPopUpWindows( { action: '{{ url('admin_minsal_seguimiento_sechistorialclinico_show', {'id' : apt.getIdHistorialClinico().getId() } ) }}?external=true', method: 'post', target: 'Ver Historia Clínica'})" target="_blank" class="btn btn-primary"><span class="fa fa-search-plus"></span> Ver Consulta de Evaluación</a></td>
+                    <tr/>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

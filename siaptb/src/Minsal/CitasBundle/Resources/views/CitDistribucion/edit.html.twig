@@ -1,0 +1,204 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        jQuery(document).ready(function ($) {
+            $("select[name*='rango']").select2({
+            width: '100%',
+                    allowClear:true,
+            });
+
+            $('body').on('click','#actualizar_distribucion', function(e) {
+                $(this).parent().parent().waitMe({ text: 'Procesando...' });
+
+                var existe_distribucion = verificar_horario();
+
+                if(!existe_distribucion) {
+                    $('form#distribucion').submit();
+                }
+                e.preventDefault();
+                $(this).parent().parent().waitMe('hide');
+            });
+
+            function verificar_horario(e) {
+                var idHorarios     = [];
+                var horarios       = [];
+                var dias           = [];
+                var ok             = false;
+                var idDistribucion = [];
+                var diaSemana      = [];
+                var nombreDia      = [];
+                var tipo_conflicto = [];
+                var todosLosMeses;
+                var nombreAtributo;
+                var nombreElemento;
+
+                $( "select[name*='rangoHora']" ).each(function(i) {
+                    nombreAtributo=$(this).attr('name').split('[');
+                    nombreAtributo=nombreAtributo[1].split(']');
+                    nombreAtributo=nombreAtributo[0];
+                    idDistribucion[i]=nombreAtributo;
+                    idHorarios[i] = $(this).select2('val');
+                    horarios[i] = $(this).select2('data').text;
+                    nombreElemento="input[name='diaSemana["+nombreAtributo+"]']";
+                    diaSemana         = $(nombreElemento).val().split('-');
+                    dias[i]           = diaSemana[0];
+                    nombreDia[i]      = diaSemana[1];
+                });
+
+                var todosLosMeses=$('#aplicar').prop('checked');
+
+                $.each( horarios, function( key, value ) {
+                    $.ajax({
+                        url:  Routing.generate("verificar_horario_distribucion"),
+                        async: false,
+                        dataType: 'json',
+                        data: {
+                            'idEmpleado': $('#idEmpleado').val(),
+                            'mes': $('#mes').val(),
+                            'idAtenAreaModEstab': $('#idAtenAreaModEstab').val(),
+                            'yrs': $('#yrs').val(),
+                            'horario': idHorarios[key],
+                            'textoHorario': horarios[key],
+                            'dia': dias[key],
+                            'idDistribucion': idDistribucion[key],
+                            'todosLosMeses': todosLosMeses
+                        },
+                        success: function(data) {
+                            if (data != 'false'){
+                                ok = true;
+                                tipo_conflicto=data.split('|');
+                                if(tipo_conflicto[0] == 'distribucion')
+                                    var msg = "Ya existe una distribución para este médico el día <b>"+nombreDia[key]+"</b> en el mes de <b>"+tipo_conflicto[1]+"</b> en el horario de <b>"+horarios[key]+"</b> en la especialidad <b>"+tipo_conflicto[2];
+                                else if (tipo_conflicto[0] == 'distribucion_traslape')
+                                    var msg = "Ya existe una distribución para este médico el día <b>"+nombreDia[key]+"</b> en el mes de <b>"+tipo_conflicto[1]+"</b> que se traslapa con el horario de <b>"+horarios[key]+"</b> en la especialidad <b>"+tipo_conflicto[2];
+                                if(tipo_conflicto[0] == 'procedimiento')
+                                    var msg = "Ya existe una distribución para este médico el día <b>"+nombreDia[key]+"</b> en el mes de <b>"+tipo_conflicto[1]+"</b> en el horario de <b>"+horarios[key]+"</b> en el procedimiento <b>"+tipo_conflicto[2];
+                                else if (tipo_conflicto[0] == 'procedimiento_traslape')
+                                    var msg = "Ya existe una distribución para este médico el día <b>"+nombreDia[key]+"</b> en el mes de <b>"+tipo_conflicto[1]+"</b> que se traslapa con el horario de <b>"+horarios[key]+"</b> en el procedimiento <b>"+tipo_conflicto[2];
+
+                                var title = 'Horario existente';
+                                var dialogClass = 'dialog-error';
+                                var width = 500;
+                                var modal = true;
+                                var closeBtnName = 'Aceptar';
+
+                                showDialogMsg(title, msg, dialogClass, closeBtnName, null, null, width, modal);
+                            }else{
+                                ok=false;
+                            }
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                            showDialogMsg('ErroR','Se ha Producido<br/>Es posible que existan problemas de conexión con la BD.Comuniquese con el administrador lo antes posibles.','dialog-error');
+                            ok= true;
+                        }
+                    });
+                    if(ok == true){
+                        return false;
+                    }
+                });
+                return ok;
+            }
+        });
+    </script>
+{% endblock %}
+{% block notice %}
+{% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+{% block form %}
+    <form id='distribucion' method='post' action='{{url('admin_minsal_citas_citdistribucion_edit')}}'>
+        <input id='idAreaModEstab' name='idAreaModEstab' value='{{especialidad.getIdAreaModEstab().getId()}}' type='hidden'/>
+        <input id='idAtenAreaModEstab' name='idAtenAreaModEstab' value='{{especialidad.getId()}}' type='hidden'/>
+        <input id='idEmpleado' name='idEmpleado' value='{{medico.getId()}}' type='hidden'/>
+        <input id='yrs' name='yrs' value='{{anio}}' type='hidden'/>
+        <input id='mes' name='mes' value='{{mes}}' type='hidden'/>
+        <table id="tablaResultados" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <td colspan='12'><h3><strong><center>{{medico.getNombreempleado()}}<br/>{{especialidad.getIdAtencion()}}<br/>{{mesAnio}}</center></strong></h3></td>
+                </tr>
+            </thead>
+            <tbody>
+                {% set dia=''%}
+                {%for distribucion in distribuciones%}
+                    {% if dia is not sameas (distribucion.getDia())%}
+                        {% set dia=distribucion.getDia()%}
+                        <tr>
+                            <td colspan='12'>
+                                <h4><strong>{{distribucion.getDiaSemana()}}</strong></h4>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td><strong>Horario</strong></td>
+                        <td>
+                            <input id='diaSemana[{{distribucion.getId()}}]']' name='diaSemana[{{distribucion.getId()}}]']' value='{{dia}}-{{distribucion.getDiaSemana()}}' type='hidden'/>
+                            <select name='rangoHora[{{distribucion.getId()}}]'>
+                                {% for rango in rangos %}
+                                    <option value='{{rango.getId()}}'>{{rango}}</option>
+                                {% endfor %}
+                            </select>
+                            <script type="text/javascript">
+                                jQuery(document).ready(function ($) {
+                                    $("select[name*='rangoHora[{{distribucion.getId()}}]']").select2('val',{{distribucion.getIdRangohora().getId()}} );
+                                });
+                            </script>
+                        </td>
+                        <td><strong>Tipo de Distribución</strong></td>
+                        <td>
+                            <select id="tipoDistribucion_{{distribucion.getId()}}" name="tipoDistribucion[{{distribucion.getId()}}]">
+                                {% for tipo in tiposDistribuciones %}
+                                    <option value='{{tipo.getId()}}'>{{tipo.getNombre()}}</option>
+                                {% endfor %}
+                            </select>
+                            <script type="text/javascript">
+                                jQuery(document).ready(function ($) {
+                                    initializeSelect2($("#tipoDistribucion_{{distribucion.getId()}}"),true,false,{
+                                        placeholder: 'Seleccionar...',
+                                        allowClear: true,
+                                        width: '100%'
+                                    });
+                                    {% if  distribucion.getIdTipoDistribucion() %}
+                                        $("#tipoDistribucion_{{distribucion.getId()}}").select2('val',{{ distribucion.getIdTipoDistribucion().getId()}});
+                                    {% endif %}
+
+                                });
+                            </script>
+                        </td>
+                        <td><strong>Consultorio</strong></td>
+                        <td><select name='consultorio[{{distribucion.getId()}}]' id='consultorio_{{distribucion.getId()}}'>
+                                {% for consultorio in consultorios %}
+                                    <option value='{{consultorio.getId()}}'>{{consultorio.getNombre()}}</option>
+                                {% endfor %}
+                            </select>
+                            <script type="text/javascript">
+                                jQuery(document).ready(function ($) {
+                                    initializeSelect2($("#consultorio_{{distribucion.getId()}}"),true,false,{
+                                        placeholder: 'Seleccionar...',
+                                        allowClear: true,
+                                        width: '100%'
+                                    });
+                                    $("#consultorio_{{distribucion.getId()}}").select2('val',{{distribucion.getIdConsultorio().getId()}} );
+                                });
+                            </script>
+                        </td>
+                        <td><strong>Primera Vez</strong></td>
+                        <td><input type='text' value='{{distribucion.getPrimera()}}' name='primera[{{distribucion.getId()}}]' style='width: 50px'/></td>
+                        <td><strong>Subsecuente</strong></td>
+                        <td><input type='text' value='{{distribucion.getSubsecuente()}}' name='subsecuente[{{distribucion.getId()}}]' style='width: 50px'/></td>
+                        <td><strong>Máxima Agregadas</strong></td>
+                        <td><input type='text' value='{{distribucion.getMaxCitasAgregadas()}}' name='agregadas[{{distribucion.getId()}}]' style='width: 50px'/></td>
+                    </tr>
+                {%endfor%}
+            </tbody>
+        </table>
+        <div class="well well-small form-actions">
+            <a class="btn btn-primary" href="{{ url('admin_minsal_citas_citdistribucion_list')}}"><i class="fa fa-list"></i> {{ 'link_list'|trans({}, 'SonataAdminBundle') }}</a>
+            <button id="actualizar_distribucion" class="btn btn-success" name="actualizar_distribucion" type="button"><i class="fa fa-save"></i> Actualizar Distribución</button>
+            <input type='checkbox' name='aplicar' id='aplicar'> <strong>Aplicar a los meses siguientes del año {{anio}}</strong></input>
+        </div>
+    </form>
+{% endblock-%}

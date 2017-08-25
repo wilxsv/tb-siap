@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntSnomedCie10" table="mnt_snomed_cie10">
+    <indexes>
+      <index name="idx_sct_name_es" columns="sct_name_es"/>
+      <index name="IDX_5E7C27F91E833DEC" columns="id_cie10"/>
+    </indexes>
+    <unique-constraints>
+      <unique-constraint name="idx_codigo" columns="codigo"/>
+    </unique-constraints>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="codigo" type="string" column="codigo" nullable="true"/>
+    <field name="effectiveTime" type="decimal" column="effective_time" precision="10" scale="0" nullable="true"/>
+    <field name="active" type="decimal" column="active" precision="10" scale="0" nullable="true"/>
+    <field name="moduleId" type="decimal" column="module_id" precision="10" scale="0" nullable="true"/>
+    <field name="refSetId" type="decimal" column="ref_set_id" precision="10" scale="0" nullable="true"/>
+    <field name="referencedComponentId" type="decimal" column="referenced_component_id" precision="10" scale="0" nullable="true"/>
+    <field name="sctName" type="string" column="sct_name" nullable="true"/>
+    <field name="sctNameEs" type="string" column="sct_name_es" nullable="true"/>
+    <field name="mapGroup" type="decimal" column="map_group" precision="10" scale="0" nullable="true"/>
+    <field name="mapPriority" type="decimal" column="map_priority" precision="10" scale="0" nullable="true"/>
+    <field name="mapRule" type="string" column="map_rule" nullable="true"/>
+    <field name="mapAdvice" type="string" column="map_advice" nullable="true"/>
+    <field name="mapTarget" type="string" column="map_target" nullable="true"/>
+    <field name="icdName" type="string" column="icd_name" nullable="true"/>
+    <field name="icdNameEs" type="string" column="icd_name_es" nullable="true"/>
+    <field name="mapCategoryId" type="decimal" column="map_category_id" precision="10" scale="0" nullable="true"/>
+    <field name="mapCategoryValue" type="string" column="map_category_value" nullable="true"/>
+    <field name="unaccentSctNameEs" type="text" column="unaccent_sct_name_es" nullable="true"/>
+    <many-to-one field="idCie10" target-entity="MntCie10">
+      <join-columns>
+        <join-column name="id_cie10" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

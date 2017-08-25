@@ -1,0 +1,15 @@
+<div class="table-responsive" style="overflow-x: auto; border:0px; ">
+    <table  style="font-size: 10px;border:0px;">
+        <tbody>
+            <tr>
+                <td><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/Reporte-Escudo.png') }}" style="width: 50px;"/></td>
+                <td  width="500px"><center>MINISTERIO DE SALUD <br/>
+                    SISTEMA NACIONAL DE SALUD<br/>
+                    {{ nombreReporte|default('HOJA DE HISTORIA CLINICA') }}<br/>
+                    {{ app.user.getIdEstablecimiento()|upper }}
+                    </center></td>
+                <td ><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/minsal_2014.png') }}" style="width: 120px;float:right;"/></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

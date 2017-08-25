@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecAntecedentesLaboral" table="sec_antecedentes_laboral">
+    <indexes>
+      <index name="IDX_C26323A927746649" columns="id_antecedentes_otro"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="fechaInicioLabores" type="date" column="fecha_inicio_labores" nullable="true"/>
+    <many-to-one field="idAntecedentesOtro" target-entity="SecAntecedentesOtro">
+      <join-columns>
+        <join-column name="id_antecedentes_otro" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

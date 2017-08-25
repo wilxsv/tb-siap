@@ -1,0 +1,89 @@
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block stylesheets %}
+{{ parent() }}
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+    $('#fecha_inicio').mask('99/99/9999');
+    $('#fecha_final').mask('99/99/9999');
+
+    $('#limpiar').on('click',function(e){
+
+        $('#resultado').empty();
+    });
+
+    $('#emitir_informe').on('click',function(e){
+        if($('#fecha_inicio').val()!='' && $('#fecha_final').val()!=''){
+            if($('#fecha_inicio').val() > $('#fecha_final').val()){
+                var title='Error de Llenado';
+                var body="La fecha de inicio debe de ser mayor a la fecha final";
+                var clase='dialog-error';
+                var arrayBtns = [{text: 'Cerrar',
+                                        click: function( event, ui) {
+                                            jQuery( this ).dialog( "close" );
+                                            $('#fecha_inicio').val('');
+                                            $('#fecha_inicio').focus();
+                                            $('#fecha_final').val('');
+                                        }}
+                                ];
+                showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+
+            }else{
+                $('#resultado').empty();
+                $('#resultado').append('<center><img id="wait" src="{{ asset("bundles/minsalsiaps/imagenes/wait_icon1.gif") }}" alt="wait" width="24" height="24"><div id="search-message">Por Favor Espere...</div></center>');
+                $('#resultado').load(Routing.generate('cantidad_historias_medico',{'datos':$('#buscarForm').serialize()}));
+            }
+        } else{
+            var title='Error de Llenado';
+            var body="Debe de seleccionar ambas fechas para generar el informe";
+            var clase='dialog-error';
+            var arrayBtns = [{text: 'Cerrar',
+                                    click: function( event, ui) {
+                                        jQuery( this ).dialog( "close" );
+                                        if($('#fecha_inicio').val()=='')
+                                            $('#fecha_inicio').focus();
+                                        else
+                                            $('#fecha_final').focus();
+                                    }}
+                            ];
+            showDialogMsg(title, body, clase, '', arrayBtns, false, null, true);
+        }
+        e.preventDefault()
+    });
+
+});
+</script>
+{% endblock %}
+{% block notice %}
+{% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+{% block list_table -%}
+<div class="container-fluid">
+    <form  id="buscarForm" method="post" >
+
+    <div class="row">
+        <div class="col-md-7 col-md-offset-2">
+            <h2><img class="icono" src={{ asset('bundles/minsalsiaps/imagenes/listar.png') }} />Cantidad de historias clinicas por médico</h2>
+            <table class="table table-bordered">
+                    <tr>
+                        <th>Fecha de Inicio:</th>
+                        <td><input id="fecha_inicio" name="fecha_inicio" type="text" class="fecha bootstrap-datepicker now form-control" /></td>
+                        <th>Fecha Final:</th>
+                        <td><input id="fecha_final" name="fecha_final" type="text" class="fecha bootstrap-datepicker now form-control" /></td>
+                    </tr>
+            </table>
+            <div class="well form-actions">
+                <center>
+                <input type="submit" class="btn btn-primary" id="emitir_informe" value="Emitir Informe"/>
+                <input type="reset" class="btn btn-info" id="limpiar" value="Limpiar"/>
+                </center>
+            </div>
+        </div>
+    </div>
+</form>
+</div>
+<div id="resultado"></div>
+{% endblock %}

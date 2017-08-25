@@ -1,0 +1,1727 @@
+{% extends 'SonataAdminBundle:CRUD:action.html.twig' %}
+
+{# Definicion de variables globales #}
+{% if app.user.getIdEmpleado.getIdTipoEmpleado is not defined or app.user.getIdEmpleado.getIdTipoEmpleado.getCodigo is not sameas("MED") %}
+    {% set idUserEspecialidad = NULL %}
+{% else %}
+    {% set idUserEspecialidad = app.session.get('_idEmpEspecialidadEstab') %}
+{% endif %}
+
+{% block actions %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalcitas/css/CitasBundle.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        var select2Options = {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            containerCss: {
+                'width': '100%'
+            }
+        };
+        var superAdmin         = {% if app.user.hasRole("ROLE_SUPER_ADMIN") %}true{% else %}false{% endif %};
+        var medSupResidente    = false;
+        var citasTransferidas  = [];
+        var startDateOld       = null;
+        var endDateOld         = null;
+
+        jQuery(document).ready(function($) {
+            /*
+             * Declaracion de Varibles
+             */
+            $idEmpleadoPropietario     = $('#{{ admin.uniqid }}_idEmpleadoPropietario');
+            $idEspecialidadPropietario = $('#{{ admin.uniqid }}_idEspecialidadPropietario');
+            $idEmpleadoSuplente        = $('#{{ admin.uniqid }}_idEmpleadoSuplente');
+            $idEspecialidadSuplente    = $('#{{ admin.uniqid }}_idEspecialidadSuplente');
+            $rangoFecha                = $('#{{ admin.uniqid }}_rangoFecha');
+
+            var autoClean = false;
+
+            /*
+             * Inicializacion de Selects
+             */
+            select2Options['placeholder'] = 'Seleccionar Médico...';
+            initializeSelect2($idEmpleadoPropietario, true, false, select2Options);
+
+            select2Options['placeholder'] = 'Seleccionar Especialidad...';
+            initializeSelect2($idEspecialidadPropietario, true, true, select2Options);
+
+            select2Options['placeholder'] = 'Seleccionar Médico...';
+            initializeSelect2($idEmpleadoSuplente, true, false, select2Options);
+
+            select2Options['placeholder'] = 'Seleccionar Especialidad...';
+            initializeSelect2($idEspecialidadSuplente, true, true, select2Options);
+
+            /*
+             * Logica de Proceso
+             */
+            initializeICheck();
+
+            getMedico($idEmpleadoPropietario);
+            getMedicoEspecialidad($idEspecialidadPropietario, $idEmpleadoPropietario.select2('val'))
+            getMedico($idEmpleadoSuplente);
+            getMedicoEspecialidad($idEspecialidadSuplente, $idEmpleadoSuplente.select2('val'))
+
+            $idEmpleadoPropietario.on('change', function(e) {
+                select2Options['placeholder'] = 'Seleccionar Especialidad...';
+                initializeSelect2($idEspecialidadPropietario, true, true, select2Options);
+
+                $('#error-messages').empty();
+
+                if(e.val) {
+                    getMedicoEspecialidad($idEspecialidadPropietario, e.val);
+                }
+
+                // Descomentar si se decide que no se puede transferir al mismo médico
+                // if($idEmpleadoPropietario.select2('val') === $idEmpleadoSuplente.select2('val')) {
+                //     $idEmpleadoSuplente.select2('val','');
+                //     $idEspecialidadSuplente.select2('val','');
+                // }
+
+                // $('#'+$idEmpleadoSuplente.attr('id')+' option[disabled]').each(function() {
+                //     $(this).removeAttr('disabled');
+                // });
+
+                // $('#'+$idEmpleadoSuplente.attr('id')+' option[value="'+$idEmpleadoPropietario.select2('val')+'"]').attr('disabled','disabled');
+
+                cleanElements();
+            });
+
+            $idEmpleadoSuplente.on('change', function(e) {
+                select2Options['placeholder'] = 'Seleccionar Especialidad...';
+                initializeSelect2($idEspecialidadSuplente, true, true, select2Options);
+
+                $('#error-messages').empty();
+
+                if(e.val) {
+                    if( $(this).find(":selected").data("residente") === false ) {
+                        $('.residente-capacidad').addClass('hidden');
+                    } else {
+                        $('.residente-capacidad').removeClass('hidden');
+                    }
+                } else {
+                    $('.residente-capacidad').addClass('hidden');
+                }
+
+                if(e.val) {
+                    getMedicoEspecialidad($idEspecialidadSuplente, e.val);
+                }
+
+                cleanElements();
+            });
+
+            $idEspecialidadPropietario.on('change', function(e) {
+                if($idEmpleadoPropietario.select2('val') === $idEmpleadoSuplente.select2('val') && $idEspecialidadPropietario.select2('val') === $idEspecialidadSuplente.select2('val')) {
+                    $idEspecialidadSuplente.select2('val','');
+                }
+
+                enableDisableEspecialidadSuplente();
+
+                cleanElements();
+            });
+
+            $idEspecialidadSuplente.on('change', function(e) {
+                cleanElements();
+            });
+
+            $rangoFecha.on('apply.daterangepicker', function(ev, picker) {
+                if( startDateOld !== picker.startDate.format('DD-MM-YYYY') || endDateOld !== picker.endDate.format('DD-MM-YYYY') ) {
+                    startDateOld = picker.startDate.format('DD-MM-YYYY');
+                    endDateOld   = picker.endDate.format('DD-MM-YYYY');
+
+                    if(picker.startDate.format('DD-MM-YYYY') === picker.endDate.format('DD-MM-YYYY')) {
+                        $('#siguiente-horario-rango-fecha').closest('div.row').addClass('hidden');
+                    } else {
+                        $('#siguiente-horario-rango-fecha').closest('div.row').removeClass('hidden');
+                    }
+
+                    cleanElements();
+                }
+            });
+
+            $('body').on('click', 'a[href^="#page"]', function() {
+                evaluatePagination($(this));
+            });
+
+            $('#btn_citas_search').on('click', function() {
+                var errorArray  = validate();
+                var errorMessage = '';
+
+                $('#error-messages').empty();
+
+                if(errorArray.length > 0) {
+                    if(errorArray.length === 1) {
+                        errorMessage = 'El campo: '+errorArray[0].nombre+' no puede estar vacío.';
+                    } else {
+                        errorMessage = 'Los siguientes campos no han sido seleccionados o ingresados: ';
+                        errorMessage += '<ul>';
+
+                        errorArray.forEach(function(element, index, array) {
+                            errorMessage += '<li>'+element.nombre+'</li>';
+                        });
+
+                        errorMessage += '</ul>';
+                    }
+
+                    $('#error-messages').append(
+                        '<div class="alert alert-danger alert-dismissible" role="alert">'+
+                            '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
+                            '<h4><strong>Campos no seleccionados!</strong></h4>'+errorMessage+
+                        '</div>'
+                    );
+                } else {
+                    autoClean = true;
+
+                    cleanElements(false);
+                    $('#info-box-message').removeClass('hidden');
+
+                    if( $idEmpleadoSuplente.find(":selected").data("residente") === true ) {
+                        $('.residente-capacidad').removeClass('hidden');
+                    }
+
+                    var page_limit = 10;
+                    var rangoFecha = $rangoFecha.data('daterangepicker');
+
+                    $('#box-med-propietario').waitMe({ 'text': 'Buscando Citas del Médico Propietaro...' });
+                    $.ajax({
+                        url: Routing.generate("get_citas_info_rango"),
+                        data: { fechaInicial: rangoFecha.startDate.format('DD/MM/YYYY'), fechaFinal: rangoFecha.endDate.format('DD/MM/YYYY'), idEmpleado: $idEmpleadoPropietario.select2('val'), idEspecialidad: $idEspecialidadPropietario.select2('val'), weekend: false, mostrarDetalleCitas: true, 'outputFormat': 'Y/m/d' },
+                        async: true,
+                        dataType: 'json',
+                        success: function(data) {
+                            var content           = '';
+                            var totalDays         = 0;
+                            var totalPages        = 0;
+                            var countIndex        = 1;
+                            var paginationContent = '';
+                            var numberPage        = 1;
+                            var index             = 0;
+
+                            if(Object.keys(data).length > 0) {
+                                $.each(data, function(key, value) {
+                                    if( value.totalAsignados > 0 ) {
+                                        totalDays++;
+
+                                        if( countIndex === 1 || ( (countIndex - 1) % page_limit) === 0) {
+                                            numberPage = Math.ceil( countIndex/page_limit );
+                                            content += '<div id="content-page-'+ numberPage +'"'+ (numberPage !== 1 ? ' class="hidden"' : '') +'>';
+                                        }
+
+                                        content +=
+                                                '<div class="panel panel-info" id="panel-mdp-'+value.dashFormat+'">'+
+                                                    '<div class="panel-heading" role="tab">'+
+                                                        '<div class="row">'+
+                                                            '<div class="collapsed col-xs-11 col-sm-11 col-md-11 col-lg-11">'+
+                                                                '<h4 class="panel-title">'+
+                                                                    '<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-mdp-'+value.dashFormat+'" aria-expanded="true" aria-controls="collapse-mdp-'+value.dashFormat+'">'+
+                                                                        '<i class="fa fa-calendar"></i> '+value.format+
+                                                                        '&nbsp;'+
+                                                                        '&nbsp;<span class="badge bg-blue pv" data-toggle="tooltip" data-placement="top" title="'+value.pvAsignado+' asignados de un total de '+value.pvCapacidad+' para pacientes de primera vez" data-pv-asignado="'+value.pvAsignado+'" data-pv-capacidad="'+value.pvCapacidad+'" style="font-size:15px;">'+value.pvAsignado+'/'+value.pvCapacidad+'</span></span>'+
+                                                                        '&nbsp;<span class="badge bg-green sb" data-toggle="tooltip" data-placement="top" title="'+value.sbAsignado+' asignados de un total de '+value.sbCapacidad+' para pacientes de subsecuentes" data-sb-asignado="'+value.sbAsignado+'" data-sb-capacidad="'+value.sbCapacidad+'" style="font-size:15px;">'+value.sbAsignado+'/'+value.sbCapacidad+'</span></span>'+
+                                                                        '&nbsp;<span class="badge bg-teal ag" data-toggle="tooltip" data-placement="top" title="'+value.agAsignado+' asignados de un total de '+value.agCapacidad+' para pacientes de agregados" data-ag-asignado="'+value.agAsignado+'" data-ag-capacidad="'+value.agCapacidad+'" style="font-size:15px;">'+value.agAsignado+'/'+value.agCapacidad+'</span></span>'+
+                                                                    '</a>'+
+                                                                '</h4>'+
+                                                            '</div>'+
+                                                            '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1 text-right checkbox-tools">'+
+                                                                '<i class="fa fa-square-o mouse-pointer check-all" data-toggle="tooltip" data-placement="top" title="Seleccionar todos los pacientes del día '+value.format+'" style="color:#989898;" data-fecha="'+value.dashFormat+'"></i></span>&nbsp;'+
+                                                            '</div>'+
+                                                        '</div>'+
+                                                    '</div>'+
+                                                    '<div id="collapse-mdp-'+value.dashFormat+'" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading-mdp-'+value.dashFormat+'">'+
+                                                        '<div class="panel-body">';
+                                                            if(Object.keys(value.horarios).length > 0) {
+                                                                $.each(value.horarios, function(hindex, hvalue) {
+                                                                    if( hvalue.totalAsignados > 0 ) {
+                                                                        content +=
+                                                                            '<div class="bs-callout bs-callout-'+(index % 2 === 0 ? 'primary' : 'info')+'" id="callout-mdp-'+value.dashFormat+'-'+hvalue.id+'">'+
+                                                                                '<div class="row">'+
+                                                                                    '<div class="collapsed col-xs-11 col-sm-11 col-md-11 col-lg-11">'+
+                                                                                        '<h4 style="position: relative;">'+
+                                                                                            '<i class="fa fa-clock-o"></i> <strong>'+hvalue.rangoHora+'</strong>'+
+                                                                                        '</h4>'+
+                                                                                    '</div>'+
+                                                                                    '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1 text-right checkbox-tools">'+
+                                                                                        '<i class="fa fa-square-o mouse-pointer check-all" data-toggle="tooltip" data-placement="top" title="Seleccionar todos los pacientes del día '+value.format+' y rango de hora '+
+                                                                                            hvalue.rangoHora+'" style="color:#989898;" data-fecha="'+value.dashFormat+'" data-rangohora="'+hvalue.id+'"></i></span>&nbsp;'+
+                                                                                    '</div>'+
+                                                                                '</div>'+
+                                                                                '<div class="table-responsive">'+
+                                                                                    '<table class="table table-hover table-condensed">'+
+                                                                                        '<thead>'+
+                                                                                            '<tr>'+
+                                                                                                '<th></th>'+
+                                                                                                '<th>No.</th>'+
+                                                                                                '<th>Expediente</th>'+
+                                                                                                '<th>Nombre del Paciente</th>'+
+                                                                                                '<th>Estado de la Cita</th>'+
+                                                                                                '<th>Tipo de Cita</th>'+
+                                                                                            '</tr>'+
+                                                                                        '</thead>'+
+                                                                                        '<tbody>';
+                                                                                            if(Object.keys(hvalue.citas).length > 0) {
+                                                                                                count = 1;
+                                                                                                $.each(hvalue.citas, function(cindex, cvalue) {
+                                                                                                    content +=
+                                                                                                        '<tr>'+
+                                                                                                            '<td>'+
+                                                                                                                '<input type="checkbox" id="'+value.dashFormat+'-'+hvalue.id+'-'+cvalue.id+'" name="cita['+value.dashFormat+']['+hvalue.id+']['+cvalue.id+']" class="icheck" data-type="flat-blue"'+
+                                                                                                                    'data-fecha="'+value.dashFormat+'" data-id-rango-hora="'+hvalue.id+'" data-rango-hora="'+hvalue.rangoHora+'" data-id-cita="'+cvalue.id+'" data-id-expediente="'+cvalue.idExpediente+'"'+
+                                                                                                                    'data-numero-expediente="'+cvalue.numeroExpediente+'" data-nombre-paciente="'+cvalue.nombrePaciente+'" data-id-estado-cita="'+cvalue.idEstado+'" data-nombre-estado="'+cvalue.nombreEstado+'" data-id-tipo-cita="'+cvalue.idTipoCita+'"'+
+                                                                                                                    'data-nombre-tipo-cita="'+cvalue.nombreTipoCita+'"'+'data-id-justificacion="'+cvalue.idJustificacion+'"'+'data-nombre-justificacion="'+cvalue.nombreJustificacion+'"'+
+                                                                                                                '/>'+
+                                                                                                            '</td>'+
+                                                                                                            '<td>'+count+'</td>'+
+                                                                                                            '<td>'+cvalue.numeroExpediente+'</td>'+
+                                                                                                            '<td>'+cvalue.nombrePaciente+'</td>'+
+                                                                                                            '<td>'+cvalue.nombreEstado+'</td>'+
+                                                                                                            '<td>'+cvalue.nombreTipoCita+'</td>'+
+                                                                                                        '</tr>';
+
+                                                                                                    count++;
+                                                                                                });
+                                                                                            } else {
+                                                                                                content +=
+                                                                                                    '<tr class="no-citas">'+
+                                                                                                        '<td colspan="5"><span class="disabled-label">No hay resultados para mostrar...</span></td>'+
+                                                                                                    '</tr>';
+                                                                                            }
+                                                                                        content +=
+                                                                                        '</tbody>'+
+                                                                                    '</table>'+
+                                                                                '</div>'+
+                                                                            '</div>';
+                                                                    }
+                                                                });
+                                                            }
+                                                        content +=
+                                                        '</div>'+
+                                                    '</div>'+
+                                                '</div>';
+
+                                        if( countIndex % page_limit === 0 ) {
+                                            content += '</div>';
+                                        }
+
+                                        index++;
+                                        countIndex++;
+                                    }
+                                });
+
+                                if(totalDays > 0) {
+                                    $('#box-med-propietario .display-tools').removeClass('hidden');
+
+                                    totalPages = Math.ceil(totalDays/page_limit);
+
+                                    if(totalPages > 1) {
+                                        paginationContent +=
+                                            '<li class="hidden"><a href="#pagef" data-page="1" aria-label="First"><span>&laquo;</span></a></li>'+
+                                            '<li class="hidden"><a href="#pagep" data-page="1" aria-label="Previous"><span>&lsaquo;</span></a></li>';
+
+                                        for (var i = 1; i <= totalPages; i++) {
+                                            paginationContent += '<li'+ (i === 1 ? ' class="active"' : '') +'><a href="#page'+ i +'" data-page="'+ i +'">'+ i +'</a></li>'
+                                        }
+
+                                        paginationContent +=
+                                            '<li><a href="#pagen" data-page="2" aria-label="Next"><span>&rsaquo;</span></a></li>'+
+                                            '<li><a href="#pagel" data-page="'+totalPages+'" aria-label="Last"><span>&raquo;</span></a></li>';
+                                    } else {
+                                        paginationContent += '<li class="active hidden"><a href="#page1" data-page="1">1</a></li>';
+                                    }
+
+                                    $('#pagination-mdp-propietario').append(paginationContent);
+
+                                    $('#box-med-propietario .todo-list').append(content);
+                                    initializeICheck();
+                                    if($('body #pagination-mdp-propietario a[href="#page1"]').length !== 0) {
+                                        evaluatePagination($('body #pagination-mdp-propietario a[href="#page1"]'));
+                                    }
+                                } else {
+                                    $('#med-propietario-message').append(
+                                        '<div class="alert alert-info" role="alert">'+
+                                            '<strong>Ninguna cita ha sido asignada</strong> para el rango de fechas seleccionado.'+
+                                        '</div>'
+                                    );
+                                }
+                            } else {
+                                $('#med-propietario-message').append(
+                                    '<div class="alert alert-info" role="alert">'+
+                                        '<strong>Ninguna cita ha sido asignada</strong> para el rango de fechas seleccionado.'+
+                                    '</div>'
+                                );
+                            }
+                        }
+                    })
+                    .always(function( jqXHR, textStatus, errorThrown ) {
+                        $('#box-med-propietario').waitMe('hide');
+                    });
+
+                    $('#box-med-suplente').waitMe({ 'text': 'Opteniendo la Distribución del Médico Suplente...' });
+                    $.ajax({
+                        url: Routing.generate("get_citas_info_rango"),
+                        data: { fechaInicial: rangoFecha.startDate.format('DD/MM/YYYY'), fechaFinal: rangoFecha.endDate.format('DD/MM/YYYY'), idEmpleado: $idEmpleadoSuplente.select2('val'), idEspecialidad: $idEspecialidadSuplente.select2('val'), weekend: false, showHorarioReal: false, mostrarDetalleCitas: false, outputFormat: 'Y/m/d' },
+                        async: true,
+                        dataType: 'json',
+                        success: function(data) {
+                            var content            = '';
+                            var totalDays          = 0;
+                            var totalPages         = 0;
+                            var countIndex         = 1;
+                            var paginationContent  = '';
+                            var numberPage         = 1;
+                            var index              = 0;
+                            var type               = null;
+                            var showExpandCompress = false;
+                            var hourIndex          = 1;
+                            var currentTimeStamp   = moment();
+                            var startHour          = null;
+                            var endHour            = null;
+                            var countHours         = 0;
+
+                            totalDays = Object.keys(data).length;
+
+                            if(totalDays > 0) {
+                                totalPages = Math.ceil(totalDays/page_limit);
+
+                                if(totalPages > 1) {
+                                    paginationContent +=
+                                        '<li class="hidden"><a href="#pagef" data-page="1" aria-label="First"><span>&laquo;</span></a></li>'+
+                                        '<li class="hidden"><a href="#pagep" data-page="1" aria-label="Previous"><span>&lsaquo;</span></a></li>';
+
+                                    for (var i = 1; i <= totalPages; i++) {
+                                        paginationContent += '<li'+ (i === 1 ? ' class="active"' : '') +'><a href="#page'+ i +'" data-page="'+ i +'">'+ i +'</a></li>'
+                                    }
+
+                                    paginationContent +=
+                                        '<li><a href="#pagen" data-page="2" aria-label="Next"><span>&rsaquo;</span></a></li>'+
+                                        '<li><a href="#pagel" data-page="'+totalPages+'" aria-label="Last"><span>&raquo;</span></a></li>';
+                                } else {
+                                    paginationContent += '<li class="active hidden"><a href="#page1" data-page="1">1</a></li>';
+                                }
+
+                                $('#pagination-mdp-suplente').append(paginationContent);
+
+
+                                $.each(data, function(key, value) {
+                                    countHours = 0;
+
+                                    if(value.poseeDistribucion === true || value.residente === true) {
+                                        if(value.diaBloqueado === true) {
+                                            if(value.tipoEvento === 'festivo') {
+                                                type = 3;
+                                            } else {
+                                                /* Descomentar cuando se haga bloqueo de eventor por hora*/
+                                                //type = 4;
+                                                type = 2;
+                                            }
+                                        } else {
+                                            type = 5;
+                                        }
+                                    } else {
+                                        if(value.diaBloqueado === true) {
+                                            if(value.tipoEvento === 'festivo') {
+                                                type = 3;
+                                            } else {
+                                                type = 2;
+                                            }
+                                        } else {
+                                            type = 1;
+                                        }
+                                    }
+
+                                    if( countIndex === 1 || ( (countIndex - 1) % page_limit) === 0) {
+                                        numberPage = Math.ceil( countIndex/page_limit );
+                                        content += '<div id="content-page-'+ numberPage +'"'+ (numberPage !== 1 ? ' class="hidden"' : '') +'>';
+                                    }
+
+                                    content +=
+                                        '<div class="panel panel-info" id="panel-mds-'+value.dashFormat+'">'+
+                                            '<div class="panel-heading'+(type === 1 ? ' dia-no-disponible' : ( type === 2 ? ' dia-bloqueado' : (type === 3 ? ' dia-festivo' : '') ) )+'" role="tab">'+
+                                                '<div class="row">';
+                                    if(type === 1 || type === 2 || type === 3) {
+                                        content +=
+                                                        '<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">'+
+                                                            '<h4 class="panel-title">'+
+                                                                '<a style="line-height: 25px; height: 25px;">'+
+                                                                    '<i class="fa fa-calendar-o"></i> '+value.format+'&nbsp;'+
+                                                                    '<label class="label '+(type === 1 ? 'bg-gray' : ( type === 2 ? ' bg-red' : 'bg-yellow' ) )+'" style="'+( type === 1 ? 'background-color: #777 !important; ' : '' )+'margin-left: 15px;">'+
+                                                                        (type === 1 ? 'DIA NO DISPONIBLE' : ( type === 2 ? ' DIA BLOQUEADO' : 'DIA FESTIVO' ) )+
+                                                                    '</label>'+
+                                                                '</a>'+
+                                                            '</h4>'+
+                                                        '</div>'+
+                                                '</div>'+
+                                            '</div>'+
+                                        '</div>';
+                                    } else {
+                                        showExpandCompress = true;
+                                        content +=
+                                                        '<div class="collapsed col-xs-11 col-sm-11 col-md-11 col-lg-11">'+
+                                                            '<h4 class="panel-title">'+
+                                                                '<a class="" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-mds-'+value.dashFormat+'" aria-expanded="true" aria-controls="collapse-mds-'+value.dashFormat+'">'+
+                                                                    '<i class="fa fa-calendar"></i> '+value.format+
+                                                                    '&nbsp;'+
+                                                                    '&nbsp;<span class="badge bg-blue pv" data-toggle="tooltip" data-placement="top" title="'+value.pvAsignado+( value.pvAsignado !== 1 ? ' pacientes asignados' : ' paciente asignado' )+
+                                                                        ( value.residente === true ? '' : ' de un total de '+value.pvCapacidad+' para pacientes ' )+' de primera vez" data-pv-asignado="'+value.pvAsignado+'"'+
+                                                                        'data-pv-capacidad="'+value.pvCapacidad+'" data-residente="'+value.residente+'" style="font-size:15px;">'+value.pvAsignado+( value.residente === true ? '' : '/'+value.pvCapacidad )+'</span>'+
+                                                                    '&nbsp;<span class="badge bg-green sb" data-toggle="tooltip" data-placement="top" title="'+value.sbAsignado+( value.sbAsignado !== 1 ? ' pacientes asignados' : ' paciente asignado' )+
+                                                                        ( value.residente === true ? '' : ' de un total de '+value.sbCapacidad+' para pacientes ' )+' subsecuentes" data-sb-asignado="'+value.sbAsignado+'"'+
+                                                                        'data-sb-capacidad="'+value.sbCapacidad+'" data-residente="'+value.residente+'" style="font-size:15px;">'+value.sbAsignado+( value.residente === true ? '' : '/'+value.sbCapacidad )+'</span>'+
+                                                                    '&nbsp;<span class="badge bg-teal ag" data-toggle="tooltip" data-placement="top" title="'+value.agAsignado+( value.agAsignado !== 1 ? ' pacientes asignados' : ' paciente asignado' )+
+                                                                        ( value.residente === true ? '' : ' de un total de '+value.agCapacidad+' para pacientes ' )+' agregados" data-ag-asignado="'+value.agAsignado+'"'+
+                                                                        'data-ag-capacidad="'+value.agCapacidad+'" data-residente="'+value.residente+'" style="font-size:15px;">'+value.agAsignado+( value.residente === true ? '' : '/'+value.agCapacidad )+'</span>'+
+                                                                '</a>'+
+                                                            '</h4>'+
+                                                        '</div>'+
+                                                        '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1 text-right checkbox-tools">'+
+                                                            '<i class="fa fa-square-o mouse-pointer check-all" data-toggle="tooltip" data-placement="top" title="Seleccionar todos los horarios para el día '+value.format+'" style="color:#989898;" data-fecha="'+value.dashFormat+'"></i></span>'+
+                                                        '</div>'+
+                                                '</div>'+
+                                            '</div>'+
+                                            '<div id="collapse-mds-'+value.dashFormat+'" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading-mds-'+value.dashFormat+'">'+
+                                                '<div class="panel-body">';
+                                                    if(Object.keys(value.horarios).length > 0) {
+                                                        $.each(value.horarios, function(hindex, hvalue) {
+                                                            startHour = moment(value.date+' '+hvalue.horaIni, 'YYYY/MM/DD hh:mm:ss A');
+                                                            endHour   = moment(value.date+' '+hvalue.horaFin, 'YYYY/MM/DD hh:mm:ss A');
+
+                                                            if(endHour.diff(currentTimeStamp) > 0 ) {
+                                                                content +=
+                                                                    '<div class="bs-callout bs-callout-'+(hourIndex % 2 === 0 ? 'primary' : 'info')+'" id="callout-mdp-'+value.dashFormat+'-'+hvalue.id+'">'+
+                                                                        '<div class="row">'+
+                                                                            '<div class="collapsed col-xs-11 col-sm-11 col-md-11 col-lg-11">'+
+                                                                                '<h4 style="position: relative;">'+
+                                                                                    '<i class="fa fa-clock-o"></i> <strong>'+hvalue.rangoHora+'</strong>'+
+                                                                                    '&nbsp;'+
+                                                                                    '&nbsp;<span class="badge bg-blue pv" data-toggle="tooltip" data-placement="top" title="'+hvalue.pvAsignado+( hvalue.pvAsignado !== 1 ? ' pacientes asignados' : ' paciente asignado' )+
+                                                                                        ( value.residente === true ? ( hvalue.generico === true ? '' : ' de un total de '+hvalue.pvCapacidad+' para pacientes' ) : ' de un total de '+hvalue.pvCapacidad+' para pacientes' )+
+                                                                                        ' de primera vez" style="font-size:15px;">'+hvalue.pvAsignado+( value.residente === true ? ( hvalue.generico === true ? '' : '/'+hvalue.pvCapacidad ) : '/'+hvalue.pvCapacidad )+'</span>'+
+                                                                                    '&nbsp;<span class="badge bg-green sb" data-toggle="tooltip" data-placement="top" title="'+hvalue.sbAsignado+( hvalue.sbAsignado !== 1 ? ' pacientes asignados' : ' paciente asignado' )+
+                                                                                        ( value.residente === true ? ( hvalue.generico === true ? '' : ' de un total de '+hvalue.sbCapacidad+' para pacientes' ) : ' de un total de '+hvalue.sbCapacidad+' para pacientes' )+
+                                                                                        ' subsecuentes" style="font-size:15px;">'+hvalue.sbAsignado+( value.residente === true ? ( hvalue.generico === true ? '' : '/'+hvalue.sbCapacidad ) : '/'+hvalue.sbCapacidad )+'</span>'+
+                                                                                    '&nbsp;<span class="badge bg-teal ag" data-toggle="tooltip" data-placement="top" title="'+hvalue.agAsignado+( hvalue.agAsignado !== 1 ? ' pacientes asignados' : ' paciente asignado' )+
+                                                                                        ( value.residente === true ? ( hvalue.generico === true ? '' : ' de un total de '+hvalue.agCapacidad+' para pacientes' ) : ' de un total de '+hvalue.agCapacidad+' para pacientes' )+
+                                                                                        ' agregados" style="font-size:15px;">'+hvalue.agAsignado+( value.residente === true ? ( hvalue.generico === true ? '' : '/'+hvalue.agCapacidad ) : '/'+hvalue.agCapacidad )+'</span>'+
+                                                                                '</h4>'+
+                                                                            '</div>'+
+                                                                            '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1 text-right checkbox-tools">'+
+                                                                                '<input type="checkbox" id="'+value.dashFormat+'-'+hvalue.id+'" name="horario['+value.dashFormat+']['+hvalue.id+']" class="icheck" data-type="flat-blue"'+
+                                                                                    'data-pv-capacidad="'+hvalue.pvCapacidad+'" data-pv-asignado="'+hvalue.pvAsignado+'" data-sb-capacidad="'+hvalue.sbCapacidad+'" data-sb-asignado="'+hvalue.sbAsignado+'" data-ag-capacidad="'+hvalue.agCapacidad+'" data-ag-asignado="'+hvalue.agAsignado+'"'+
+                                                                                    'data-residente="'+value.residente+'" data-generico="'+hvalue.generico+'" data-id="'+hvalue.id+'" data-fecha="'+value.dashFormat+'"'+
+                                                                                '/>'+
+                                                                            '</div>'+
+                                                                        '</div>'+
+                                                                        '<div class="table-responsive">'+
+                                                                            '<table class="table table-hover table-condensed">'+
+                                                                                '<thead>'+
+                                                                                    '<tr>'+
+                                                                                        '<th></th>'+
+                                                                                        '<th>Expediente</th>'+
+                                                                                        '<th>Nombre del Paciente</th>'+
+                                                                                        '<th>Estado de la Cita</th>'+
+                                                                                        '<th>Tipo de Cita</th>'+
+                                                                                    '</tr>'+
+                                                                                '</thead>'+
+                                                                                '<tbody>'+
+                                                                                    '<tr class="no-citas">'+
+                                                                                        '<td colspan="6"><span class="disabled-label">Ninguna cita ha sido transferida...</span></td>'+
+                                                                                    '</tr>'+
+                                                                                '</tbody>'+
+                                                                            '</table>'+
+                                                                        '</div>'+
+                                                                    '</div>';
+                                                                    hourIndex++;
+                                                            } else {
+                                                                countHours++;
+                                                            }
+                                                        });
+
+                                                        if(countHours === Object.keys(value.horarios).length) {
+                                                            content += '<span class="disabled-label">Ningun horario para mostrar...</span>';
+                                                        }
+                                                    } else {
+                                                        content += '<span class="disabled-label">Ningun horario para mostrar...</span>';
+                                                    }
+
+                                            content +=
+                                                '</div>'+
+                                            '</div>'+
+                                        '</div>';
+                                    }
+
+                                    if( countIndex % page_limit === 0 ) {
+                                        content += '</div>';
+                                    }
+
+                                    countIndex++;
+                                });
+
+                                $('#box-med-suplente .todo-list').append(content);
+
+                                if($('body #pagination-mdp-suplente a[href="#page1"]').length !== 0) {
+                                    evaluatePagination($('body #pagination-mdp-suplente a[href="#page1"]'));
+                                }
+
+                                if(showExpandCompress) {
+                                    $('#box-med-suplente .display-tools').removeClass('hidden');
+                                    $('#box-med-suplente .todo-list').css('margin-top','');
+                                } else {
+                                    $('#box-med-suplente .todo-list').css('margin-top','40px');
+                                }
+
+                                cssComplement();
+                                initializeICheck();
+                            } else {
+                                $('#med-suplente-message').append(
+                                    '<div class="alert alert-info" role="alert">'+
+                                        '<strong>Ninguna cita ha sido asignada</strong> para el rango de fechas seleccionado.'+
+                                    '</div>'
+                                );
+                            }
+                        }
+                    })
+                    .always(function( jqXHR, textStatus, errorThrown ) {
+                        $('#box-med-suplente').waitMe('hide');
+                    });
+                }
+            });
+
+            $('.expand-all').on('click', function() {
+                var propietario  = $(this).closest('div#box-med-propietario').length > 0 ? true : false;
+                var idBox        = propietario ? 'box-med-propietario' : 'box-med-suplente';
+                var idPagination = propietario ? 'pagination-mdp-propietario' : 'pagination-mdp-suplente';
+                var activePage   = $('body #'+idPagination).find('li[class~="active"] a').attr('data-page');
+
+                if($(this).hasClass('fa-expand')) {
+                    $('#'+idBox+' .todo-list #content-page-'+activePage+' .collapse').collapse('show');
+                    expandCompressIcon($(this), true);
+                } else {
+                    $('#'+idBox+' .todo-list #content-page-'+activePage+' .collapse').collapse('hide');
+                    expandCompressIcon($(this), false);
+                }
+            });
+
+            $('.check-hole').on('click', function() {
+                var propietario  = $(this).closest('div#box-med-propietario').length > 0 ? true : false;
+                var idBox        = propietario ? 'box-med-propietario' : 'box-med-suplente';
+                var idPagination = propietario ? 'pagination-mdp-propietario' : 'pagination-mdp-suplente';
+                var activePage   = $('body #'+idPagination).find('li[class~="active"] a').attr('data-page');
+
+                if($(this).hasClass('fa-square-o')) {
+                    $('body #'+idBox+' .todo-list #content-page-'+activePage+' input[type="checkbox"]').iCheck('check');
+                    checkUncheckIcon($(this), true, 'Click para deseleccionar todos los pacientes de todas las fechas');
+                } else {
+                    $('body #'+idBox+' .todo-list #content-page-'+activePage+' input[type="checkbox"]').iCheck('uncheck');
+                    checkUncheckIcon($(this), false, 'Click para seleccionar todos los pacientes de todas las fechas');
+                }
+            });
+
+            $('body').on('click', 'i.check-all', function() {
+                var propietario = $(this).closest('div#box-med-propietario').length > 0 ? true : false;
+                var idBox       = propietario ? 'box-med-propietario' : 'box-med-suplente';
+                var fecha       = $(this).attr('data-fecha');
+                var idRangoHora = $(this).attr('data-rangohora');
+                var idPattern   = fecha;
+
+                if(typeof idRangoHora !== 'undefined') {
+                    idPattern += '-' + idRangoHora;
+                }
+
+                if($(this).hasClass('fa-square-o')) {
+                    checkUncheckIcon($(this), true, 'Click para deseleccionar todos los pacientes del día '+fecha);
+                    $('body #'+idBox+' input[id^="'+idPattern+'"]').iCheck('check');
+                } else {
+                    checkUncheckIcon($(this), false, 'Click para deseleccionar todos los pacientes del día '+fecha);
+                    $('body #'+idBox+' input[id^="'+idPattern+'"]').iCheck('uncheck');
+                }
+            });
+
+            $('body').on('ifToggled', 'input[type="checkbox"]', function() {
+                var bsCallout       = $(this).closest('div.bs-callout');
+                var panelCollapsed  = $(this).closest('div.panel');
+                var contentPage     = $(this).closest('div[id^="content-page-"]');
+                var helpSelector    = $(this).closest('#box-med-propietario').length > 0 ? 'box-med-propietario' : 'box-med-suplente';
+
+                evaluateCheckUncheckIcon(bsCallout, bsCallout.find('.checkbox-tools i.check-all', 'del rango de hora'));
+                evaluateCheckUncheckIcon(panelCollapsed, panelCollapsed.find('.checkbox-tools i.check-all'), 'del día');
+                evaluateCheckUncheckIcon(contentPage, $('#'+helpSelector+' i.check-hole'), '');
+            });
+
+            $('body').on('hidden.bs.collapse shown.bs.collapse', '.panel', function() {
+                var contentPage  = $(this).closest('div[id^="content-page-"]');
+                var helpSelector = $(this).closest('#box-med-propietario').length > 0 ? 'box-med-propietario' : 'box-med-suplente';
+
+                evaluateExpandCompressIcon(contentPage, $('#'+helpSelector+' i.expand-all'));
+            });
+
+            $('body').on('click', 'a[data-type="descripcion"]', function() {
+                var atributos = $(this).attr();
+
+                if( atributos.hasOwnProperty('data-status') ) {
+                    $(this).empty();
+
+                    if( atributos['data-status'] === 'hidden' ) {
+                        $(this).append('ocultar descripcion...');
+                        $(this).attr('data-status','shown');
+                    } else {
+                        $(this).append('ver descripcion...');
+                        $(this).attr('data-status','hidden');
+                    }
+                }
+            });
+
+            $('#transferir-citas').on('click', function() {
+                var cantidadCitas    = $('#box-med-propietario').find('input[type="checkbox"]:checked').length;
+                var cantidadHorarios = $('#box-med-suplente').find('input[type="checkbox"]:checked').length;
+                var noTransferidos   = [];
+                var nextIteration    = true;
+                var siguienteHorario = $('#ningun-horario').prop('checked') === false ? true : false;
+
+                if(cantidadCitas > 0) {
+                    if(cantidadHorarios > 0) {
+                        $('#box-med-propietario').find('input[type="checkbox"]:checked').each(function() {
+                            var cita = $(this);
+                            var atributos = cita.attr();
+                            // var primeraVez = atributos['data-id-tipo-cita'] === '1' ? true : false;
+                            var tipoCita = atributos['data-id-tipo-cita'] === '1' ? 'pv' : 'sb';
+
+                            /*
+                             *  Evalua si el paciente es de Primera Vez en la especialidad a la que se le esta transfiriendo, descomentar si se hace la consulta en vivo
+                             */
+                            // $.ajax({
+                            //     url: Routing.generate("citas_tipo_cita")+'/'+$idEmpleadoSuplente.select2('val')+'/'+$idEspecialidadSuplente.select2('val')+'/'+atributos['data-id-expediente'],
+                            //     async: false,
+                            //     dataType: 'json',
+                            //     success: function(data) {
+                            //         primeraVez = data;
+                            //     }
+                            // });
+
+                            if(nextIteration) {
+                                nextIteration = agregarCita(cita, tipoCita);
+
+                                if(nextIteration === false) {
+                                    noTransferidos.push(cita.attr('id'));
+                                }
+                            } else {
+                                noTransferidos.push(cita.attr('id'));
+                                return;
+                            }
+                        });
+
+                        if(noTransferidos.length > 0) {
+                            var title       = '';
+                            var dialogClass = '';
+                            var msj         = '';
+                            var width       = null;
+
+                            if( cantidadCitas === noTransferidos.length ) {
+                                title       = 'Citas no transferidas.';
+                                dialogClass = 'dialog-warning';
+                                msj = '<strong>El proceso de transferencia de citas no se pudo realizar.</strong><br /><br />'+
+                                      ( cantidadCitas > 1 ? 'Las citas seleccionadas no pudieron ser transferidas' : 'La cita no pudo ser transferida' )+' debido que no se <strong>encontró espacio disponible</strong> en '+( cantidadHorarios > 1 ? 'los horarios seleccionados' : 'el horario seleccionado' ) + ( siguienteHorario === true ? ', ni en los horarios posteriores.' : '' )+'<br />';
+                            } else {
+                                title       = 'Informe de transferencia de Citas.';
+                                dialogClass = 'dialog-info';
+                                width       = 800;
+                                msj = (noTransferidos.length > 1 ? 'Las siguientes citas no pudieron ser transferidas' : 'La siguiente cita no pudo ser transferida' )+' debido que no se <strong>encontró espacio disponible</strong> en '+( cantidadHorarios > 1 ? 'los horarios seleccionados' : 'el horario seleccionado' ) + ( siguienteHorario === true ? ', ni en los horarios posteriores.' : '' )+
+                                      '<br />'+
+                                      '<div class="table-responsive">'+
+                                        '<table class="table table-hover table-condensed" style="margin: 0px 30px;">'+
+                                            '<thead>'+
+                                                '<tr>'+
+                                                    '<th>Fecha</th>'+
+                                                    '<th>Horario</th>'+
+                                                    '<th>No. Expediente</th>'+
+                                                    '<th>Paciente</th>'+
+                                                '</tr>'+
+                                            '</thead>'+
+                                            '<tbody>';
+
+                                for (var i = 0; i < noTransferidos.length; i++) {
+                                    msj +=  '<tr>'+
+                                                '<td>'+$('#'+noTransferidos[i]).attr('data-fecha')+'</td>'+
+                                                '<td>'+$('#'+noTransferidos[i]).attr('data-rango-hora')+'</td>'+
+                                                '<td>'+$('#'+noTransferidos[i]).attr('data-numero-expediente')+'</td>'+
+                                                '<td>'+$('#'+noTransferidos[i]).attr('data-nombre-paciente')+'</td>'+
+                                            '</tr>';
+                                }
+
+                                msj += '</tbody>'+
+                                    '</table>'+
+                                '</div>';
+                            }
+
+                            msj += '<br />Por favor <strong>seleccione otra fecha y/o horario</strong> y haga click sobre el botón transferir para poder asignar las citas';
+
+                            showDialogMsg(title, msj, dialogClass, null, null, null, width);
+                        }
+                    } else {
+                        var title = 'Citas no seleccionadas';
+                        var dialogClass = 'dialog-error';
+                        var msj = '<strong>Debe de seleccionar al menos un horario del médico suplente</strong> al cual desea transferir las citas seleccionadas.';
+                        showDialogMsg(title, msj, dialogClass);
+                    }
+                } else {
+                    var title = 'Citas no seleccionadas';
+                    var dialogClass = 'dialog-error';
+                    var msj = '<strong>Ninguna cita ha sido seleccionada para ser transferidad.</strong>.<br />Para poder transferir las citas debe de seleccionar al menos una.';
+                    showDialogMsg(title, msj, dialogClass);
+                }
+
+                saveButtonChangeStatus();
+            });
+
+            $('body').on('click','span[id^="trash-"]', function() {
+                var tbody       = $(this).closest('tbody');
+                var id          = $(this).attr('id').replace(/trash\-/g,'');
+                var tipoCitaNew = $(this).attr('data-tipo');
+                var horario     = $(this).closest('.bs-callout').find('input[type="checkbox"]');
+                var tipoCitaOld = $('#'+id).attr('data-id-estado-cita') === '6' ? 'ag' : ( $('#'+id).attr('data-id-tipo-cita') === '1' ? 'pv' : 'sb' );
+                // var tipoCitaOld = parseInt( $('#'+id).attr('data-id-tipo-cita') ) === 1 ? 'pv' : ( parseInt( $('#'+id).attr('data-id-tipo-cita') ) === 2 ? 'sb' : 'ag' );
+                var asignado    = $('#'+id).closest('.panel').find('.badge.'+tipoCitaOld);
+
+                index = getIndexOfK(citasTransferidas, 'htmlId', id);
+
+                if(index !== -1) {
+                    $('#'+id).closest('tr').removeClass('hidden');
+                    $('#'+id).iCheck('check');;
+                    $('#'+id).iCheck('enable');
+
+                    $(this).closest('tr').remove();
+
+                    if( $('#'+id).closest('tbody').find("tr:not('[class*=hidden]')").length > 0 ) {
+                        $('#'+id).closest('tbody').find('tr.no-citas').addClass('hidden');
+                    }
+
+                    if( tbody.find("tr:not('[class*=hidden]')").length === 0 ) {
+                        tbody.find('tr.hidden').removeClass('hidden');
+                    }
+
+                    citasTransferidas.splice(index, 1);
+
+                    /* Actualizando la cantidad de asignados del rango de hora de la cita transferida*/
+                    agregarRestarCapacidadAsignado(asignado, asignado, tipoCitaOld, '+');
+
+                    /* Actualizando la cantidad de asignados del rango de hora*/
+                    agregarRestarCapacidadAsignado(horario, horario.closest('.bs-callout').find('.collapsed .badge.'+tipoCitaNew), tipoCitaNew, '-');
+
+                    /* Actualizando la cantidad de asignados del día del rango de hora seleccionado*/
+                    agregarRestarCapacidadAsignado(horario.closest('.panel').find('.panel-title .badge.'+tipoCitaNew), horario.closest('.panel').find('.panel-title .badge.'+tipoCitaNew), tipoCitaNew, '-', isPanel = true);
+                } else {
+                    console.error('Error no se pudo encontrar el id: '+id+' en el array de citas transferidas');
+
+                    var title = 'Cita transferida no eliminada.';
+                    var dialogClass = 'dialog-error';
+                    var msj = '<strong>No se pudo eliminar la cita transferida</strong>.<br />Por favor intente nuevamente si el probema persiste contacte con el Administrador.';
+                    showDialogMsg(title, msj, dialogClass);
+                }
+
+                saveButtonChangeStatus();
+            });
+
+            $('#guardar-citas').on('click', function() {
+                var title       = '';
+                var dialogClass = '';
+                var msg         = '';
+                var width       = 800;
+
+                if(citasTransferidas.length > 0) {
+                    $('.sonata-ba-content').waitMe({ 'text': '<h3><strong>Procesando las citas a transferir.</strong></h3>Esto puede tomar un poco de tiempo, no cierre ni recargue la pagina, por favor espere...' })
+                    $.ajax({
+                        url: Routing.generate("citas_transferir_cita"),
+                        async: true,
+                        dataType: 'json',
+                        method: "POST",
+                        data: { citas: JSON.stringify(citasTransferidas) },
+                        success: function(data) {
+                            $('#error-messages').empty();
+
+                            if(data.status) {
+                                if( Object.keys(data.transferred).length > 0 ) {
+                                    $.each(data.transferred, function(key, transferred) {
+                                        var index = getIndexOfK(citasTransferidas, 'htmlId', transferred.idHtml);
+
+                                        if(index != -1) {
+                                            citasTransferidas.splice(index, 1);
+                                        } else {
+                                            console.error('Error no se pudo encontrar el id html de la cita: '+transferred.idHtml+' en el array de citas Transferidas: ');
+                                            console.log(citasTransferidas);
+                                        }
+                                    });
+                                }
+
+                                if( data.notFound.length > 0 ) {
+                                    title = 'Problemas al guardar los cambios';
+                                    dialogClass = 'dialog-error';
+
+                                    msg = '<strong>Problemas al guardar los cambios de transferencia.</strong><br />'+
+                                            ( data.notFound.length === 1 ? 'El cambio de transferencia de cita no se pudo guardar para la siguiente cita' : 'Los cambios de transferencia de citas no se pudieron guardar de las siguientes citas' )+
+                                            '<div class="table-responsive">'+
+                                                '<table class="table table-hover table-condensed" style="margin: 0px 30px;">'+
+                                                    '<thead>'+
+                                                        '<tr>'+
+                                                            '<th>Fecha</th>'+
+                                                            '<th>Horario</th>'+
+                                                            '<th>No. Expediente</th>'+
+                                                            '<th>Paciente</th>'+
+                                                        '</tr>'+
+                                                    '</thead>'+
+                                                        '<tbody>';
+
+                                    for (var i = 0; i < data.notFound.length; i++) {
+                                        msg +=  '<tr>'+
+                                                    '<td>'+$('#'+notFound[i]).attr('data-fecha')+'</td>'+
+                                                    '<td>'+$('#'+notFound[i]).attr('data-rango-hora')+'</td>'+
+                                                    '<td>'+$('#'+notFound[i]).attr('data-numero-expediente')+'</td>'+
+                                                    '<td>'+$('#'+notFound[i]).attr('data-nombre-paciente')+'</td>'+
+                                                '</tr>';
+                                    }
+
+                                    msg +=
+                                                    '</tbody>'+
+                                                '</table>'+
+                                            '</div>'+
+                                            '<br />Por favor intente nuevamente, si el problema persiste contacte con el Administrador.';
+                                } else {
+                                    title = 'Transferencia Exitosa';
+                                    dialogClass = 'dialog-success';
+
+                                    msg = '<strong>Transferencia Realizada Exitosamente.</strong><br />';
+
+                                    if( data.transferred.length === 1 ) {
+                                        msg += 'La cita ha sido transferida exitosamente,  a continuación se muestra el detalle de la transferencia:';
+                                    } else {
+                                        msg +=
+                                            'Las citas han sido transferidas exitosamente, a continuación se muestra el detalle de la transferencia:';
+                                    }
+
+                                    msg +=
+                                        '<div class="table-responsive">'+
+                                            '<table class="table table-hover table-condensed" style="margin: 0px 30px;">'+
+                                                '<thead>'+
+                                                    '<tr>'+
+                                                        '<th>No. Expediente</th>'+
+                                                        '<th>Paciente</th>'+
+                                                        '<th>Fecha y hora (Cita Transferida)</th>'+
+                                                        '<th></th>'+
+                                                    '</tr>'+
+                                                '</thead>'+
+                                                    '<tbody>';
+
+                                    for (var i = 0; i < data.transferred.length; i++) {
+                                        msg +=  '<tr>'+
+                                                    '<td>'+data.transferred[i].numeroExpediente+'</td>'+
+                                                    '<td>'+data.transferred[i].nombrePaciente+'</td>'+
+                                                    '<td>'+data.transferred[i].fechaHora+'</td>'+
+                                                    '<td><a href="{{ url('citasgetcomprobante') }}?id='+data.transferred[i].id+'" target="_blank" class="btn btn-info" style="color: #ffffff;"><span class="fa fa-print"> Imprimir</span></a></td>'+
+                                                '</tr>';
+                                    }
+
+                                    msg +=
+                                                    '</tbody>'+
+                                                '</table>'+
+                                            '</div>';
+
+                                    citasTransferidas = [];
+                                }
+
+                                $('#btn_citas_search').trigger('click');
+                                // $('#error-messages').append(msg);
+                            } else {
+                                console.error('Error al procesar la transferencia de citas - Detalles del Error: ');
+                                console.log(data.errorDetail);
+
+                                title       = 'Error al guardar los cambios';
+                                dialogClass = 'dialog-error';
+                                msg         = '<strong>Error al tratar de guardar los cambios de la transferencia</strong>. Por favor intente nuevamente, si el problema persiste contacte con el Administrador.';
+                                width       = 500;
+                            }
+
+                            showDialogMsg(title, msg, dialogClass, null, null, null, width);
+                        }
+                    })
+                    .always(function( jqXHR, textStatus, errorThrown ) {
+                        $('.sonata-ba-content').waitMe('hide');
+                    });
+                } else {
+                    title       = 'Error al Guardar la transferencia.';
+                    dialogClass = 'dialog-error';
+                    msg         = 'No se puede guardar ningun cambio de transferencia, debido a que <strong>ninguna cita ha sido transferida del Médico Propietario al Médico Suplente.</strong>.';
+                    width       = 500;
+
+                    showDialogMsg(title, msg, dialogClass, null, null, null, width);
+                }
+            });
+
+            function agregarCita(cita, tipoCita) {
+                var transferirComoAgregado = $('#ag-cupo-agregado').prop('checked') ? true : false;
+                var esAgregado             = cita.attr('data-id-estado-cita') === '6' ? true : false;
+                var tipoCitaBusqueda       = transferirComoAgregado ? ( esAgregado ? 'ag' : tipoCita ) : tipoCita;
+                var horario                = buscarHorarioDisponible(tipoCitaBusqueda);
+                var tipoCitaNew            = tipoCitaBusqueda;
+                var tbody                  = null;
+                var atributos              = cita.attr();
+                var status                 = false;
+                var horarioTitle           = '';
+                var tipoCitaOld            = cita.attr('data-id-estado-cita') === '6' ? 'ag' : ( cita.attr('data-id-tipo-cita') === '1' ? 'pv' : 'sb' );
+                // var tipoCitaOld         = parseInt( cita.attr('data-id-tipo-cita') ) === 1 ? 'pv' : ( parseInt( cita.attr('data-id-tipo-cita') ) === 2 ? 'sb' : 'ag' );
+                var asignado               = cita.closest('.panel').find('.badge.'+tipoCitaOld);
+
+                if(horario !== false) {
+                    cita.closest('tr').addClass('hidden');
+
+                    if(cita.closest('tbody').find("tr:not('[class*=hidden]')").length === 0) {
+                        if(cita.closest('tbody').find('tr.no-citas').length === 0) {
+                            cita.closest('tbody').append('<tr class="no-citas"><td colspan="6"><span class="disabled-label">No hay citas para ser transferidas...</span></td></tr>');
+                        } else {
+                            cita.closest('tbody').find('tr.no-citas').removeClass('hidden');
+                        }
+                    }
+
+                    tbody = horario.closest('div.bs-callout').find('table tbody');
+
+                    if(tbody.find('tr.no-citas').length > 0) {
+                        tbody.find('tr.no-citas').addClass('hidden');
+                    }
+
+                    tbody.append(
+                        '<tr>'+
+                            '<td>'+
+                                '<span class="fa fa-trash-o mouse-pointer" id="trash-'+atributos['id']+'" name="trash-'+atributos['name'].replace(/cita/g,'')+'" data-tipo="'+tipoCitaNew+'">'+
+                                '</span>'+
+                            '</td>'+
+                            '<td>'+atributos['data-numero-expediente']+'</td>'+
+                            '<td>'+atributos['data-nombre-paciente']+'</td>'+
+                            '<td>'+(tipoCitaBusqueda === 'ag' ? 'Agregado' : 'Programada')+'</td>'+
+                            // '<td>'+(primeraVez === true ? 'Primera Vez' : 'Subsecuente')+'</td>'+
+                            '<td>'+atributos['data-nombre-tipo-cita']+'</td>'+
+
+                        '</tr>'
+                    );
+
+                    cita.iCheck('disable');
+                    cita.iCheck('uncheck');
+                    /* Actualizando la cantidad de asignados del rango de hora de la cita transferida*/
+                    agregarRestarCapacidadAsignado(asignado, asignado, tipoCitaOld, '-');
+
+                    /* Actualizando la cantidad de asignados del rango de hora*/
+                    agregarRestarCapacidadAsignado(horario, horario.closest('.bs-callout').find('.collapsed .badge.'+tipoCitaNew), tipoCitaNew, '+');
+
+                    /* Actualizando la cantidad de asignados del día del rango de hora seleccionado*/
+                    agregarRestarCapacidadAsignado(horario.closest('.panel').find('.panel-title .badge.'+tipoCitaNew), horario.closest('.panel').find('.panel-title .badge.'+tipoCitaNew), tipoCitaNew, '+', isPanel = true);
+
+                    citasTransferidas.push({ htmlId: atributos['id'], idEmpleado: $idEmpleadoSuplente.select2('val'), idEspecialidad: $idEspecialidadSuplente.select2('val'), idCita: atributos['data-id-cita'], fecha: horario.attr('data-fecha'), idRangohora: horario.attr('data-id'), tipoCita: tipoCita, agregado: ( tipoCitaBusqueda === 'ag' ? true : false ), idMotivo: ( tipoCitaBusqueda === 'ag' ? atributos['data-id-justificacion'] : '' )  });
+
+                    status = true;
+                }
+
+                return status;
+            }
+
+            function agregarRestarCapacidadAsignado(elemento, budge, tipo, action, isPanel) {
+                var title     = '';
+                var residente = elemento.attr('data-residente') === 'true' ? true : false;
+                var generico  = elemento.attr('data-generico') === 'true' ? true : false;
+                var isPanel   = isPanel === true ? true : false;
+
+                elemento.attr( 'data-'+tipo+'-asignado', (  action === '+' ? ( parseInt( elemento.attr('data-'+tipo+'-asignado') ) + 1 ) : ( parseInt( elemento.attr('data-'+tipo+'-asignado') ) - 1 ) ) );
+                title = elemento.attr('data-'+tipo+'-asignado')+(parseInt( elemento.attr('data-'+tipo+'asignado') ) !== 1 ? ' pacientes asignados' : ' paciente asignado')+
+                        ( elemento.attr('data-residente') === 'true' ? ( isPanel ? '' : ( generico ? '' : ' de un total de '+elemento.attr('data-'+tipo+'-capacidad' ) )+' para pacientes ' ) : ' de un total de '+elemento.attr('data-'+tipo+'-capacidad')+' para pacientes ' )+
+                        ( tipo === 'pv' ?  'de primera vez' : ( tipo === 'sb' ? 'subsecuentes' : 'agregados' ) );
+                budge.attr('title', title);
+                budge.empty().append( elemento.attr('data-'+tipo+'-asignado')+( residente === true ?  ( isPanel ? '' : ( generico ? '' : '/'+elemento.attr('data-'+tipo+'-capacidad' ) ) ) : '/'+elemento.attr('data-'+tipo+'-capacidad') ) );
+
+                return;
+            }
+
+            function buscarHorarioDisponible(tipo) {
+                var horario           = null;
+                var pattern           = 'data-'+tipo+'-';
+                var lastChecked       = $('#box-med-suplente').find('input[type="checkbox"]:checked:last');
+                var noSchedule        = $('#ningun-horario').prop('checked');
+                var nextScheduleDay   = $('#siguiente-horario-dia').prop('checked');
+                var nextScheduleRange = $('#siguiente-horario-rango-fecha').prop('checked');
+
+                horario = recorrerHorarios(pattern, $('#box-med-suplente').find('input[type="checkbox"]:checked'));
+
+                if(horario === null) {
+                    if(noSchedule === false) {
+                        if(nextScheduleDay === true || nextScheduleRange === true) {
+                            horario = recorrerHorarios(pattern, lastChecked.closest('div.bs-callout').nextAll().has(":checkbox").find('input[type="checkbox"]'));
+
+                            if(horario === null) {
+                                if(nextScheduleRange === true) {
+                                    horario = recorrerHorarios(pattern, lastChecked.closest('div.panel').nextAll().has(":checkbox").find('input[type="checkbox"]'));
+
+                                    if(horario === null) {
+                                        horario = recorrerHorarios(pattern, lastChecked.closest('div[id^="content-page-"]').nextAll().has(":checkbox").find('input[type="checkbox"]'));
+
+                                        if(horario === null) {
+                                            horario = false;
+                                        }
+                                    }
+                                } else {
+                                    horario = false;
+                                }
+                            }
+                        } else {
+                            horario = false;
+                        }
+                    } else {
+                        horario = false;
+                    }
+                }
+
+                return horario;
+            }
+
+            function recorrerHorarios(pattern, horarios) {
+                var horario    = null;
+                var patternType = pattern.replace(/-/g,'').replace(/data/g,'');
+
+                if(horarios.length > 0) {
+                    horarios.each(function() {
+                        var atributos = $(this).attr();
+                        var capacidad = atributos['data-residente'] === 'true' ? ( atributos['data-generico'] === 'true' ? ( $('#def-capacidad-'+patternType).val() === '' ? 0 : parseInt( $('#def-capacidad-'+patternType).val() ) ) : parseInt( atributos[pattern+'capacidad'] ) ) : parseInt( atributos[pattern+'capacidad'] );
+                        var asignado  = parseInt( atributos[pattern+'asignado'] );
+
+                        if( (  capacidad - asignado ) > 0 ) {
+                            horario = $(this);
+                            return false;
+                        } else {
+                            return;
+                        }
+                    });
+                }
+
+                return horario;
+            }
+
+            function evaluateCheckUncheckIcon(element, iconCheck, msj) {
+                var totalCheckBoxes = 0;
+                var totalChecked    = 0;
+                var totalUnchecked  = 0;
+                var check           = null;
+                totalCheckBoxes = element.find('input[type="checkbox"]').length;
+
+                element.find('input[type="checkbox"]').each(function(index) {
+                    if( $(this).prop('checked') ) {
+                        totalChecked++;
+                    } else {
+                        totalUnchecked++;
+                    }
+                });
+
+                if(totalCheckBoxes > 0) {
+                    if(totalChecked === totalCheckBoxes) {
+                        check = true;
+                    } else {
+                        if(totalUnchecked === totalCheckBoxes) {
+                            check = false;
+                        } else {
+                            check = null;
+                        }
+                    }
+                } else {
+                    check = false;
+                }
+
+                checkUncheckIcon(iconCheck, check, msj);
+            }
+
+            function checkUncheckIcon(element, check, title) {
+                switch (check) {
+                    case true:
+                        element.removeClass('fa-square-o');
+                        element.removeClass('fa-minus-square');
+                        element.addClass('fa-check-square');
+                        element.attr('title','Click para deseleccionar todos los pacientes '+title);
+                        element.css({'color': '#428bca'});
+                        break;
+                    case false:
+                        element.removeClass('fa-check-square');
+                        element.removeClass('fa-minus-square');
+                        element.addClass('fa-square-o');
+                        element.attr('title','Click para deseleccioar todos los pacientes '+title);
+                        element.css({'color': '#989898'});
+                        break;
+                    default:
+                        element.removeClass('fa-square-o');
+                        element.removeClass('fa-check-square');
+                        element.addClass('fa-minus-square');
+                        element.attr('title','Click para deseleccioar todos los pacientes '+title);
+                        element.css({'color': '#428bca'});
+                        break;
+                }
+            }
+
+            function evaluateExpandCompressIcon(element, iconElement) {
+                var totalCollapsed = 0;
+                var totalShow      = 0;
+                var totalHide      = 0;
+                var type           = null;
+
+                totalCollapsed = element.find('div.panel-collapse').length;
+
+                element.find('div.panel-collapse').each(function(index) {
+                    if( $(this).hasClass('in') ) {
+                        totalShow++;
+                    } else {
+                        totalHide++;
+                    }
+                });
+
+                if(totalCollapsed > 0) {
+                    if(totalShow === totalCollapsed) {
+                        type = true;
+                    } else {
+                        if(totalHide === totalCollapsed) {
+                            type = false;
+                        } else {
+                            type = null;
+                        }
+                    }
+                } else {
+                    type = null;
+                }
+
+                expandCompressIcon(iconElement, type);
+            }
+
+            function expandCompressIcon(element, type) {
+                switch (type) {
+                    case true:
+                        element.removeClass('fa-expand');
+                        element.addClass('fa-compress');
+                        element.attr('title','Click para contraer todas las fechas');
+                        element.css({'color': '#428bca'});
+                        break;
+                    default:
+                        element.removeClass('fa-compress');
+                        element.addClass('fa-expand');
+                        element.attr('title','Click para expandir todas las fechas');
+                        element.css({'color': '#989898'});
+                        break;
+                }
+            }
+
+            function evaluatePagination(element) {
+                var parent          = element.parent();
+                var First           = parent.parent().find('a[aria-label="First"]');
+                var Last            = parent.parent().find('a[aria-label="Last"]');
+                var Next            = parent.parent().find('a[aria-label="Next"]');
+                var Previous        = parent.parent().find('a[aria-label="Previous"]');
+                var lastPage        = parseInt( Last.attr('data-page') );
+                var firstPage       = parseInt( First.attr('data-page') );
+                var newActivePage   = parseInt( element.attr('data-page') );
+                var newNextPage     = (lastPage - newActivePage) > 0 ? (newActivePage + 1) : lastPage;
+                var newPreviousPage = (newActivePage - firstPage) > 0 ? (newActivePage - 1) : firstPage;
+                var propietario     = parent.parent().attr('id') === 'pagination-mdp-propietario' ? true : false;
+                var pageIdPattern   = propietario ? 'box-med-propietario' : 'box-med-suplente';
+                var contentPage     = element.closest('#content-page-'+newActivePage);
+
+                parent.siblings().removeClass('active');
+                parent.parent().find('a[href="#page'+newActivePage+'"]').parent().addClass('active');
+                parent.siblings().removeClass('hidden');
+
+                switch (element.attr('aria-label')) {
+                    case 'First':
+                        parent.addClass('hidden');
+                        Previous.parent().addClass('hidden');
+                        break;
+                    case 'Last':
+                        parent.addClass('hidden');
+                        Next.parent().addClass('hidden');
+                        break;
+                    default:
+                        hideNextLast(lastPage, newActivePage, Next, Last);
+                        hidePreviousFirst(firstPage, newActivePage, Previous, First);
+                        break;
+                }
+
+                Next.attr('data-page', newNextPage);
+                Previous.attr('data-page', newPreviousPage);
+
+                $('body #'+ pageIdPattern +' div[id^="content-page-"]').addClass('hidden');
+                $('body #'+ pageIdPattern +' #content-page-'+newActivePage).removeClass('hidden');
+
+                evaluateCheckUncheckIcon(contentPage, $('#'+pageIdPattern+' i.check-hole'), '');
+                evaluateExpandCompressIcon(contentPage, $('#'+pageIdPattern+' i.expand-all'));
+            }
+
+            function hidePreviousFirst(firstPage, newActivePage, Previous, First) {
+                if( (newActivePage - firstPage) <= 1 ) {
+                    if( (newActivePage - firstPage) === 0 ) {
+                        Previous.parent().addClass('hidden');
+                    }
+
+                    First.parent().addClass('hidden');
+                }
+            }
+
+            function hideNextLast(lastPage, newActivePage, Next, Last) {
+                if( (lastPage - newActivePage) <= 1 ) {
+                    if( (lastPage - newActivePage) === 0 ) {
+                        Next.parent().addClass('hidden');
+                    }
+
+                    Last.parent().addClass('hidden');
+                }
+            }
+
+            function getMedico(element) {
+                $.ajax({
+                    url: Routing.generate("citasgetmedico"),
+                    async: true,
+                    dataType: 'json',
+                    success: function(data) {
+                        $.each(data.data1, function(indice, val) {
+                            if (superAdmin) {
+                                element.append( $('<option>', {value: val.id, text: val.nombre, 'data-residente': val.residente} ) );
+                            } else {
+                                if( val.idEstablecimiento === {% if app.user.getIdEmpleado %}{{ app.user.getIdEmpleado.getIdEstablecimiento.getId }}{% else %}''{% endif %} ) {
+                                    element.append( $('<option>', {value: val.id, text: val.nombre, 'data-residente': val.residente} ) );
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+            function getMedicoEspecialidad(element, idEmpleado) {
+                if(idEmpleado) {
+                    $.ajax({
+                        url: Routing.generate('citasgetmedicoespecialidadestab') + '?idEmpleado=' + idEmpleado,
+                        async: true,
+                        dataType: 'json',
+                        success: function(data) {
+                            if(Object.keys(data.result).length > 0) {
+                                $.each(data.result, function(indice, val) {
+                                    if (superAdmin) {
+                                        element.append($('<option>', {value: val.id, text: val.nombre}));
+                                    } else {
+                                        if (val.idEstablecimiento === {% if app.user.getIdEmpleado %}{{ app.user.getIdEmpleado.getIdEstablecimiento.getId }}{% else %}''{% endif %}) {
+                                            element.append($('<option>', {value: val.id, text: val.nombre }));
+                                        }
+                                    }
+                                });
+
+                                enableDisableEspecialidadSuplente();
+                            } else {
+                                var propietario = $(element).attr('id') === '{{ admin.uniqid }}_idEspecialidadPropietario' ? true : false;
+                                var idMessage   = 'error-messages';
+                                var idEmpleado  = propietario === true ? '{{ admin.uniqid }}_idEmpleadoPropietario' : '{{ admin.uniqid }}_idEmpleadoSuplente';
+
+                                $('#'+idMessage).empty();
+                                $('#'+idMessage).append(
+                                    '<div class="alert alert-warning" role="alert">'+
+                        				'<h4><i class="fa fa-warning"></i> Especialidad no encontrada</h4>'+
+                        				'El médico '+$('#'+idEmpleado).select2('data').text+' <strong>No posee ninguna especialidad</strong> por favor contacte al encargado de la consulta externa para que se le cofigure sus especialidades.'+
+                        			'</div>'
+                                );
+                            }
+                        }
+                    });
+                }
+            }
+
+            function validate() {
+                var errorArray = [];
+
+                if(!$idEmpleadoPropietario.select2('val')) {
+                    errorArray.push({id: 'idEmpleadoPropietario', nombre: 'Nombre del Médico Propietario'});
+                }
+
+                if(!$idEspecialidadPropietario.select2('val')) {
+                    errorArray.push({id: 'idEspecialidadSuplente', nombre: 'Especialidad del Médico Propietario'});
+                }
+
+                if(!$idEmpleadoSuplente.select2('val')) {
+                    errorArray.push({id: 'idEmpleadoSuplente', nombre: 'Nombre del Médico Suplente'});
+                }
+
+                if(!$idEspecialidadSuplente.select2('val')) {
+                    errorArray.push({id: 'idEspecialidadSuplente', nombre: 'Especialidad del Médico Suplente'});
+                }
+
+                if(!$rangoFecha.val()) {
+                    errorArray.push({id: 'rangoFecha', nombre: 'Rango de Fecha'});
+                }
+
+                return errorArray;
+            }
+
+            function initializeICheck() {
+                $('.icheck').each(function() {
+                    var type = $(this).attr('data-type');
+
+                    $(this).iCheck({
+                        checkboxClass: 'icheckbox_'+type,
+                        radioClass: 'iradio_'+type
+                    });
+                });
+            }
+
+            function cssComplement() {
+                $('body .panel-heading.dia-no-disponible').parent().css({'border-right': '1px solid #F3F4F5', 'border-left': '3px solid #E6E7E8', 'border-top': '1px solid #F3F4F5', 'border-bottom': '1px solid #F3F4F5'});
+                $('body .panel-heading.dia-bloqueado').parent().css({'border-right': '1px solid #FFE7E7', 'border-left': '3px solid #DD4B39', 'border-top': '1px solid #FFE7E7', 'border-bottom': '1px solid #FFE7E7'});
+                $('body .panel-heading.dia-festivo').parent().css({'border-right': '1px solid #FFF1E1', 'border-left': '3px solid #ED872D', 'border-top': '1px solid #FFF1E1', 'border-bottom': '1px solid #FFF1E1'});
+            }
+
+            function cleanElements(showEmptyMessage) {
+                showEmptyMessage = (typeof showEmptyMessage === 'undefined') ? true : showEmptyMessage;
+
+                if(autoClean) {
+                    $('#ningun-horario').iCheck('check');
+
+                    $('#box-med-propietario .display-tools').addClass('hidden');
+                    $('#med-propietario-message').empty();
+                    if(showEmptyMessage) { $('#med-propietario-message').append('<div class="alert alert-info" role="alert">Haga click en el botón <strong>Consultar</strong> para ver los resultados de la búsqueda...</div>'); }
+                    $('#box-med-propietario .todo-list').empty();
+                    $('#box-med-propietario .todo-list').css('margin-top','');
+                    $('#pagination-mdp-propietario').empty();
+
+                    $('#box-med-suplente .display-tools').addClass('hidden');
+                    $('#med-suplente-message').empty();
+                    if(showEmptyMessage) { $('#med-suplente-message').append('<div class="alert alert-info" role="alert">Haga click en el botón <strong>Consultar</strong> para ver los resultados de la búsqueda...</div>'); }
+                    $('#box-med-suplente .todo-list').empty();
+                    $('#box-med-suplente .todo-list').css('margin-top','');
+                    $('#pagination-mdp-suplente').empty();
+                }
+            }
+
+            function getIndexOfK(arr, field, clue) {
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i][field] === clue) {
+                        return i;
+                    }
+                }
+                return -1;
+            }
+
+            function saveButtonChangeStatus() {
+                if(citasTransferidas.length > 0) {
+                    $('#guardar-citas').prop('disabled', false);
+                } else {
+                    $('#guardar-citas').prop('disabled', 'disabled');
+                }
+            }
+
+            function enableDisableEspecialidadSuplente() {
+                $('#'+$idEspecialidadSuplente.attr('id')+' option[disabled]').each(function() {
+                    $(this).removeAttr('disabled');
+                });
+
+                if($idEmpleadoPropietario.select2('val') === $idEmpleadoSuplente.select2('val')) {
+                    $('#'+$idEspecialidadSuplente.attr('id')+' option[value="'+$idEspecialidadPropietario.select2('val')+'"]').attr('disabled','disabled');
+                }
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div id="error-messages"></div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <div class="box box-success">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Transferencia de citas</h3>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                            <div class="small-box bg-aqua">
+                                <div class="inner" style="padding-right: 90px;">
+                                    <h4><strong>Datos del Médico Propietario</strong></h4>
+                                    <p>Médico al que pertenecen las citas.</p>
+                                    <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_idEmpleadoPropietario">
+                                        <label class="control-label required" for="{{ admin.uniqid }}_idEmpleadoPropietario">
+                                            Nombre
+                                        </label>
+                                        <div class="input-group sonata-ba-field sonata-ba-field-standard-natural" style="width:100%;">
+                                            <select id="{{ admin.uniqid }}_idEmpleadoPropietario" name="{{ admin.uniqid }}[idEmpleadoPropietario]"></select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_idEspecialidadPropietario" style="width:100%;">
+                                        <label class="control-label required" for="{{ admin.uniqid }}_idEspecialidadPropietario">
+                                            Especialidad
+                                        </label>
+                                        <div class="input-group sonata-ba-field sonata-ba-field-standard-natural" style="width:100%;">
+                                            <select id="{{ admin.uniqid }}_idEspecialidadPropietario" name="{{ admin.uniqid }}[idEspecialidadPropietario]"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="icon">
+                                    <i class="fa fa-user-md"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                            <div class="small-box bg-teal">
+                                <div class="inner" style="padding-right: 90px;">
+                                    <h4><strong>Datos del Médico Suplente</strong></h4>
+                                    <p>Médico al que se le trasladrán las citas</p>
+                                    <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_idEmpleadoSuplente">
+                                        <label class="control-label required" for="{{ admin.uniqid }}_idEmpleadoSuplente">
+                                            Nombre
+                                        </label>
+                                        <div class="input-group sonata-ba-field sonata-ba-field-standard-natural" style="width:100%;">
+                                            <select id="{{ admin.uniqid }}_idEmpleadoSuplente" name="{{ admin.uniqid }}[idEmpleadoSuplente]"></select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_idEspecialidadSuplente" style="width:100%;">
+                                        <label class="control-label required" for="{{ admin.uniqid }}_idEspecialidadSuplente">
+                                            Especialidad
+                                        </label>
+                                        <div class="input-group sonata-ba-field sonata-ba-field-standard-natural" style="width:100%;">
+                                            <select id="{{ admin.uniqid }}_idEspecialidadSuplente" name="{{ admin.uniqid }}[idEspecialidadSuplente]"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="icon">
+                                    <i class="fa fa-user-md"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-9 col-md-10 col-lg-10">
+                            <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_rangoFecha">
+                                <label class="control-label required" for="{{ admin.uniqid }}_rangoFecha">
+                                    Seleccione el Rango de Fecha
+                                </label>
+                                <div class="input-group sonata-ba-field sonata-ba-field-standard-natural">
+                                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                                    <input type="text" class="form-control bootstrap-daterangepicker" id="{{ admin.uniqid }}_rangoFecha" name="{{ admin.uniqid }}[rangoFecha]"
+                                           data-mask="99/99/9999 - 99/99/9999" placeholder="dd/mm/yyyy - dd/mm/yyyy" value="" style="text-align:center; background-color: #FFFFFF;" data-date-start-date="{{ "now"|date("d/m/Y") }}"
+                                           data-date-min-date="{{ "now"|date("d/m/Y") }}" data-date-show-dropdowns="true" data-date-opens="center" data-date-auto-apply="true";
+                                     />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-3 col-md-2 col-lg-2">
+                            <div class="form-group" id="sonata-ba-field-container-{{ admin.uniqid }}_btnSearch" style="height: 59px;vertical-align: bottom;display: table-cell;">
+                                <button type="button" class="btn btn-info" id="btn_citas_search" name="btn_citas_search"><i class="fa fa-search"></i> Consultar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-md-12 col-lg-12">
+            <div id="info-box-message" class="bs-callout bs-callout-default hidden">
+                <h4>Información</h4>
+                <div class="row" style="padding-left:15px;">
+                    <div class="col-md-12">
+                        <strong style="display:block;">Codigo de Colores:</strong>
+                        <label class="label" style="background-color: #0073b7; height: 19px; width: 19px; display: inline-flex;"></label> <label class="label" style="color: #777; font-size: 100%;">Primera Vez</label>
+                        <label class="label" style="background-color: #00a65a; height: 19px; width: 19px; display: inline-flex;"></label> <label class="label" style="color: #777; font-size: 100%;">Subsecuentes</label>
+                        <label class="label" style="background-color: #39cccc; height: 19px; width: 19px; display: inline-flex;"></label> <label class="label" style="color: #777; font-size: 100%;">Agregados</label>
+                    </div>
+                    <div class="col-md-12">
+                        <br />
+                        <div class="alert alert-info" role="alert" style="margin-left: 0px;">
+                            <strong style="display:block;">Indicaciones de Traslado de Citas:</strong>
+                            <p style="padding-left:20px;">
+                                Una vez que haya seleccionado todas las citas que desea transferir, haga click sobre el botón <strong>Transferir</strong>. <strong>Los cambios de transferencia serán
+                                aplicados solamente si se hace click sobre el botón Guardar</strong>.<br />
+                                A continuaci&oacute;n se le presenta una lista de opciones para el traslado de citas del m&eacute;dico propietario al m&eacute;dico suplente:
+                            </p>
+                            <br />
+                            <div class="row" style="padding-left:20px;">
+                                <div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
+                                    <div class="callout callout-info">
+                                        <h4>Configuración de Citas a Transferir:</h4>
+                                        <div class="row" class="color: #777 !importan;">
+                                            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                                <div class="row">
+                                                    <div class="col-xs-6 col-sm-5 col-md-4 col-lg-3">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input type="radio" id="ningun-horario" name="optionsRadios" class="icheck" data-type="square-blue" checked />
+                                                                <strong>Transferir únicamente en dia(s) y horario(s) seleccionados</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
+                                                        Si selecciona esta opción, <strong>solamente se asignarán citas en los horarios seleccionados</strong>, para el día o días al que pertenece el/los horario(s). Si la capacidad de estos son menores al número de citas que se desea transferir, <strong>las citas restantes no serán transferidas</strong>.
+                                                    </div>
+                                                </div>
+                                                {#<div class="row">
+                                                    <div class="col-xs-6 col-sm-5 col-md-4 col-lg-3">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input type="radio" id="siguiente-horario-dia" name="optionsRadios" class="icheck" data-type="square-blue" />
+                                                                <strong>Siguiente Horario Disponible del día</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
+                                                        Si selecciona esta opción, le permitirá asignar citas del médico propietario al médico suplente en los siguientes horarios disponibles <strong>solamente para el mismo día, a partir del último horario seleccionado</strong>.
+                                                        Esta opción es aplicada <strong>solamente cuando el número de citas que se desean transferir sobrepasan la capacidad del/los horarios seleccionados</strong>.
+                                                    </div>
+                                                </div>#}
+                                                <div class="row hidden">
+                                                    <div class="col-xs-6 col-sm-5 col-md-4 col-lg-3">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input type="radio" id="siguiente-horario-rango-fecha" name="optionsRadios" class="icheck" data-type="square-blue" />
+                                                                <strong>Transferir a partir de la Fecha y Hora dentro del Rango de Búsqueda</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
+                                                        Si selecciona esta opción, le permitirá asignar citas del médico propietario, al médico suplente en los siguientes horarios disponibles <strong>posteriores al último horario seleccionado del rango de fechas del cual se ha realizado la búsqueda</strong>.
+                                                        Esta opción es aplicada <strong>solamente cuando el número de citas que se desean transferir sobrepasan la capacidad del/los horarios seleccionados</strong>.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
+                                    <div class="callout callout-warning">
+                                        <h4>Configuración de Pacientes Agregados a transferir:</h4>
+                                        <div class="row" class="color: #777 !important;">
+                                            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                                <div class="row">
+                                                    <div class="col-xs-6 col-sm-5 col-md-4 col-lg-3">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input type="radio" id="ag-cupo-ordinario" name="optionsRadios2" class="icheck" data-type="square-yellow" checked />
+                                                                <strong>Cupo Ordinario</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
+                                                        Si selecciona esta opción, los pacientes <strong>agregados</strong> del médico propietario<strong>serán asignados en los cupos ordinarios</strong> (primera vez y subsecuentes) del médico suplente.
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-xs-6 col-sm-5 col-md-4 col-lg-3">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input type="radio" id="ag-cupo-agregado" name="optionsRadios2" class="icheck" data-type="square-yellow" />
+                                                                <strong>Cupo Agregado</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
+                                                        Si selecciona esta opción, los pacientes <strong>agregados</strong> del médico propietario<strong>serán asignados en los cupos de pacientes agregados</strong> del médico suplente.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-12 col-sm-12 col-md-12 col-md-12 residente-capacidad hidden">
+                                    <strong>Definir Capacidad de Atencion de Paciente</strong>
+                                    <div class="row" style="padding-left:25px;padding-right:25px;">
+                                        <div class="col-xs-5 col-sm-4 col-md-3 col-lg-2">
+                                            <div class="form-inline">
+                                                <div class="form-group">
+                                                    <label for="def-pv-capacidad">Capacidad Primera Vez</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">#</span>
+                                                        <input type="text" id="def-capacidad-pv" class="form-control" placeholder="0" data-mask="9?9">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="def-sb-capacidad">Capacidad Subsecuentes</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">#</span>
+                                                        <input type="text" id="def-capacidad-sb" class="form-control" placeholder="0" data-mask="9?9">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-7 col-sm-8 col-md-9 col-lg-10">
+                                            Esta opción le permite asignar <strong>las capacidad de citas que puede atender el médico suplente</strong> en los hoarios seleccionados (y en los posteriores a este, dependiendo de la configuración de la opción <strong>"Asignar cita en el siguiente horario disponible"</strong>
+                                            que se haya seleccionado), para pacientes de primera vez como subsecuentes y sólo <strong>cuando el médico suplente seleccionado es residente</strong>. Si no se asigna una capacidad se tómara como <strong>valor por defecto CERO</strong>.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-xs-12 col-sm-12 col-md-12 col-md-12">
+                                    <div class=text-right>
+                                        <button id="transferir-citas" type="button" class="btn btn-primary"><div class="double-arrow-icon"><span class="fa fa-long-arrow-left"></span><span class="fa fa-long-arrow-right"></span></div> Transferir</button>
+                                        <button id="guardar-citas" type="button" class="btn btn-success" disabled="disabled"><span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+            <div class="box box-info" id="box-med-propietario">
+                <div class="box-header">
+                    <i class="fa fa-calendar"></i>
+                    <h3 class="box-title">Citas del Médico Propietario</h3>
+                    <div class="box-tools pull-right">
+                        <ul class="pagination pagination-sm inline" id="pagination-mdp-propietario">
+                        </ul>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="display-tools pull-right hidden" style="font-size:18px;color:#989898;padding: 0px 16px 15px 0px;">
+                                <i class="fa fa-expand expand-all" data-toggle="tooltip" data-placement="top" title="Click para expandir todas las fechas"></i>
+                                <i class="fa fa-square-o check-hole" style="padding-left:10px;" title="Click para Seleccionar las citats de todas las fechas"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div id="med-propietario-message">
+                                <div class="alert alert-info" role="alert">
+                                    Haga click en el botón <strong>Consultar</strong> para ver los resultados de la búsqueda...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="todo-list">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+            <div class="box box-success aqua" id="box-med-suplente">
+                <div class="box-header">
+                    <i class="fa fa-calendar"></i>
+                    <h3 class="box-title">Citas del Médico Suplente</h3>
+                    <div class="box-tools pull-right">
+                        <ul class="pagination pagination-sm inline" id="pagination-mdp-suplente">
+                        </ul>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="display-tools pull-right hidden" style="font-size:18px;color:#989898;padding: 0px 16px 15px 0px;">
+                                <i class="fa fa-expand expand-all" data-toggle="tooltip" data-placement="top" title="Click para expandir todas las fechas"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div id="med-suplente-message">
+                                <div class="alert alert-info" role="alert">
+                                    Haga click en el botón <strong>Consultar</strong> para ver los resultados de la búsqueda...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="todo-list">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

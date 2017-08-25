@@ -1,0 +1,462 @@
+<html>
+    <head>
+        <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        {% include 'MinsalSiapsBundle::standard_css_reportes.html.twig' %}
+        <link href="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" rel="stylesheet">
+        <style type="text/css">
+
+            html,body {
+                overflow: visible !important;
+                color: black !important;
+                border-style: none !important;
+                border-color:black !important;
+                font-size: 12px!important;
+            }
+
+            div .table-responsive {
+                overflow: visible !important;
+                border-style: none !important
+            }
+
+            .panel{
+                margin: 8px;
+            }
+
+            .panel-info > .panel-heading,.titulo_vista {
+                background-color: white;
+                font-size: 12px;
+                border-color: black;
+                color: black;
+                font-weight: bold;
+                border-style: none !important;
+                padding: 2px 5px;
+            }
+
+            table{
+                font-size: 10px!important;
+            }
+
+            .panel-body, .vista_paciente{
+                font-size: 10px;
+                border-style: none !important;
+            }
+
+            td,th {
+                padding: 2px 5px;
+            }
+
+            .panel-info{
+                border-color:black
+            }
+
+            table {
+                width: 100%
+            }
+
+            .square-span{
+                border: 1px solid #000000;
+                width: 15px !important;
+                height: 12px !important;
+                margin: 0px;
+                padding: 0px;
+                display: inline-block;
+            }
+
+            .table-strong-label strong  {
+                font-size: 11px;
+            }
+
+            .border-title{
+                border: 1px solid #000000;
+            }
+        </style>
+    </head>
+    <body >
+        <div style="height: 824px;border-bottom-style: dashed; border-width: 1px;">
+            <div class="table-responsive" style="overflow-x: auto; border:0px; ">
+                <table  style="font-size: 10px;border:0px;">
+                    <tbody>
+                        <tr>
+                            <td><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/Reporte-Escudo.png') }}" style="width: 50px;"/></td>
+                            <td  width="500px">
+                                <center>
+                                    MINISTERIO DE SALUD <br/>
+                                    SISTEMA NACIONAL DE SALUD/COMISION INTERSECTORIAL DE SALUD (CISALUD)<br/>
+                                    FORMULARIO PARA SOLICITUD Y CONFIRMACIÓN DE VIH (FVIH-01)<br/>
+                                    {{ app.user.getIdEstablecimiento()|upper }}
+                                </center>
+                            </td>
+                            <td ><img src="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/imagenes/minsal_2014.png') }}" style="width: 120px;float:right;"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <table class="table-strong-label">
+                <tbody>
+                    <tr class="border-title">
+                        <th colspan="8">A. DATOS GENERALES</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Fecha de Consulta: </strong></td>
+                        <td>{{ object.fechaconsulta | date('d-m-Y') }}</td>
+                        <td><strong>Nombre del Establecimiento</strong></td>
+                        <td colspan="5">{{ app.user.getIdEstablecimiento() }} </td>
+                    </tr>
+                    <tr>
+                        <td><strong>No. Expediente:</strong></td>
+                        <td>{{expediente.numero}}</td>
+                        <td><strong>Categoría de Afiliación:</strong></td>
+                        <td colspan="5">{{ expediente.idPaciente.idAreaCotizacion ? : '- -' }}</td>
+                    </tr>
+                    <tr class="border-title">
+                        <th colspan="8">I. DATOS DE IDENTIFICACIÓN</th>
+                    </tr>
+                    <tr>
+                        <td><strong>1er Nombre:</strong></td>
+                        <td>{{ expediente.idPaciente.primerNombre ? : '--' }}</td>
+                        <td><strong>1er Apellido:</strong></td>
+                        <td>{{ expediente.idPaciente.primerApellido ? : '--' }}</td>
+                        <td><strong>Fecha Nacimiento:</strong></td>
+                        <td>{{ expediente.idPaciente.fechaNacimiento | date ('d/m/Y') }}</td>
+                        <td><strong>DUI:</strong></td>
+                        <td>{{ expediente.idPaciente.idDocPaciente.id == 1 ? expediente.idPaciente.numeroDocIdePaciente : '- -' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2&deg; Nombre:</strong></td>
+                        <td>{{ expediente.idPaciente.segundoNombre ? : '--' }}</td>
+                        <td><strong>2&deg; Apellido:</strong></td>
+                        <td>{{ expediente.idPaciente.segundoApellido ? : '--' }}</td>
+                        <td><strong>Edad:</strong></td>
+                        <td colspan="3">{{ edad }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3er Nombre:</strong></td>
+                        <td>{{ expediente.idPaciente.tercerNombre ? : '--' }}</td>
+                        <td><strong>Apellido Casada:</strong></td>
+                        <td>{{ expediente.idPaciente.apellidoCasada ? : '--' }}</td>
+                        <td><strong>Sexo:</strong></td>
+                        <td>{{ expediente.idPaciente.idSexo }}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><strong>Si es menor de edad, nombre completo de responsable:</strong></td>
+                        <td colspan="3">
+                            {% set var=edad|split('año')%}
+                            {% if var|length == 2 %}
+                                {% if var[0] <18 %}
+                                    {{ expediente.idPaciente.nombreResponsable }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            {% else %}
+                                {{ expediente.idPaciente.nombreResponsable }}
+                            {% endif %}
+                        </td>
+                        <td colspan="1"><strong>Conocido por:</strong></td>
+                        <td colspan="1">{{ expediente.idPaciente.conocidoPor ? : '--' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Departamento:</strong></td>
+                        <td>{{ expediente.idPaciente.idDepartamentoDomicilio ? : '--' }}</td>
+                        <td><strong>Municipio:</strong></td>
+                        <td>{{ expediente.idPaciente.idMunicipioDomicilio ? : '--' }}</td>
+                        <td><strong>Area:</strong></td>
+                        <td>{{ expediente.idPaciente.areaGeograficaDomicilio ? : '--' }}</td>
+                        <td><strong>Nacionalidad:</strong></td>
+                        <td>{{ expediente.idPaciente.idNacionalidad ? : '--' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dirección Completa:</strong></td>
+                        <td colspan="5">{{ expediente.idPaciente.direccion }}</td>
+                        <td><strong>Teléfono:</strong></td>
+                        <td>{{ expediente.idPaciente.telefonoCasa ? : '--' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Estado Civil:</strong></td>
+                        <td>{{ expediente.idPaciente.idEstadoCivil ? : '--' }}</td>
+                        <td><strong>Alfabeta:</strong></td>
+                        <td>{{ solicitud.getAlfabeta() ? 'Si' : 'No' }}</td>
+                        <td><strong>Educación:</strong></td>
+                        <td>{{ solicitud.getIdNivelEducacion().getNombre() }}</td>
+                        <td><strong>Ocupación:</strong></td>
+                        <td>{{ solicitud.getIdOcupacion().getNombre() }}</td>
+                    </tr>
+                    <tr class="border-title">
+                        <th colspan="3" class="border-title">{{ 'II.Datos Espeficos de Mujeres en edad Reproductiva (09-54) Años'|upper }}</th>
+                        <th colspan="3" class="border-title">{{ 'III.Datos Especificos Sobre Población'|upper }}</th>
+                        <th colspan="2" class="border-title">{{ 'IV.Motivos de Solicitud de Examen'|upper }}</th>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="border-title">
+                            <table>
+                                <tr>
+                                    <td colspan="4"><center>Indagar en toda mujer en edad reproductiva (09 a 54 años de edad)</center></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Embarazada:</strong></td>
+                                    <td>{{ ( expediente.getIdPaciente().getIdCondicionPersona().getId() == 1 ) ? 'Si' : 'No' }}</td>
+                                    <td><strong>En control prenatal: </strong></td>
+                                    <td>{{ datoEmbarazo ? (datoEmbarazo.idEstablecimientoControl ? ' Si' : 'No') : 'No' }}</td><!-- Este se obtine de SecDatoEmbarazo -->
+                                    <!--<td colspan="2"><strong>En control prenatal:</strong>{{solicitud.idDatoEmbarazo ? solicitud.idDatoEmbarazo.controlPrenatal ? 'Si':'No' :'N/A'}}</td>--><!-- Proviene de TarDatosEmbarazada -->
+                                </tr>
+                                <tr>
+                                    <td><strong>Establecimiento de Control:</strong></td>
+                                    <td colspan="3">{{ datoEmbarazo ? (datoEmbarazo.idEstablecimientoControl ? datoEmbarazo.idEstablecimientoControl.nombre : '- -') : 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>FUM:</strong></td>
+                                    <td colspan="3">{{ datoEmbarazo ? datoEmbarazo.fechaUltimaMestruacion|date('d/m/Y') : 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Formula Obstétrica:</strong></td>
+                                    <td colspan="3">
+                                        {% if expediente.getIdPaciente().getIdAntecedentes() %}
+                                            {% if expediente.getIdPaciente().getIdAntecedentes().idAntecedentesObstetricos() %}
+                                                <table>
+                                                    <tr>
+                                                        <td>G: {{ expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.gestaciones ? : '- -' }}</td>
+                                                        <td>P: {{ expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.partosTermino ? : '- -' }}</td>
+                                                        <td>P: {{ expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.partoPrematuro ? : '- -' }}</td>
+                                                        <td>A: {{ expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.abortos ? : '- -' }}</td>
+                                                        <td>V: {{ expediente.idPaciente.idAntecedentes.idAntecedentesObstetricos.nacidosVivos ? : '- -' }}</td>
+                                                    </tr>
+                                                </table>
+                                            {% else %}
+                                                <table>
+                                                    <tr>
+                                                        <td>G: N/A</td>
+                                                        <td>P: N/A</td>
+                                                        <td>P: N/A</td>
+                                                        <td>A: N/A</td>
+                                                        <td>V: N/A</td>
+                                                    </tr>
+                                                </table>
+                                            {% endif %}
+                                        {% else %}
+                                            <table>
+                                                <tr>
+                                                    <td>G: N/A</td>
+                                                    <td>P: N/A</td>
+                                                    <td>P: N/A</td>
+                                                    <td>A: N/A</td>
+                                                    <td>V: N/A</td>
+                                                </tr>
+                                            </table>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><strong>Periodo de indicación del examen: </strong></td>
+                                    <td colspan="2">{{ solicitud.idDatoEmbarazo ? solicitud.idDatoEmbarazo.idPeriodo :'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td colspan="3" class="border-title">
+                            <table>
+                                <tr>
+                                    <td><strong>Orientación Sexual:</strong></td>
+                                    <td>{{ solicitud.getIdOrientacionSexual() }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Identitidad Sexual:</strong></td>
+                                    <td>{{solicitud.getIdentidadGenero()}}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><strong>Otros Posibles Factores de Riesgo</strong></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        {%for factor in solicitud.getIdFactoresRiesgo()%}
+                                            <ul style="margin: 0px;">
+                                                <li>{{factor}}</li>
+                                            </ul>
+                                        {%endfor%}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td colspan="2" class="border-title">
+                            <table>
+                                <tr>
+                                    <td><strong>Motivo:</strong></td>
+                                    <td>{{solicitud.getIdMotivoSolicitud()}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Población Meta:</strong></td>
+                                    <td>{{solicitud.getIdPoblacionMeta()}}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <br/>
+                            <table>
+                                <tr><td ><center>{{object.getIdEmpleado()}}</center></td></tr>
+                                <tr><td><center>Nombre de responsable de indicar prueba</center></td></tr>
+                                <tr><td><center><br/><br/><br/><br/><br/><br/></center></td></tr>
+                                <tr><td><center>Firma y Sello</center></td></tr>
+                            </table>
+                        </td>
+                        <td colspan="3">
+                            <table class="border-title">
+                                <tr>
+                                    <td colspan="4"><strong>V. DATOS CLINICOS:</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Clínica:</strong></td>
+                                    <td>{{ solicitud.getIdDatosClinicos() }}</td>
+                                    <td><strong>Manejo:</strong></td>
+                                    <td>{{ solicitud.getIdDatosManejo() }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td colspan="2">
+                            <table class="border-title">
+                                <tr>
+                                    <td colspan="2"><strong>VI. CONSEJERIA:</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Se registró consejería:</strong></td>
+                                    <td>{{ solicitud.getEsConsejeria() ? 'Si' : 'No' }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <br/>
+                        <td colspan="8"><center>Esta hoja deberá ser llenada en forma completa con letra legible por personal que indicó la prueba de VIH</center></td>
+                    </tr>
+                    <tr class="border-title">
+                        <td colspan="8">
+                            <center>
+                                <strong>Ley y Reglamento de Prevención y Control de la Infección Provocada por el Virus de Inmunodefiencia Humana<br/>
+                                        DECRETO No. 588. CAPITULO III. Vigilancia Epidemiológica Art. 30. Y DECRETO No.40 CAPITULO IV. Art.59. Art.61.
+                                </strong>
+                            </center>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <br/>
+        <table class="border-title">
+            <tbody>
+                <tr>
+                    <td><strong>Establecimiento: </strong>{{ app.user.getIdEstablecimiento()|upper }}</td>
+                    <td><strong>Fecha:</strong> _______________</td>
+                    <td><strong>ORDEN DE SOLICIUTD DE EXAMEN</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>1er Nombre: </strong>{{ expediente.idPaciente.primerNombre ? : '- -' }}</td>
+                    <td><strong>1er Apellido: </strong>{{ expediente.idPaciente.primerApellido ? : '- -' }}</td>
+                    <td><strong>DUI: </strong>{{ expediente.idPaciente.idDocPaciente.id == 1 ? expediente.idPaciente.numeroDocIdePaciente : '- -' }}</td>
+                </tr>
+                <tr>
+                    <td><strong>2&deg; Nombre: </strong>{{ expediente.idPaciente.segundoNombre ? : '- -' }}</td>
+                    <td><strong>2&deg; Apellido: </strong>{{ expediente.idPaciente.segundoApellido ? : '- -' }}</td>
+                    <td><strong>Conocido por: </strong>{{ expediente.idPaciente.conocidoPor  ? : '- -' }}</td>
+                </tr>
+                <tr>
+                    <td><strong>3er Nombre: </strong>{{ expediente.idPaciente.tercerNombre ? : '- -' }}</td>
+                    <td><strong>Apellido de Casada: </strong>{{ expediente.idPaciente.apellidoCasada ? : '- -' }}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>Edad: </strong>{{edad}}</td>
+                    <td><strong>Sexo: </strong>{{expediente.idPaciente.idSexo}}</td>
+                    <td><strong>No. Expediente: </strong>{{expediente.numero}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Motivo de Solicitud de Examen: </strong>{{solicitud.getIdMotivoSolicitud()}}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><center>{{object.getIdEmpleado()}}</center></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><center>Nombre de responsable de indicar prueba</center></td>
+                    <td><center>Firma y Sello</center></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Salto de Página-->
+        <p style="page-break-after: always;"></p>
+        <div style="height: 830px;border-bottom-style: dashed;border-width: 1px;">
+            <p style="text-align: right">Uso exclusivo de Laboratorio</p>
+            <p><strong>B. EXAMENES QUE FUNDAMENTAN EL DIANÓSTICO</strong></p>
+            <table class="border-title">
+                <td><br/></td>
+                <tr>
+                    <td><strong>Nombre del Establecimiento que realiza la prueba: </strong>____________________________________________________________________________________________________</td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Fecha toma de muestra: </strong>___________________&emsp;
+                        <strong>Fecha de realización: </strong>___________________&emsp;
+                        <strong>Fecha de resultado: </strong>___________________
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Prueba Rápida &nbsp;</strong><span class="square-span"></span>
+                        Marca _______________
+                        &nbsp;Reactivo pendiente de confirmar <span class="square-span"></span>
+                        &nbsp;No Reactivo a la fecha <span class="square-span"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>ELISA &emsp;&emsp;&emsp;&emsp;&nbsp;&nbsp;</strong><span class="square-span"></span>
+                        Marca _______________
+                        Lectura _____________
+                        Reactivo pendiente de confirmar <span class="square-span"></span>&nbsp;
+                        No Reactivo a la fecha <span class="square-span"></span>&nbsp;
+                        Indeterminado pendiente de confirmar <span class="square-span"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Responsable:</strong></td>
+                </tr>
+            </table>
+        </div>
+        <p><strong>EXÁMENES QUE FUNDAMENTAN EL DIAGNÓSTICO</strong></p>
+        <table class="border-title">
+            <td><br/></td>
+            <tr>
+                <td><strong>Nombre del Establecimiento que realiza la prueba: </strong>____________________________________________________________________________________________________</td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>Fecha toma de muestra: </strong>___________________&emsp;
+                    <strong>Fecha de realización: </strong>___________________&emsp;
+                    <strong>Fecha de resultado: </strong>___________________
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>Prueba Rápida &nbsp;</strong><span class="square-span"></span>
+                    Marca _______________
+                    &nbsp;Reactivo pendiente de confirmar <span class="square-span"></span>
+                    &nbsp;No Reactivo a la fecha <span class="square-span"></span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>ELISA &emsp;&emsp;&emsp;&emsp;&nbsp;&nbsp;</strong><span class="square-span"></span>
+                    Marca _______________
+                    Lectura _____________
+                    Reactivo pendiente de confirmar <span class="square-span"></span>&nbsp;
+                    No Reactivo a la fecha <span class="square-span"></span>&nbsp;
+                    Indeterminado pendiente de confirmar <span class="square-span"></span>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Responsable:</strong></td>
+            </tr>
+        </table>
+    </body>
+</html>

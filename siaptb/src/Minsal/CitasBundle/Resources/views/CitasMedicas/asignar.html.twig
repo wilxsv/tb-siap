@@ -1,0 +1,531 @@
+{# src/MinsalCitasBundle/CitasMedicas/asignar.html.twig #}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% set idAreaModEstab = idAreaModEstab ? idAreaModEstab : '1' %}
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntExpediente/list.css') }}" type="text/css" media="all" />
+{% endblock%}
+
+{% block javascripts %}
+    {{parent()}}
+    <script type="text/javascript">
+    $(document).ready(function () {
+        var idExpediente=$('#numExpNomPac');
+        var idAreaModEstab = $('#idAreaModEstab');
+        var idAtenAreaModEstab = $('#idAtenAreaModEstab');
+        var idEmpleado = $('#idEmpleado');
+        var idTipocita = $('#idTipocita');
+        var fecha = $('#fecha');
+        var cantidadDias = $('#cantidadDias');
+        var metodoAsignacion=$("#metodoAsignacion");
+        var idEstablecimientoReferencia=$('#idEstablecimientoReferencia');
+        var numeroExpedienteReferencia=$('#numeroExpedienteReferencia');
+        var idTipoDistribucion=$('#idTipoDistribucion');
+
+        var incluirAgregados = $('input[id$="incluirAgregados"]');
+        initializeSwitchOnOff(incluirAgregados, 'Sí', 'No');
+        var citaIntegral = $('input[id$="citaIntegral"]');
+        initializeSwitchOnOff(citaIntegral, 'Sí', 'No');
+        var buscarSinTipoCita = $('input[id$="buscarSinTipoCita"]');
+        initializeSwitchOnOff(buscarSinTipoCita, 'Sí', 'No');
+
+
+        metodoAsignacion.select2('val','1');
+        cantidadDias.numeric();
+
+        initializeSelect2(idTipocita, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(idTipoDistribucion, true, true, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+
+        initializeSelect2(idAreaModEstab, true, false, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initializeSelect2(idAtenAreaModEstab, true, true, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+        initializeSelect2(idEmpleado, true, true, {
+            placeholder: 'Seleccionar...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        initExpedienteMedicoSearch(idExpediente,'Seleccionar...');
+        function initExpedienteMedicoSearch(element, placeholder){
+            element.select2({
+                allowClear: true,
+                placeholder: placeholder,
+                minimumInputLength: 1,
+                dropdownAutoWidth: true,
+                ajax: {
+                    url: Routing.generate('citasexpedientepaciente'),
+                    dataType: 'json',
+                    quietMillis: 1000,
+                    data: function(term, page) {
+                        return {
+                            clue: term, //search term
+                            page_limit: 10, // page size
+                            page: page, // page number
+                        };
+                    },
+                    results: function(data, page) {
+                        var more = (page * 10) < data.data2;
+                        return {results: data.data1, more: more};
+                    }
+                },
+                initSelection: function(element, callback) {
+                    // the input tag has a value attribute preloaded that points to a preselected repository's id
+                    // this function resolves that id attribute to an object that select2 can render
+                    // using its formatResult renderer - that way the repository name is shown preselected
+                    var id = element.val();
+                    if (id !== "") {
+                        $.ajax(Routing.generate('citasexpedientepaciente') +'?id='+id, {
+                            dataType: "json"
+                        }).done(function(data) {
+                            callback(data);
+                            element.select2('data',{id: id,text: data.data1[0].text });
+                        });
+                    }
+                }
+            });
+        }
+
+
+        {% if not app.user.hasRole('ROLE_SUPER_ADMIN') %}
+            idAreaModEstab.select2('val',{{idAreaModEstab.getId()}} );
+            idAreaModEstab.parent().parent().hide();
+            {% if  not app.user.hasRole('ROLE_SONATA_ADMIN_CITCITASDIA_CITAINTEGRAL') %}
+                citaIntegral.parent().parent().parent().parent().hide();
+            {% endif %}
+            {% if  not app.user.hasRole('ROLE_SONATA_ADMIN_CITCITASDIA_EXCLUYENDO_TIPO_CITA') %}
+                buscarSinTipoCita.parent().parent().parent().parent().hide();
+            {% endif %}
+        {% endif %}
+
+        idAtenAreaModEstab.on('change', function () {
+            idTipocita.select2('val','');
+            idTipocita.trigger('change');
+        });
+
+        idExpediente.on('change', function () {
+            if ($(this).val()!='' && idAreaModEstab.val()!='') {
+                $.ajax({
+                    url: Routing.generate("obtener_cantidad_citas_expediente", {'idExpediente': $(this).val(),'idAreaModEstab':idAreaModEstab.val()}),
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+
+                        initializeSelect2(idAtenAreaModEstab, true, true, {
+                            placeholder: 'Seleccionar...',
+                            allowClear: true,
+                            width: '100%'
+                        });
+                        idTipocita.select2('val');
+                        incluirAgregados.iCheck('unCheck');
+                        citaIntegral.iCheck('unCheck');
+                        buscarSinTipoCita.iCheck('unCheck');
+
+                        $.each(data.resultados, function (indice, val) {
+                          if (val.cuantas > 0){
+                            if(val.tipoDistribucionCita==0){
+                                idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.text+' --- Posee cita en esta especialidad'}));
+                                $('#idAtenAreaModEstab option[value="'+val.id+'"]').attr('disabled','disabled');
+                            }else if (val.tipoDistribucionCita==1 && val.idTipoDistribucion=='cn') {
+                                idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.text+' --- Posee cita normal en esta especialidad'}));
+                                $('#idAtenAreaModEstab option[value="'+val.id+'"]').attr('idtipodistribucioncita',val.idTipoDistribucion);
+                            }else{
+                                idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.text+' --- Posee cita en esta especialidad con tipo distribucion'}));
+                                $('#idAtenAreaModEstab option[value="'+val.id+'"]').attr('idtipodistribucioncita',val.idTipoDistribucion);
+                            }
+                          }else{
+                            idAtenAreaModEstab.append($('<option>', {value: val.id, text: val.text}));
+                            $('#idAtenAreaModEstab option[value="'+val.id+'"]').attr('idtipodistribucioncita','na');
+                          }
+                        });
+                    }
+                });
+            } else {
+                initializeSelect2(idAtenAreaModEstab, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                initializeSelect2(idEmpleado, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                initializeSelect2(idTipoDistribucion, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                idTipocita.select2('val','');
+                incluirAgregados.iCheck('unCheck');
+                citaIntegral.iCheck('unCheck');
+                buscarSinTipoCita.iCheck('unCheck');
+            }
+        });
+
+        idTipocita.on('change', function () {
+            if ($(this).val()!='' && idAtenAreaModEstab != '') {
+                $.ajax({
+                    url: Routing.generate("obtener_medicos_tipocita_especialidad", {'idAtenAreaModEstab': idAtenAreaModEstab.val(),'idTipocita':$(this).val(),
+                    'idTipoDistribucionCita':$('#idAtenAreaModEstab option[value="'+idAtenAreaModEstab.val()+'"]').attr('idtipodistribucioncita')}),
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+
+                        initializeSelect2(idEmpleado, true, true, {
+                            placeholder: 'Seleccionar...',
+                            allowClear: true,
+                            width: '100%'
+                        });
+                        initializeSelect2(idTipoDistribucion, true, true, {
+                            placeholder: 'Seleccionar...',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        $.each(data.resultados, function (indice, val) {
+                            idEmpleado.append($('<option>', {value: val.id, text: val.text}));
+                        });
+                    }
+                });
+            } else {
+                initializeSelect2(idEmpleado, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                initializeSelect2(idTipoDistribucion, true, true, {
+                    placeholder: 'Seleccionar...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                incluirAgregados.iCheck('unCheck');
+                citaIntegral.iCheck('unCheck');
+                buscarSinTipoCita.iCheck('unCheck');
+            }
+        });
+
+        metodoAsignacion.on('change',function(){
+            if(metodoAsignacion.select2('val')==1){
+                cantidadDias.removeAttr('readonly');
+            }else{
+                cantidadDias.attr('readonly','readonly');
+            }
+        });
+
+
+        cantidadDias.on('focusout',function(){
+            var fechaABuscar=calcularFecha($(this).val());
+            fecha.val(fechaABuscar);
+        });
+
+        function calcularFecha(diasSumar){
+            var calculada=moment().add(diasSumar,'day');
+
+            switch (calculada.days()) {
+                case 0:
+                    calculada.add(1,'day');
+                case 6:
+                    calculada.add(2,'day');
+                    break;
+            }
+            return calculada.format('DD/MM/YYYY');
+        }
+
+        idEmpleado.on('change',function(){
+            initializeSelect2(idTipoDistribucion, true, true, {
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                width: '100%'
+            });
+            if ($(this).select2('val')!=''){
+                  $.ajax({
+                      url: Routing.generate("obtener_tipodistribucion_medico", {'idAtenAreaModEstab': idAtenAreaModEstab.select2('val'),'idEmpleado':$(this).select2('val'),
+                      'idTipoDistribucionCita':$('#idAtenAreaModEstab option[value="'+idAtenAreaModEstab.val()+'"]').attr('idtipodistribucioncita')}),
+                      async: false,
+                      dataType: 'json',
+                      success: function (data) {
+                        if(data.resultados.length==1){
+                            $.each(data.resultados, function (indice, val) {
+                                idTipoDistribucion.append($('<option>', {value: val.id, text: val.text}));
+                                idTipoDistribucion.select2('val',val.id);
+                            });
+                        }else{
+                            $.each(data.resultados, function (indice, val) {
+                                idTipoDistribucion.append($('<option>', {value: val.id, text: val.text}));
+                            });
+                        }
+                      }
+                  });
+              }
+        });
+
+        window.cargarCuposDisponibles=function(){
+            var html='';
+            var fechaActual=moment().format('DD/MM/YYYY');
+            var fechaElemento=moment(fecha.val(),'DD/MM/YYYY');
+            $('.modal-body').waitMe({'effect':'bounce', 'text' : 'Cargando...'});
+
+            if(fecha.val() !='' && idEmpleado.select2('val')!='' && idAtenAreaModEstab.select2('val')!='' && idTipocita.select2('val')!='' && idExpediente.select2('val')!='' ){
+                    if (fechaElemento<fechaActual){
+                     html+='<div class="alert alert-danger" role="alert">\
+                             <p>La fecha debe ser mayor que la fecha actual</p>\
+                            </div>';
+                            $('.modal-body').waitMe('hide');
+                     }else{
+                      html='<div id="cargar"></div>'
+                    }
+                }else{
+                    html+='<div class="alert alert-danger" role="alert">\
+                            <p>Debe seleccionar todos los campos requeridos para poder buscar un cupo disponible</p>\
+                           </div>';
+                           $('.modal-body').waitMe('hide');
+                }
+
+            return html;
+
+        }
+
+        $('#limpiar').on('click', function(){
+            idExpediente.select2('val','');
+            idTipocita.select2('val','');
+
+
+            initializeSelect2(idAtenAreaModEstab, true, true, {
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                width: '100%'
+            });
+            initializeSelect2(idEmpleado, true, true, {
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                width: '100%'
+            });
+            initializeSelect2(idTipoDistribucion, true, true, {
+                placeholder: 'Seleccionar...',
+                allowClear: true,
+                width: '100%'
+            });
+            $('#fecha').val('');
+            $('#cantidadDias').val('');
+            $('#idEstablecimientoReferencia').val('');
+            $('#numeroExpedienteReferencia').val('');
+            $('#valor1').iCheck('check');
+            incluirAgregados.iCheck('unCheck');
+            citaIntegral.iCheck('unCheck');
+            buscarSinTipoCita.iCheck('unCheck');
+            idExpediente.select2('open');
+        });
+
+        {% if idExpediente != '' %}
+            idExpediente.select2('val',{{idExpediente}} );
+            $('#idEstablecimientoReferencia').val('{{idEstablecimientoReferencia}}');
+            $('#numeroExpedienteReferencia').val('{{expedienteReferencia}}');
+            idExpediente.trigger('change');
+        {% endif %}
+
+        window.cargarAcciones=function(){
+            var fechaFinal='NULL';
+            $('#otroExpediente').hide();
+
+            if(fecha.val()==moment().format('DD/MM/YYYY')){
+                fechaFinal=fecha.val();
+            }
+
+            $('#cargar').load(Routing.generate("obtener_cupos_citas",
+                    {'idEspecialidad' : idAtenAreaModEstab.select2('val'),
+                    'idProcedimientoEstablecimiento':'NULL',
+                    'idEstablecimientoReferencia': idEstablecimientoReferencia.val(),
+                    'idTipoCita'     : idTipocita.select2('val'),
+                    'idExpediente'   : idExpediente.select2('val'),
+                    'idEmpleado'     : idEmpleado.select2('val'),
+                    'fechaInicial'   : fecha.val(),
+                    'fechaFinal'     : fechaFinal,
+                    'origenCita'     : 1,
+                    'incluirAgregados'  : incluirAgregados.prop('checked'),
+                    'autoSeleccionarHorario' : 'FALSE',
+                    'idAreaModEstab': idAreaModEstab.select2('val'),
+                    'citaIntegral': citaIntegral.prop('checked'),
+                    'numeroExpedienteReferencia': numeroExpedienteReferencia.val(),
+                    'idTipoDistribucion':idTipoDistribucion.select2('val'),
+                    'buscarSinTipoCita':buscarSinTipoCita.prop('checked')
+                }),
+                function( response, status, xhr ) {
+                    $('.modal-body').waitMe('hide');
+                    if(status!= 'error'){
+                        $('body select[id^="justificacion_"]').each(function(){
+                            initializeSelect2($(this), true, false, {
+                                placeholder: 'Seleccionar...',
+                                allowClear: true,
+                                width: '100%'
+                            });
+                        });
+                    }
+                }
+            );
+
+            $('#otroExpediente').on('click',function(){
+                var otraVez=idExpediente.select2('val');
+                $('#limpiar').trigger('click');
+                idExpediente.select2('val', otraVez);
+                idExpediente.select2('close');
+                idExpediente.trigger('change');
+                idAtenAreaModEstab.select2('open');
+            });
+
+
+
+            $('#cerrar').on('click',function(){
+                $('#limpiar').trigger('click');
+            });
+        }
+    });
+    var modal_elements=[];
+    var parametros=[];
+    var footer=''
+    var footer='<button id="cerrar" data-dismiss="modal" class="btn btn-success"><span class="label"><span class="glyphicon glyphicon-minus-sign"></span>&nbsp; Cerrar y Limpiar</span></button>';
+    footer+='<button id="cancelar" data-dismiss="modal" class="btn btn-default">Cancelar</button>'
+    footer+='<button id="otroExpediente" data-dismiss="modal" class="btn btn-default">Otra cita con el mismo número</button>'
+    modal_elements.push({
+        id: 'buscar_modal',
+        func: 'cargarCuposDisponibles',
+        header: 'Detalle de cupos disponibles',
+        footer: footer,
+        closeBtnName:'Cancelar',
+        afterLoadCallFunction:'cargarAcciones',
+        widthModal: '50%',
+        maxWidth: '750px',
+        parameters: parametros,
+        closeBtn: false,
+        closeXBtn:false
+    });
+
+    </script>
+{% endblock%}
+
+{% block notice %}
+{% include 'SonataCoreBundle:FlashMessage:render.html.twig' %}
+{% endblock notice %}
+
+{% block list_table -%}
+
+<div class="container-fluid">
+    <div class="row">
+
+        <form id="formDistribucion" method="post" >
+            <div class="col-md-7 col-md-offset-2">
+                <h2 class="text-center">Asignar Cita Médica</h2>
+                <img src="{{ asset('bundles/minsalcitas/imagenes/BuscarCita.png') }}" alt="imagen_buscar" style="width: 100px; margin: 20px auto; display:block;" />
+                <table class="table table-bordered">
+                    <tbody>
+                      <tr>
+                          <th style="width: 300px;">Área a la que pertenece la especialidad:</th>
+                          <td><select id="idAreaModEstab" name="idAreaModEstab" style="width:400px !important;">
+                              {% for area in areas %}
+                              <option value="{{ area.id }}">{{ area }}</option>
+                              {% endfor %}
+                          </select></td>
+                      </tr>
+                      <tr>
+                        <th>No. Expediente - Nombre Paciente *: </th>
+                        <td><input type="hidden" id="numExpNomPac" name="numExpNomPac" style="width:400px !important;"></input></td>
+                      </tr>
+                        <tr>
+                            <th>Especialidad *:
+                                <span class="glyphicon glyphicon-info-sign fd_help_msg" data-toggle="tooltip" data-placement="right" title="Si la especialidad se encuentra deshabilitada es porque ese paciente ya posee cita en esa especialidad."></span>
+                            </th>
+                            <td><select id="idAtenAreaModEstab" name="idAtenAreaModEstab" style="width:400px !important;"></select></input></td>
+                        </tr>
+                        <tr>
+                            <th>Tipo de Cita *:</th>
+                            <td><select id="idTipocita" name="idTipocita" style="width:400px !important;">
+                              <option value="1">Primera Vez</option>
+                              <option value="2">Subsecuente</option>
+                            </select></input></td>
+                        </tr>
+                        <tr>
+                            <th>Médico*:</th>
+                            <td><select id="idEmpleado" name="idEmpleado" style="width:400px !important;"></select></td>
+                        </tr>
+                        <tr>
+                            <th>Tipo Distribucion*:</th>
+                            <td><select id="idTipoDistribucion" name="idTipoDistribucion" style="width:400px !important;"></select></td>
+                        </tr>
+                        <tr>
+                            <th>Método de Asignación*:</th>
+                            <td>
+                                <select id="metodoAsignacion" name="metodoAsignacion" style="width:400px !important;">
+                                  <option value="1">Por número de días</option>
+                                  <option value="2">Por Fecha</option>
+                              </select>
+                              </td>
+                        </tr>
+                        <tr>
+                            <th>Cantidad de días(999):</th>
+                            <td><input id="cantidadDias" name="cantidadDias" type="text" class="form-control" style="width: 50px !important;" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Fecha a buscar cupo:</th>
+                            <td>
+                              <input id="fecha" name="fecha" type="text" class="form-control bootstrap-datepicker" placeholder="dd/mm/aaaa" data-mask="99/99/9999" style="width: 125px !important;" data-date-start-date="{{ 'now' | date('d/m/Y')}}"  />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Buscar cupo sin importar tipo de cita:
+                                <span class="glyphicon glyphicon-info-sign fd_help_msg"
+                                        data-toggle="tooltip" data-placement="right"
+                                        title="Buscará fecha libre en el total de cupos asignado al médico ">
+                                </span>
+                            </th>
+                            <td><input id="buscarSinTipoCita" type="checkbox"/></td>
+                        </tr>
+                        <tr>
+                            <th>Incluir Cupos de Agregados:</th>
+                            <td><input id="incluirAgregados" type="checkbox"/></td>
+                        </tr>
+                        <tr>
+                            <th>Cita Integral:
+                                <span class="glyphicon glyphicon-info-sign fd_help_msg" data-toggle="tooltip" data-placement="right" title="Cita Integral aplica cuando a un paciente se le quieren dar cita en más de una especialidad el mismo día."></span>
+                            </th>
+                            <td><input id="citaIntegral" type="checkbox"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <input type="hidden" id="idEstablecimientoReferencia" value=""/>
+            <input type="hidden" id="numeroExpedienteReferencia" value=""/>
+        </form>
+    </div>
+    <div class="row">
+        <div class="col-md-7 col-md-offset-2">
+            <center>
+                <a href="#myModal" id="buscar_modal" custom-modal="true" role="button" data-backdrop="static" data-keyboard="false" data-toggle="modal" style="width: 160px; margin-top: 5px;" class="btn btn-primary"><i class="fa fa-list-alt"></i><strong>&nbsp; Buscar Cupo</strong></a>
+                <a id="limpiar" style="width: 160px; margin-top: 5px;" class="btn btn-info" href="#"><i class="fa fa-trash-o"></i><strong>&nbsp; Limpiar</strong></a>
+            </center>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div id="resultado" class="col-md-10 center-block">
+        </div>
+    </div>
+</div>
+{% endblock -%}

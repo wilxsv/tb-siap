@@ -1,0 +1,18 @@
+services:
+    minsal_farmacia.admin.farm_recetas:
+        class: Minsal\FarmaciaBundle\Admin\FarmRecetasAdmin
+        arguments: [~, Minsal\FarmaciaBundle\Entity\FarmRecetas, MinsalFarmaciaBundle:FarmRecetasAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: FR-1-Farmacia, label: Consultar Recetas}
+
+    minsal_farmacia.admin.farm_medicinarecetada:
+        class: Minsal\FarmaciaBundle\Admin\FarmMedicinarecetadaAdmin
+        arguments: [~, Minsal\FarmaciaBundle\Entity\FarmMedicinarecetada, MinsalFarmaciaBundle:FarmMedicinarecetadaAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: RP-2-Farmacia, label: FarmMedicinarecetada, show_in_dashboard: false}
+
+    minsal_farmacia.admin.farm_estados:
+        class: Minsal\FarmaciaBundle\Admin\FarmEstadosAdmin
+        arguments: [~, Minsal\FarmaciaBundle\Entity\FarmEstados, MinsalFarmaciaBundle:FarmEstadosAdmin]
+        tags:
+            - {name: sonata.admin, manager_type: orm, group: RP-2-Farmacia, label: Pacientes y Médicamentos Derivados a Farmacia Especializada}

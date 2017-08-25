@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="MntImcRango" table="mnt_imc_rango">
+    <indexes>
+      <index name="IDX_C8F49585E2C1B42E" columns="id_clasificacion_peso"/>
+      <index name="IDX_C8F49585301F60F3" columns="id_imc_parametros"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="rangoMinimo" type="float" column="rango_minimo" precision="10" scale="0" nullable="false"/>
+    <field name="rangoMaximo" type="float" column="rango_maximo" precision="10" scale="0" nullable="false"/>
+    <many-to-one field="idImcParametros" target-entity="SecImcParametros">
+      <join-columns>
+        <join-column name="id_imc_parametros" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idClasificacionPeso" target-entity="CtlClasificacionPeso">
+      <join-columns>
+        <join-column name="id_clasificacion_peso" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

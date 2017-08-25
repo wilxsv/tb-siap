@@ -1,0 +1,291 @@
+{# src/Minsal/SeguimientoBudle/Resource/view/SecHistorialClinico/edit.html.twig
+# Parámetros:
+            * action: la acción a realiazar, en este caso es create
+            * form: el renderizado de la plantilla
+            * object: el objeto SecHistorialClinico
+            * expediente: el objeto expediente
+            * edad: la edad del paciente según el numero de expediente
+            *edadFertil: bandera que indica si es una mujer en edad fertil
+#}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+{% block sonata_breadcrumb %}
+{% endblock sonata_breadcrumb %}
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+        var modal_elements = [];
+
+        jQuery(document).ready(function ($) {
+
+            var embarazada = $('input[id$="_embarazada"]');
+
+            $('div[id$="_idDatoEmbarazo"]').hide();
+            $('input[id*="_idDatoEmbarazo_"]').prop('disabled', true);
+
+            {%if not edadFertil%}
+                    $('#checkbox_embarazada').hide();
+            {%else%}
+                {%if expediente.getIdPaciente().getIdCondicionPersona().getId()==1%}
+                        embarazada.iCheck('check');
+                        $('input[id*="_idDatoEmbarazo_"]').prop('disabled', false);
+                        $('div[id$="_idDatoEmbarazo"]').show();
+                        $('input[id*="_idDatoEmbarazo_gravidez"]').val({{expediente.getIdPaciente().getIdAntecedentes() ? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos()? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos().getGestaciones():0 : 0}});
+                        $('input[id*="_idDatoEmbarazo_partos"]').val({{expediente.getIdPaciente().getIdAntecedentes() ? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos()? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos().getPartosTermino():0 : 0}});
+                        $('input[id*="_idDatoEmbarazo_prematuros"]').val({{expediente.getIdPaciente().getIdAntecedentes() ? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos()? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos().getPartoPrematuro():0 : 0}});
+                        $('input[id*="_idDatoEmbarazo_abortos"]').val({{expediente.getIdPaciente().getIdAntecedentes() ? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos()? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos().getAbortos():0 : 0}});
+                        $('input[id*="_idDatoEmbarazo_vivos"]').val({{expediente.getIdPaciente().getIdAntecedentes() ? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos()? expediente.getIdPaciente().getIdAntecedentes().getIdAntecedentesObstetricos().getNacidosVivos():0 : 0}});
+                {%else%}
+                        $('div[id$="_idDatoEmbarazo"]').hide();
+                {%endif%}
+            {%endif %}
+
+                embarazada.on('ifChecked', function (event) {
+                    $('div[id$="_idDatoEmbarazo"]').show();
+                    $('input[id*="_idDatoEmbarazo_"]').prop('disabled', false);
+                });
+
+                embarazada.on('ifUnchecked', function (event) {
+                    $('div[id$="_idDatoEmbarazo"]').hide();
+                    $('input[id*="_idDatoEmbarazo_"]').val('');
+                    $('input[id*="_idDatoEmbarazo_"]').prop('disabled', true);
+                });
+
+                if (embarazada.prop('checked')) {
+                    $('div[id$="_idDatoEmbarazo"]').show();
+                    $('input[id*="_idDatoEmbarazo_"]').prop('disabled', false);
+                }
+
+                $('input[id*="_idDatoEmbarazo_fechaUltimaMestruacion"]').change(function(){
+                    var actual=new Date();
+                    fum=$('input[id*="_idDatoEmbarazo_fechaUltimaMestruacion"]').val().split('/');
+                    var fum=new Date(fum[2]+'-'+fum[1]+'-'+fum[0]);
+                    diferencia=actual-fum;
+                    valor=Math.round((diferencia/(1000*60*60*24))/7);
+                    $('input[id*="_idDatoEmbarazo_semanaAmenorrea"]').val(valor);
+
+                });
+
+
+            var controlPrenatal = $('input[id$="_controlPrenatal"]');
+            var idEstablecimientoControl = $('select[id$="_idEstablecimientoControl"]');
+            var divEstablecimientoControl = idEstablecimientoControl.parent().parent();
+
+            initializeSelect2( idEstablecimientoControl, true, false, { placeholder: "Ninguno.", allowClear: true, containerCss: { 'width': '50%'} } );
+
+            if( ! controlPrenatal.prop('checked') ){
+                divEstablecimientoControl.hide();
+            }
+
+            controlPrenatal.on('ifChecked', function(){
+                divEstablecimientoControl.show();
+            }).on('ifUnchecked', function(){
+                divEstablecimientoControl.hide();
+            });
+
+            idEstablecimientoControl.parent().append('<button type="button" id="thisEstabButton" class="btn btn-primary btn-sm"><i class="fa fa-map-marker"></i> &nbsp;Establecimiento Local</button>')
+            $('#thisEstabButton').on('click', function(){
+                idEstablecimientoControl.select2('val', {{ establecimiento.getId() }})
+            });
+
+
+            {% if solicitudQuirurgica|length > 0 %}
+                var arrayBtns =
+                    [{
+                        text: 'Verificar', click: function() {
+                            jQuery( this ).dialog( "close" );
+                            jQuery('#reviewSolQ').click();
+                        }
+                    }];
+
+                if( ! jQuery('select[id$="_idSolicitudQuirurgica"]').val() ){
+                    //showDialogMsg('¡ Atención !', 'Se han encontrado <b>Solicitudes de Intervención Quirurgicas</b> pendientes de evaluaciones para el paciente.', 'dialog-info', '', arrayBtns, false, 500, true, false, false);
+                }
+
+                modal_elements.push({
+                    id: 'reviewSolQ',
+                    func: 'getSolicitudesQuirurgicas',
+                    header: 'Solicitudes de Intervención Quirurgicas Pendientes de Evaluaciones',
+                    footer: '<button id="cancelEvaluacionQ" value="true" onClick="cancelEvaluacionQ()" class="btn btn-danger"><i class="fa fa-fw fa-ban"></i> Cancelar</button>',
+                    widthModal: '90%',
+                    maxWidth: '900px',
+                    parameters: '',
+                    closeBtn: false,
+                    closeXBtn: false
+                });
+
+            {% endif %}
+
+        });//fin document ready
+
+        function getSolicitudesQuirurgicas(){
+            var htmlSQ = '';
+
+            {% for i, solicitudQ in solicitudQuirurgica %}
+                htmlSQ += '<div class="panel panel-primary">\
+                                <div class="panel-heading" >\
+                                    <b>Solicitud #{{i+1}}</b>\
+                                    \
+                                </div>\
+                                <div class="table-responsive">\
+                                    <table class="table table-hover">\
+                                        <tr><th>Fecha de Solicitud</th><td>{{ solicitudQ.getFecha()|date('d-m-Y') }}</td></tr>\
+                                        <tr><th>Médico Solicitante</th><td>{{ solicitudQ.getIdEmpleado() }}</td></tr>\
+                                        <tr><th>Diagnostico del Paciente</th><td><ul>{% for diagnostico in solicitudQ.getIdHistorialClinico().getDiagnostico() %}<li>{{ diagnostico }}</li>{% endfor %}</ul></td></tr>\
+                                        <tr><th>Procedimientos Quirurgicos</th><td><ul>{% for proc in solicitudQ.getProcedimientoQuirurgico() %}<li>{{ proc }}</li>{% endfor %}</ul></td></tr>\
+                                        <tr><th>Prioridad de la Cirugía</th><td>{{ solicitudQ.getIdPrioridadCirugia() }}</td></tr>\
+                                        <tr><!--<th>Detalles de Solicitud ...</th>-->\
+                                            <td colspan="2">\
+                                                <button class="btn btn-info btn-xs" type="button" collapsed-details="true" data-toggle="collapse" data-target="#detailsSolQ{{ solicitudQ.getId() }}" aria-expanded="false" aria-controls="detailsSolQ{{ solicitudQ.getId() }}" onClick="changeDetailsButton(jQuery(this));">\
+                                                    <i class="fa fa-fw fa-angle-double-down"></i> Ver Detalles de Solicitud\
+                                                </button>\
+                                            </td>\
+                                        </tr>\
+                                    </table>\
+                                </div>\
+                                <div class="collapse" id="detailsSolQ{{ solicitudQ.getId() }}">\
+                                    <div class="table-responsive">\
+                                        <table class="table table-hover">\
+                                            <tr><th>Riesgo Anestésico</th><td>{{ solicitudQ.getIdRiesgoAnestesico() }}</td></tr>\
+                                            <tr><th>Anestesia Solicitada</th><td><ul>{% for anestesia in solicitudQ.getTipoAnestesia() %}<li>{{ anestesia }}</li>{% endfor %}</ul></td></tr>\
+                                            <tr><th>Manejo de la Cirugía</th><td>{{ solicitudQ.getIdManejoCirugia() }}</td></tr>\
+                                            <tr><th>Grado de Complejidad</th><td>{{ solicitudQ.getIdGradoComplejidadQuirurgica() }}</td></tr>\
+                                            <tr><th>Tiempo Quirurgico Estimado</th><td>{{ solicitudQ.getTiempoQuirurgicoEstimado() }} (min)</td></tr>\
+                                            <tr><th>Estado de Solicitud</th><td>{{ solicitudQ.getIdEstadoSolicitudQuirurgica() }}</td></tr>\
+                                            <tr><th></th><td></td></tr>\
+                                        </table>\
+                                    </div>\
+                                </div>\
+                                <div class="panel-footer" align="right"><button id="confirmSolicitudQuirurgica{{ solicitudQ.getId() }}" value="true" onClick="confirmSolicitudQuirurgica({{ solicitudQ.getId() }})" class="btn btn-success"><i class="fa fa-fw fa-check"></i> Brindar Evaluación Pre-Operatoria</button></div>\
+                           </div>';
+            {% endfor %}
+
+            htmlSQ += '';
+            return htmlSQ;
+        };
+
+        function confirmSolicitudQuirurgica(idSolQ){
+
+            var arrayBtns =
+                [{
+                    text: 'Continuar', click: function() {
+                        jQuery( this ).dialog( "close" );
+                        jQuery('#myModal').modal('hide');
+                        showAutoDismissMsg('La Evaluación Pre-Operatoria se mostrará al iniciar la consulta.', 'success', 'xlarge', true, '', '', '', 7000);
+                        jQuery('select[id$="_idSolicitudQuirurgica"]').select2('val', idSolQ);
+                    }
+                },
+                {
+                    text: 'Cancelar', click: function() {
+                        jQuery( this ).dialog( "close" );
+                    }
+                }];
+
+            showDialogMsg('¿Confirmar Evaluación Pre-Operatoria?', 'Si brindará una Evaluación Pre-Operatoria al paciente presione el botón <b>Continuar</b>. Si no será realizada por usted, presione el botón <b>Cancelar</b>.', 'dialog-warning', '', arrayBtns, false, 500, false, false, false);
+        };
+
+        function cancelEvaluacionQ(){
+            jQuery('#myModal').modal('hide');
+        }
+
+        function changeDetailsButton(element){
+            if( element.attr('collapsed-details') == 'true'){
+                element.empty().prepend('<i class="fa fa-fw fa-angle-double-up"></i> Ocultar Detalles');
+                element.attr('collapsed-details', 'false');
+            }
+            else{
+                element.empty().prepend('<i class="fa fa-fw fa-angle-double-down"></i> Ver Detalles de Solicitud');
+                element.attr('collapsed-details', 'true');
+            }
+        }
+
+    </script>
+{% endblock %}
+{% block form %}
+    {{ sonata_block_render_event('sonata.admin.edit.form.top', { 'admin': admin, 'object': object }) }}
+
+    {% set url = admin.id(object) is not null ? 'edit' : 'create' %}
+
+    {% if not admin.hasRoute(url)%}
+        <div>
+            {{ "form_not_available"|trans({}, "SonataAdminBundle") }}
+        </div>
+    {% else %}
+        <form
+            {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+            role="form"
+            action="{{ admin.generateUrl(url, {'id': admin.id(object), 'uniqid': admin.uniqid, 'subclass': app.request.get('subclass')}) }}&id_expediente={{expediente.id}}&id_empleado={{id_empleado}}&id_aten_area_mod_estab={{id_aten_area_mod_estab}}&id_cita={{id_cita}}" {{ form_enctype(form) }}
+            method="POST"
+            {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+            >
+            {% if form.vars.errors|length > 0 %}
+                <div class="sonata-ba-form-error">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            {% block sonata_pre_fieldsets %}
+                <div class="row">
+                {% endblock %}
+
+                {% block sonata_tab_content %}
+                    {% for name, form_group in admin.formgroups %}
+                        <div class="{{ form_group.class|default('col-md-12') }}">
+                            <div class="box box-success">
+                                <div class="box-header">
+                                    <h4 class="box-title">
+                                        {# admin.trans(name, {}, form_group.translation_domain) #}
+                                    </h4>
+                                </div>
+                                {#<div class="box{% if loop.first %} in{% endif %}" id="{{ admin.uniqid }}_{{ loop.index }}">#}
+                                <div class="box-body">
+
+                                    {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                                    {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                                    <div class="bs-callout bs-callout-primary" style="max-width: 450px; max-height: 100px; float: right; padding-top: 2px; padding-bottom: 0px;">
+                                        <h4 style="color: #6B6B6B;">Opciones de Consulta <small>(Dependen de diversos criterios)</small></h4>
+                                        <div {% if displayResultsHistory == false %}style="display: none;"{% endif %}><h4>{{ form_label(form.entregaResultados) }}&nbsp;&nbsp;{{ form_widget(form.entregaResultados) }}</h4></div>
+                                        <h4 id="checkbox_embarazada">{{ form_label(form.embarazada) }}&nbsp;&nbsp;{{ form_widget(form.embarazada) }}</h4>
+                                    </div>
+                                    <a href="#myModal" id="reviewSolQ" custom-modal="true" data-toggle="modal" data-backdrop="static" data-keyboard="false" style="display: none;"></a>
+                                    {% if idTipoLugar is not null %}
+                                        <input id="idTipoLugar" name="idTipoLugar" value="{{ idTipoLugar }}" style="display: none;" />
+                                        <input id="nombreLugar" name="nombreLugar" value="{{ nombreLugar }}" style="display: none;" />
+                                    {% endif %}
+                                    <div class="sonata-ba-collapsed-fields">
+                                        {% if form_group.description != false %}
+                                            <p>{{ form_group.description|raw }}</p>
+                                        {% endif %}
+
+                                        {% for field_name in form_group.fields %}
+                                            {% if admin.formfielddescriptions[field_name] is defined %}
+                                                {% if form[field_name] is defined %}
+                                                    {{ form_row(form[field_name])}}
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {#</div>#}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endblock %}
+
+                {% block sonata_post_fieldsets %}
+                </div>
+            {% endblock %}
+
+            {{ form_rest(form) }}
+
+            {% block formactions %}
+                <div class="well well-small form-actions">
+                    <input type="submit" class="btn btn-primary" name="btn_create" value="Continuar"/>
+                </div>
+            {% endblock formactions %}
+        </form>
+    {% endif %}
+
+    {{ sonata_block_render_event('sonata.admin.edit.form.bottom', { 'admin': admin, 'object': object }) }}
+
+{% endblock %}

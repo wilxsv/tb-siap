@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="SecAntecedentesObstetricos" table="sec_antecedentes_obstetricos">
+    <indexes>
+      <index name="fki_antecedentes_antecedentes_obstetricos" columns="id_antecedentes"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="gestaciones" type="integer" column="gestaciones" nullable="false"/>
+    <field name="partosTermino" type="integer" column="partos_termino" nullable="false"/>
+    <field name="partoPrematuro" type="integer" column="parto_prematuro" nullable="false"/>
+    <field name="abortos" type="integer" column="abortos" nullable="false"/>
+    <field name="nacidosVivos" type="integer" column="nacidos_vivos" nullable="false"/>
+    <field name="edadMenarquia" type="integer" column="edad_menarquia" nullable="true"/>
+    <field name="edadInicioRelSexual" type="integer" column="edad_inicio_rel_sexual" nullable="true"/>
+    <many-to-one field="idAntecedentes" target-entity="SecAntecedentes">
+      <join-columns>
+        <join-column name="id_antecedentes" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+  </entity>
+</doctrine-mapping>

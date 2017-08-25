@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<head>
+
+    <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="{{ app.request.schemeAndHttpHost ~ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" rel="stylesheet">
+    <style type="text/css">
+
+        html,body {overflow: visible !important;}
+        div .table-responsive {overflow: visible !important;}
+
+        body .panel-info > .panel-heading {
+            background-color: white;
+            font-size: 12px;
+            border-color: black;
+            color: black;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-style: solid;
+            border-width: 1px;
+        }
+        .table-bordered {
+            font-size: 11px;
+            background-color: white;
+            border-width: 1px;
+            border-color: black;
+            color: black;
+            font-weight: bold;
+            border-style: solid;
+            text-align:left; 
+        }
+        
+        
+        table {width: 100%}
+
+    </style>
+</head>
+<body>
+    <header>
+        {% include 'MinsalSeguimientoBundle:Reportes:encabezado.html.twig' %}
+        {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente_reporte.html.twig' %}
+
+
+    </header>
+</body>
+</html>        

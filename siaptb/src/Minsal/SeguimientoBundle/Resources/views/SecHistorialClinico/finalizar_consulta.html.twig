@@ -1,0 +1,1112 @@
+{# src/Minsal/SeguimientoBudle/Resource/view/SecHistorialClinico/finalizar_consulta.html.twig #}
+{% extends 'SonataAdminBundle::layout.html.twig' %}
+
+{# Definicion de variables#}
+{% set url_parameters = { '_external': 'true', '_modulo': 'seguimiento_clinico', 'tipoPacPertenencia': 'local' } %}
+
+{% if parameters.idEmpleado is defined and parameters.idEmpleado is not sameas("") %}
+    {% set url_parameters = url_parameters|merge({ 'idEmpleado': parameters.idEmpleado }) %}
+{% endif %}
+
+{% if parameters.idEspecialidad is defined and parameters.idEspecialidad is not sameas("") %}
+    {% set url_parameters = url_parameters|merge({ 'idEspecialidad': parameters.idEspecialidad }) %}
+{% endif %}
+
+{% if parameters.idHistorialClinico is defined and parameters.idHistorialClinico is not sameas("") %}
+    {% set url_parameters = url_parameters|merge({ 'idHistorialClinico': parameters.idHistorialClinico }) %}
+{% endif %}
+{# Fin de la definicion de variables#}
+
+{% block stylesheets %}
+    {{parent()}}
+    <link rel="stylesheet" href="{{ asset('bundles/minsalsiaps/css/MntPacienteAdmin/encabezado_paciente.css') }}" type="text/css" media="all" />
+    <link rel="stylesheet" href="{{ asset('bundles/minsalseguimiento/css/seguimiento.css') }}" type="text/css" media="all" />
+{% endblock %}
+
+{% block javascripts %}
+    {{parent()}}
+    <script src="{{ asset('bundles/minsalseguimiento/js/SecHistorialClinico/finalizar_consulta.js') }}" type="text/javascript"></script>
+    <!--Script para Citas-->
+    <script type="text/javascript">
+                var idCitaControl = null;
+                var idCitaSeguimiento = null;
+                var idCitaProcedimiento = null;
+                var numReceta = null;
+                var numReferencia = null;
+                var idSolicitud = null;
+                var idSolFVIH = null;
+                var modal_elements = [];
+
+                function updateIdCita(idCita, tipoCita) {
+                switch (tipoCita) {
+                case 1:
+                        idCitaControl = idCita;
+                        break;
+                        case 2:
+                        idCitaSeguimiento = idCita;
+                        break;
+                        default:
+                        idCitaProcedimiento = idCita;
+                        break;
+                }
+
+                updatePrintButtons();
+                }
+
+        function updateIdFarmacia(idFarmacia) {
+        if (idFarmacia !== null && idFarmacia !== '') {
+        numReceta = 1;
+        } else {
+        numReceta = 0;
+        }
+
+        updatePrintButtons();
+        }
+
+        function updateIdReferencia(idReferencia) {
+        if (idReferencia !== null && idReferencia !== '') {
+        numReferencia = 1;
+        } else {
+        numReferencia = 0;
+        }
+
+        updatePrintButtons();
+        }
+
+        function updateIdSolicitudestudios(idSolicitudestudios) {
+        idSolicitud = idSolicitudestudios;
+                updatePrintButtons();
+        }
+
+        function updateSolicitudFVIH(idSolicitud) {
+        idSolFVIH = idSolicitud;
+                updatePrintButtons();
+        }
+
+
+        function updatePrintButtons() {
+                changeBtnStatus(jQuery('#comprobante-cita-control'), idCitaControl, "{{ url('citasgetcomprobante') }}?id=" + idCitaControl);
+                changeBtnStatus(jQuery('#comprobante-cita-seguimiento'), idCitaSeguimiento, "{{ url('citasgetcomprobante') }}?id=" + idCitaSeguimiento);
+                changeBtnStatus(jQuery('#comprobante-cita-procedimiento'), idCitaSeguimiento, "{{ url('citasgetcomprobante') }}?id=" + idCitaSeguimiento);
+                changeBtnStatus(jQuery('#imprimir-recetas'), numReceta, '#');
+                changeBtnStatus(jQuery('#imprimir-fvih01'), idSolFVIH, '#');
+                changeBtnStatus(jQuery('#imprimir-solicitud-estudios'), idSolicitud, '#');
+                changeBtnStatus(jQuery('#imprimir-referencia-interconsulta'), numReferencia, '#');
+        }
+
+        function changeBtnStatus(element, value, url) {
+        if (value === null || value === '') {
+        element.addClass('disabled');
+                element.attr('href', '#');
+        } else {
+        element.removeClass('disabled');
+                element.attr('href', url);
+        }
+        }
+
+        jQuery(document).ready(function ($) {
+            {% for cita in SecHistorialCitaDiaSubsec %}
+                {% if cita.getIdTipoCitaSubsecuente().getId() == '1' %}
+                    idCitaControl = '{{ cita.getIdCitaDia().getId() }}';
+                {% elseif cita.getIdTipoCitaSubsecuente().getId() == '2' %}
+                    idCitaSeguimiento = '{{ cita.getIdCitaDia().getId() }}';
+                {% else %}
+                    idCitaProcedimiento = '{{ cita.getIdCitaDia().getId() }}';
+                {% endif %}
+            {% endfor %}
+                        numReceta = {% if objreceta|length > 0 %}"{{ objreceta|length }}"{% else %}null{% endif %};
+                        numReferencia = {% if objremision|length > 0 %}"{{ objremision|length }}"{% else %}null{% endif %};
+                        idSolFVIH = "{{ idSolFVIH ? idSolFVIH.getId() : null }}";
+                        {% if SecSolicitudestudios|length > 0 %}
+                            idSolicitud = {{ SecSolicitudestudios.getId() }};
+                        {% endif %}
+                        updatePrintButtons();
+                        $.ajaxSetup({
+                        error: function (jqXHR, exception) {
+                        if (jqXHR.status === 0) {
+                        alert('Not connect.\n Verify Network.');
+                        } else if (jqXHR.status == 404) {
+                        alert('Requested page not found. [404]');
+                        } else if (jqXHR.status == 500) {
+                        alert('Internal Server Error [500].');
+                        } else if (exception === 'parsererror') {
+                        alert('Requested JSON parse failed.');
+                        } else if (exception === 'timeout') {
+                        alert('Time out error.');
+                        } else if (exception === 'abort') {
+                        alert('Ajax request aborted.');
+                        } else {
+                        alert('Uncaught Error.\n' + jqXHR.responseText);
+                        }
+                        }
+                        });
+                        $("a[id^='asignar-cita']").on("click", function () {
+                var tipo = "";
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+                        if ($(this).attr('id') === "asignar-cita-control") {
+                tipo = "1"; //Control
+                } else if ($(this).attr('id') === "asignar-cita-seguimiento") {
+                tipo = "2"; //Seguimiento
+                } else {
+                tipo = "3"; //Procedimiento
+                }
+
+                parameters['tipo'] = tipo;
+                        winParams['method'] = "post";
+                        winParams['action'] = "{{ url('admin_minsal_citas_citcitasdia_list') }}";
+                        winParams['target'] = "Asignacion de Cita al Paciente";
+                        winParams['parameters'] = parameters;
+                        openPostPopUpWindows(winParams);
+                });
+
+                $('#btn-solicitud-estudios').on('click', function() {
+                    $serv_ap = $('#servicio_apoyo');
+
+                    if ($serv_ap.select2("val") != "") {
+                        switch ($serv_ap.select2("val")) {
+                        case "1":
+                            var parameters = {{ url_parameters|json_encode|raw }};
+                            var winParams = [];
+                            parameters['fechaSolicitud'] = {% if object.getIdMotivoRetroactivo() is not null %}
+                                                                '{{ object.getFechaconsulta()|date('Y-m-d') }}'
+                                                            {% else %}
+                                                                getCurrentDate('yyyy-mm-dd')
+                                                            {% endif %};
+                            winParams['method'] = "post";
+                            winParams['action'] = "{{ url('admin_minsal_laboratorio_secsolicitudestudios_assign_exam') }}";
+                            winParams['target'] = "Creacion de Solicitud de Estudio de Laboratorio Clinico";
+                            winParams['parameters'] = parameters;
+                            openPostPopUpWindows(winParams);
+                            break;
+                            default:
+                            var title = 'Funcion no disponible';
+                            var body = 'Lo sentimos, por el momento no se encuentra disponible esta funcion del sistema.';
+                            var clase = 'dialog-info';
+                            showDialogMsg(title, body, clase);
+                            break;
+                        }
+                    } else {
+                        var title = 'Dato incompleto!!!';
+                        var body = 'Debe de seleccionar un <b>servicio de apoyo</b> ante de crear una solicitud de estudios';
+                        var clase = 'dialog-warning';
+                        showDialogMsg(title, body, clase);
+                    }
+                });
+
+                $("a#recetario").on("click", function () {
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+                        winParams['method'] = "post";
+                        winParams['action'] = "{{ url('admin_minsal_farmacia_farmrecetas_assign_receta') }}";
+                        winParams['target'] = "Creacion de Receta";
+                        winParams['parameters'] = parameters;
+                        openPostPopUpWindows(winParams);
+                });
+                $("a#imprimir-recetas").on("click", function () {
+                        var tipo = "";
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+                        winParams['method'] = "post";
+                        winParams['action'] = "{{ url('admin_minsal_farmacia_farmrecetas_imprimir_receta') }}";
+                        winParams['target'] = "Impresion de Receta";
+                        winParams['parameters'] = parameters;
+                        openPostPopUpWindows(winParams);
+                });
+
+                $("a#imprimir-solicitud-estudios").on("click", function () {
+                    var tipo = "";
+                    var parameters = {{ url_parameters|json_encode|raw }};
+                    var winParams = [];
+
+                    winParams['method'] = "post";
+                    winParams['action'] = "{{ url('admin_minsal_laboratorio_secsolicitudestudios_imprimir_solicitudestudios',{'idHistorialClinico':object.getId()}) }}";
+                    winParams['target'] = "Impresion Solicitud Estudios";
+                    winParams['parameters'] = parameters;
+                    openPostPopUpWindows(winParams);
+                });
+
+                        $("#imprimir-fvih01").on("click", function () {
+                var tipo = "";
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+
+                        winParams['method'] = "get";
+                        winParams['action'] = "{{ url('imprimir_fvih01',{'idHistorialClinico':object.getId()}) }}";
+                        winParams['target'] = "Impresion FVIH01";
+                        winParams['parameters'] = parameters;
+                        openPostPopUpWindows(winParams);
+                });
+
+                        $("#imprimir-vigepes01").on("click", function () {
+                var tipo = "";
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+
+                        winParams['method'] = "get";
+                        winParams['action'] = "{{ url('imprimir_vigepes01',{'idHistorialClinico':object.getId()}) }}";
+                        winParams['target'] = "Impresion VIGEPES01";
+                        winParams['parameters'] = parameters;
+                        openPostPopUpWindows(winParams);
+                });
+
+                $("#imprimir-vigepes02").on("click", function () {
+                        var tipo = "";
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+
+                        winParams['method'] = "get";
+                        winParams['action'] = "{{ url('imprimir_vigepes02',{'idHistorialClinico':object.getId()}) }}";
+                        winParams['target'] = "Impresion VIGEPES02";
+                        winParams['parameters'] = parameters;
+                        openPostPopUpWindows(winParams);
+                });
+                        $('#establecimiento').prepend('<option/>')
+                        .val(function () {
+                        return $('[selected]', this).val();
+                        })
+                        .select2({
+                        placeholder: 'Seleccionar Establecimiento ...',
+                                allowClear: true,
+                                dropdownAutoWidth: true
+                        });
+                        $('#especialidad').prepend('<option/>')
+                        .val(function () {
+                        return $('[selected]', this).val();
+                        })
+                        .select2({
+                        placeholder: 'Seleccionar Especialidad ...',
+                                allowClear: true,
+                                dropdownAutoWidth: true
+                        });
+
+            /* Agregar Consejeria */
+            var addedAdviseTypes = [ {% for consejo in parameters.consejeriaBrindada %}'{{consejo.getIdTipoConsejeria().getId() }}',{% endfor %} ];
+
+            $('#tipoConsejeria').prepend('<option/>').val(function () {
+                return $('[selected]', this).val();
+            })
+            .select2({
+                placeholder: 'Seleccionar Tipo de Consejería ...',
+                allowClear: true,
+                dropdownAutoWidth: true
+            })
+            .on('change', function(){
+                if( $(this).val() != '' && jQuery.inArray( $(this).val() , addedAdviseTypes ) >= 0 ){
+                    showDialogMsg('Consejería ya registrada.', 'Ya agregó este tipo de consejería. Si desea modificarla, de clic sobre el botón correspondiente "Editar".', 'dialog-error', null, [ { text: 'Cerrar', click: function(){ $(this).dialog("close"); $("button[advise-type='"+$('#tipoConsejeria').val()+"']").effect( {effect: "highlight", duration: 1000} ); $('#tipoConsejeria').select2('val',''); } } ], false );
+                }
+            });
+
+            $("#btn-add-advise").on('click', function(){
+                if ($('#tipoConsejeria').val()){
+                    if ($('#consejeria').val() && ($('#consejeria').val()).replace(/\s+/g, '') != ''){
+                        jQuery.ajax({
+                            url: Routing.generate('addnewadvise') + '?idHistorialClinico='+{{ object.getId() }}+'&idTipoConsejeria=' + $('#tipoConsejeria').val() + '&consejo=' + $('#consejeria').val() + '&idEmpleado='+{{ parameters.idEmpleado }}+'&idAtenAreaModEstab=' +{{ parameters.idEspecialidad }} ,
+                            async: false,
+                            dataType: 'json',
+                            timeout: 8000, // 8 sec
+                            success: function(data) {
+                                if (data.success){
+                                    $('#advisesDiv').prepend('\
+                                        <blockquote id="advise' + data.id + '" class="advise-block" advise-type="' + $('#tipoConsejeria').val() + '" recently-added="true">\
+                                            <p class="text-' + ($('#tipoConsejeria').val() == 1 ? 'green' : $('#tipoConsejeria').val() == 2 ? 'yellow' : 'light-blue') + '">\
+                                                <b>' + data.nombreConsejeria + '</b>&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-primary btn-xs" id="adviseEditButton' + data.id + '" onClick="editAdvise(' + data.id + ');" advise-type="' + $('#tipoConsejeria').val() + '"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Editar</button>\
+                                            </p>\
+                                            <span id="adviseText' + data.id + '">' + $('#consejeria').val() + '</span>\
+                                            <small>Brindada por: ' + data.nombreEmpleado + '</small>\
+                                        </blockquote>\
+                                    ');
+                                    addedAdviseTypes.push($('#tipoConsejeria').select2('val'));
+                                    $('#tipoConsejeria').select2('val', '');
+                                    $('#consejeria').val('');
+                                }
+                                else{
+                                    showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Consejeria. Por favor, Intente nuevamente.', 'dialog-error');
+                                }
+                            },
+                            error: function(xhr, textStatus, errorThrown) {
+                                console.error('Hubo un error al intentar realizar el registro de Consejeria.\nDetalle del Error: textStatus: '+textStatus+', errorThrown: '+errorThrown);
+                                showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Consejeria. Por favor, Intente nuevamente.', 'dialog-error');
+                            }
+                        });
+                    }else{
+                        showDialogMsg('Consejo no especificado', 'Por favor, especifíque el Consejo que esta brindando.', 'dialog-error', null, [ { text: 'Cerrar', click: function(){ $(this).dialog("close"); $('#consejeria').focus(); } } ], false );
+                    }
+                }else{
+                    showDialogMsg('Seleccione Tipo de Consejeria', 'Por favor, seleccione el Tipo de Consejeria que esta brindando.', 'dialog-error', null, [ { text: 'Cerrar', click: function(){ $(this).dialog("close"); $('#tipoConsejeria').focus(); } } ], false  );
+                }
+            });
+
+            /* Fin Agregar Consejeria*/
+
+            $("#indicaciones_medicas").on('change', function(){
+                jQuery.ajax({
+                        url: Routing.generate('saveotrasobservaciones')+'?idHistorialClinico='+{{ object.getId() }}+'&indicaciones_medicas='+$('#indicaciones_medicas').val()+'&campo=IndicacionObservacion',
+                        async: false,
+                        dataType: 'json',
+                        timeout: 8000, // 8 sec
+                        success: function(data) {
+                            if(data.success){
+                                //showDialogMsg('Guardado', 'La informacion de Indicaciones Médicas y Recomendaciones se ha guardado.', 'dialog-success');
+                            }
+                            else{
+                                showDialogMsg('Error...', 'Hubo un error al intentar guardar el registro de Indicaciones Médicas y Recomendaciones. Por favor, Intente nuevamente.', 'dialog-error');
+                            }
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                                        console.error('Hubo un error al intentar realizar el registro de Indicaciones Médicas y Recomendaciones.\nDetalle del Error: textStatus: '+textStatus+', errorThrown: '+errorThrown);
+                                showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Indicaciones Médicas y Recomendaciones. Por favor, Intente nuevamente.', 'dialog-error');
+                        }
+                    });
+
+                });
+
+            $("#examen_gabinete").on('change', function(){
+                jQuery.ajax({
+                       url: Routing.generate('saveotrasobservaciones')+'?idHistorialClinico='+{{ object.getId() }}+'&indicaciones_medicas='+$('#examen_gabinete').val()+'&campo=examenGabinete',
+                        async: false,
+                        dataType: 'json',
+                        timeout: 8000, // 8 sec
+                        success: function(data) {
+                            if (data.success){
+                            //showDialogMsg('Guardado', 'La informacion de Indicaciones Médicas y Recomendaciones se ha guardado.', 'dialog-success');
+                            }
+                            else{
+                            showDialogMsg('Error...', 'Hubo un error al intentar guardar el registro de Examenes de Gabinete. Por favor, Intente nuevamente.', 'dialog-error');
+                            }
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                        console.error('Hubo un error al intentar realizar el registro de Examenes de Gabinete.\nDetalle del Error: textStatus: ' + textStatus + ', errorThrown: ' + errorThrown);
+                                showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Examenes de Gabinete. Por favor, Intente nuevamente.', 'dialog-error');
+                        }
+                    });
+                });
+
+            $("#plan_ingreso").on('change', function(){
+                    jQuery.ajax({
+                           url: Routing.generate('saveotrasobservaciones')+'?idHistorialClinico='+{{ object.getId() }}+'&indicaciones_medicas='+$('#plan_ingreso').val()+'&campo=planIngreso',
+                            async: false,
+                            dataType: 'json',
+                            timeout: 8000, // 8 sec
+                            success: function(data) {
+                                if (data.success){
+                                //showDialogMsg('Guardado', 'La informacion de Indicaciones Médicas y Recomendaciones se ha guardado.', 'dialog-success');
+                                }
+                                else{
+                                showDialogMsg('Error...', 'Hubo un error al intentar guardar el registro de Examenes de Gabinete. Por favor, Intente nuevamente.', 'dialog-error');
+                                }
+                            },
+                            error: function(xhr, textStatus, errorThrown) {
+                            console.error('Hubo un error al intentar realizar el registro de Examenes de Gabinete.\nDetalle del Error: textStatus: ' + textStatus + ', errorThrown: ' + errorThrown);
+                                    showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Examenes de Gabinete. Por favor, Intente nuevamente.', 'dialog-error');
+                            }
+                        });
+                    });
+                $('#grupo_dispensarial').select2({
+                        allowClear: true,
+                        placeholder: 'Seleccione el grupo dispensarial del paciente',
+                        dropdownAutoWidth: true
+                });
+
+                $('#grupo_dispensarial').select2('val', '{{ expediente.getIdPaciente().getIdGrupoDispensarial().getId()}}');
+                $('#establecimiento').on('change', function() {//Dependiendo del establecimiento selecionado muestra las areas de atencion
+                        var resultadoExterno;
+                        $('#especialidad').empty();
+                        if ($('#establecimiento').val()) {
+                            var idEstablecimientoLocal = {{ parameters.idEstablecimiento }};
+                            var idEstablecimientoSelect = $('#establecimiento').val();
+                            if (idEstablecimientoLocal == idEstablecimientoSelect){//Establecimiento selecionado igual que el local
+                                consultaEspeLocalConf(); //llama a funcion que muestra los establecimientos configurados localmente
+                        }
+                        else{
+                            consultaEspeExterno();
+                        }
+                }});
+
+                        function consultaEspeLocalConf() {
+                        jQuery.ajax({
+                        url: Routing.generate('especialidadesConfiguradas') + '?idEstablecimiento={{ parameters.idEstablecimiento }}&idHistorialClinico={{object.getId()}}' ,
+                                async: true,
+                                dataType: 'json',
+                                timeout: 8000, // 8 sec
+                                success: function(data) {
+                                if (data.success){
+                                jQuery.each(data.especialidades, function(indice, val) {
+                                $('#especialidad').append('<option value="' + val['id'] + '">' + val['nombre'] + '</option>');
+                                });
+                                        $('#especialidad').prepend('<option/>')
+                                        .val(function () {
+                                        return $('[selected]', this).val();
+                                        })
+                                        .select2({
+                                        placeholder: 'Seleccionar Especialidad ...',
+                                                allowClear: true,
+                                                dropdownAutoWidth: true
+                                        });
+                                        $('#idEnviar').val('FALSE');
+                                }
+                                else{
+                                showDialogMsg('Error...', 'Hubo un error al intentar consultar . Por favor, Intente nuevamente.', 'dialog-error');
+                                }
+                                },
+                                error: function(xhr, textStatus, errorThrown) {
+                                console.error('Hubo un error al intentar realizar el registro de Examenes de Gabinete.\nDetalle del Error: textStatus: ' + textStatus + ', errorThrown: ' + errorThrown);
+                                        showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Examenes de Gabinete. Por favor, Intente nuevamente.', 'dialog-error');
+                                }
+                        });
+                        }
+
+                function consultaEspeExterno() {
+                        //var path = "{{ url('mespecialidades', {'establecimiento': 'selectedId', 'host':global_host,'method':method}) }}";
+                        var path="{{url('especialidadesLocales')}}?idHistorialClinico={{object.getId()}}&idEstablecimiento="+$('#establecimiento').val();
+                        jQuery.ajax({
+                                url: path,
+                                async: true,
+                                dataType: 'json',
+                                timeout: 8000, // 8 sec
+                                success: function(data) {
+                                if (data.success){
+                                    jQuery.each(data.atenciones, function(indice, val) {
+                                      $('#especialidad').append('<option value="' + val.id + '">' + val.nombre + '</option>');
+                                    });
+                                    $('#especialidad').prepend('<option/>').val(function () {
+                                              return $('[selected]', this).val();
+                                    }).select2({
+                                      placeholder: 'Seleccionar Especialidad ...',
+                                      allowClear: true,
+                                      dropdownAutoWidth: true
+                                    });
+                                    $('#idEnviar').val('FALSE');
+                                }
+                                else{
+                                    showDialogMsg('Error...', 'Hubo un error al intentar consultar . Por favor, Intente nuevamente.', 'dialog-error');
+                                    }
+                                },
+                                error: function(xhr, textStatus, errorThrown) {
+                                console.error('Hubo un error .\nDetalle del Error: textStatus: ' + textStatus + ', errorThrown: ' + errorThrown);
+                                        showDialogMsg('Error...', 'Hubo un error.', 'dialog-error');
+                                }
+                        });
+                }
+
+                function consultaEspeLocal() {
+                jQuery.ajax({
+                url: Routing.generate('especialidadesLocales'),
+                        async: true,
+                        dataType: 'json',
+                        timeout: 8000, // 8 sec
+                        success: function(data) {
+                        if (data.success){
+                        jQuery.each(data.atenciones, function(indice, val) {
+                        $('#especialidad').append('<option value="' + val.id + '">' + val.nombre + '</option>');
+                        });
+                                $('#especialidad').prepend('<option/>')
+                                .val(function () {
+                                return $('[selected]', this).val();
+                                })
+                                .select2({
+                                placeholder: 'Seleccionar Especialidad ...',
+                                        allowClear: true,
+                                        dropdownAutoWidth: true
+                                });
+                                $('#idEnviar').val('FALSE');
+                        }
+                        else{
+                        showDialogMsg('Error...', 'Hubo un error al intentar consultar . Por favor, Intente nuevamente.', 'dialog-error');
+                        }
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                        console.error('Hubo un error al intentar realizar el registro de Examenes de Gabinete.\nDetalle del Error: textStatus: ' + textStatus + ', errorThrown: ' + errorThrown);
+                                showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Examenes de Gabinete. Por favor, Intente nuevamente.', 'dialog-error');
+                        }
+                });
+                }
+
+                $("#generar-referencia").on("click", function () {
+                        var especialidad = $('#especialidad').val();
+                        var establecimiento = $('#establecimiento').val();
+                        var valEnviar = $('#idEnviar').val();
+                        if ((establecimiento && especialidad)) {
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+                        if (1 == 1) {
+                                var path = "{{ url('admin_minsal_seguimiento_secremisionpaciente_createsolo',{'idhistoria':parameters.idHistorialClinico,'estadoEnviar':'env','idespe':'elespe','idestable':'elestable'}) }}";
+                                var url = path;
+                                var url = path.replace('env', valEnviar);
+                                var url = url.replace('elespe', especialidad);
+                                var url = url.replace('elestable', establecimiento);
+                                var nurl = url;
+                        } else {
+                            var path = "{{ url('admin_minsal_seguimiento_secremisionpaciente_createespe',{'idhistoria':parameters.idHistorialClinico,'idespe':'elespe','idestable':'elestable'}) }}";
+                                    var url = path.replace('elespe', especialidad);
+                                    var nurl = url.replace('elestable', establecimiento);
+                }
+                        winParams['method'] = "post";
+                        winParams['action'] = nurl;
+                        winParams['target'] = "Remision de Paciente";
+                        winParams['parameters'] = parameters;
+                        openPostPopUpWindows(winParams);
+                } else {
+                        var title = 'Dato incompleto!!!';
+                        var body = '<p><span class="fa fa-warning"></span> \
+                                                Debe de seleccionar un <b>establecimiento</b> y una <b>especialidad</b> antes de generar una referencia';
+                        var clase = 'dialog-warning';
+                        showDialogMsg(title, body, clase);
+                }
+                });
+
+
+                $("#imprimir-referencia-interconsulta").on("click", function () {
+                {% if referencias is not null%}
+                    var parameters = {{ url_parameters|json_encode|raw }};
+                            var winParams = [];
+                            var path = "{{ url('admin_minsal_seguimiento_secremisionpaciente_referencia_reporte') }}";
+                            winParams['method'] = "post";
+                            winParams['action'] = path;
+                            winParams['target'] = "Remision de Paciente";
+                            winParams['parameters'] = parameters;
+                            openPostPopUpWindows(winParams);{% endif %}
+                    });
+                var idReferenciasImpresion = [];//Se utiliza para selecionar los medicamentos a los cuales se les imprimira receta
+                $("body").on('ifChecked', "input[id^='seleccionarReferencia_']", function () {//Si se han selecionado que se impriman todas las recetas se seleciona una por una
+                        var item = $(this);
+                        var valores = item.attr('id').split('_');
+                        var id = valores[1];
+                        var winParams = [];
+                        idReferenciasImpresion.push(id);
+                });
+
+                $("body").on('ifUnchecked', "input[id^='seleccionarReferencia_']", function () {//Si se han selecionado que se impriman todas las recetas se seleciona una por una
+                    var item = $(this);
+                    var valores = item.attr('id').split('_');
+                    var id = valores[1];
+                    var index = idReferenciasImpresion.indexOf(id); //idsmedicamento es una variable global de tipo array que tiene los id de los medicamentos que se agregan a la receta
+                    idReferenciasImpresion.splice(index, 1);
+                });
+                $("span[id^='imprimir-referencia']").on("click", function () {
+                    if (idReferenciasImpresion.length != 0) {//Pregunta si el array que contiene los id de las recetas esta vacio
+                        var resultado = $(this).attr('id').split('_');
+                        var parameters = {{ url_parameters|json_encode|raw }};
+                        var winParams = [];
+                        var path = "{{ url('admin_minsal_seguimiento_secremisionpaciente_referencia_reporte') }}";
+                        winParams['method'] = "post";
+                        winParams['action'] = path;
+                        winParams['target'] = "Remision de Paciente";
+                        winParams['parameters'] = {'idRemision': idReferenciasImpresion,'idHistorialClinico':{{object.getId()}}};//Se envia un array que contiene las recetas ya sea una, varias o todas
+                        openPostPopUpWindows(winParams);
+                     }else {
+                        showDialogMsg('Referencias', 'Por favor selecionar la(s) referencias a imprimir', 'dialog-info');
+                     }
+                });
+
+                $("#imprimir-historia-clincia").on("click", function () {
+                    var parameters = {{ url_parameters|json_encode|raw }};
+                    var winParams = [];
+                    var path = "{{ url('admin_minsal_seguimiento_sechistorialclinico_imprimir_historia_clinica', { id: object.getId() }) }}";
+                    winParams['method'] = "post";
+                    winParams['action'] = path;
+                    winParams['target'] = "Remision de Paciente";
+                    winParams['parameters'] = parameters;
+                    openPostPopUpWindows(winParams);
+                });
+        });
+
+        function editAdvise(id){
+            var historyStatus = {{ object.getIdEstadoHistoriaClinica().getId() }};
+
+            if( ( historyStatus < 4 ) || ( historyStatus >= 4 && jQuery('#advise' + id).attr('recently-added') == "true" ) ){
+
+                jQuery('#adviseText'+id).hide();
+                jQuery('#adviseEditButton'+id).hide();
+                jQuery('#adviseText'+id).after('<textarea id="adviseEditArea" class="form-control">' + jQuery('#adviseText'+id).text() + '</textarea>');
+                jQuery('#adviseEditButton'+id).after('<button type="button" class="btn btn-success btn-xs" id="adviseUpdateButton" onClick="updateAdvise(' + id + ');"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span> Guardar</button>\
+                                                      <button type="button" class="btn btn-danger btn-xs" id="cancelAdviseUpdateButton" onClick="cancelAdviceUpdate(' + id + ');"><span class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span> Cancelar</button>\
+                                                    ');
+                jQuery('#adviseEditArea').focus();
+                jQuery('button[id^="adviseEditButton"]').attr('disabled','disabled');
+
+            }
+            else{
+                showDialogMsg('Acción no permitida.','No puede editar la consejería debido a que la consula ya ha sido finalizada.', 'dialog-error');
+            }
+        }
+
+        function updateAdvise(id){
+            if( jQuery('#adviseText'+id).text() != jQuery('#adviseEditArea').val() ){
+                if( jQuery('#adviseEditArea').val() && (jQuery('#adviseEditArea').val()).replace(/\s+/g, '') != ''){
+
+                    jQuery('#cancelAdviseUpdateButton').after('<span id="waitUpdate"><img src="/bundles/minsalsiaps/imagenes/wait_icon1.gif" alt="wait" width="20" height="20" style="margin-left: 20px;"> Actualizando...</span>');
+                    jQuery.ajax({
+                        url: Routing.generate('updateadvise') + '?idHistorialClinico='+{{ object.getId() }} + '&adviseId=' + id +'&consejo=' + jQuery('#adviseEditArea').val() + '&idEmpleado=' + {{ parameters.idEmpleado }},
+                        async: false,
+                        dataType: 'json',
+                        timeout: 8000, // 8 sec
+                        success: function(data) {
+                            if (data.success){
+                                jQuery('#adviseText'+id).text( jQuery('#adviseEditArea').val() );
+                                cancelAdviceUpdate(id);
+                                jQuery('#adviseEditButton'+id).after('<span id="updateAdviseOk" style="margin-left: 20px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;"><i class="fa fa-fw fa-check-circle"></i><strong> Actualizado correctamente </strong></span>');
+                                autoDismissElement(jQuery('#updateAdviseOk'), 'fade', null, false);
+                            }
+                            else{
+                                showDialogMsg('Error...', 'Hubo un error al intentar realizar el registro de Consejeria. Por favor, Intente nuevamente.', 'dialog-error');
+                            }
+                            jQuery('#waitUpdate').remove();
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                            jQuery('#waitUpdate').remove();
+                            console.error('Hubo un error al intentar actualizar la Consejeria.\nDetalle del Error: textStatus: '+textStatus+', errorThrown: '+errorThrown);
+                            showDialogMsg('Error...', 'Hubo un error al intentar actualizar la Consejeria. Por favor, Intente nuevamente.', 'dialog-error');
+                        }
+                    });
+
+                }
+                else{
+                    showDialogMsg('Consejo no especificado', 'Por favor, especifíque el Consejo que esta brindando.', 'dialog-error', null, [ { text: 'Cerrar', click: function(){ $(this).dialog("close"); jQuery('#adviseEditArea').focus(); } } ], false );
+                }
+            }
+            else{
+                cancelAdviceUpdate(id);
+            }
+        }
+
+        function cancelAdviceUpdate(id){
+            jQuery('#adviseText'+id).show();
+            jQuery('#adviseEditButton'+id).show();
+            jQuery('#adviseEditArea').remove();
+            jQuery('#adviseUpdateButton').remove();
+            jQuery('#cancelAdviseUpdateButton').remove();
+            jQuery('button[id^="adviseEditButton"]').removeAttr('disabled');
+        }
+
+        function reloadPage() {
+            var navegador = getCurrentBrowser();
+            if (navegador.indexOf("Chrome") >= 0){
+                //alert( 'Chrome' );
+                jQuery('form').attr('action', "{{ url('admin_minsal_seguimiento_sechistorialclinico_seguimiento_consulta', { 'idHistorialClinico':object.getId() }) }}");
+                jQuery('form').append('<input name="reload" id="reload" type="hidden" value="true"/>');
+                jQuery('form').submit();
+            }else{
+                //alert( 'Firefox' );
+                window.location = "{{ url('admin_minsal_seguimiento_sechistorialclinico_seguimiento_consulta', { idHistorialClinico: object.getId() }) }}";
+            }
+        }
+
+        jQuery(document).ready(function ($) {
+            {% if params.solicitudEstudio.setFalseHistoryId %}
+
+                var arrayBtns =
+                    [{
+                        text: 'Verificar', click: function() {
+                            jQuery( this ).dialog( "close" );
+                            $('#verifySecSolicitudMatch').click();
+                        }
+                    }];
+
+                showDialogMsg('¡ Atención !', 'Se ha encontrado una Solicitud de Examenes registrada que <b>coincide</b> con la <b>Fecha</b> indicada, <b>Expediente</b>, <b>Médico</b> y <b>Especialidad</b> actual.', 'dialog-info', '', arrayBtns, false, 500, true, false, false);
+
+                modal_elements.push({
+                    id: 'verifySecSolicitudMatch',
+                    func: 'setSecSolicitudMatchToModal',
+                    header: 'Detalles de la Solicitud de Examenes Encontrada',
+                    footer: '<button id="confirmSecSolicitudMatchBtn" value="true" onClick="confirmSecSolicitudMatch({{ object.getId() }},{{ params.solicitudEstudio.falseHistory.getId() }})" class="btn btn-success"><span class="label"><span class="glyphicon glyphicon-plus-sign"></span> Confirmar</span></button>',
+                    widthModal: 850,
+                    parameters: '',
+                    closeBtn: false,
+                    closeXBtn: false
+                });
+
+            {% endif %}
+        });
+
+        function confirmSecSolicitudMatch(currentHistoryId, falseHistoryId){
+
+            jQuery('#confirmSecSolicitudMatchBtn').hide().after('<span id="waitUpdate"><img src="/bundles/minsalsiaps/imagenes/wait_icon1.gif" alt="wait" width="20" height="20" style="margin-left: 20px;"> Asociando...</span>');
+            jQuery.ajax({
+                url: Routing.generate('confirmsecsolicitudmatch') + '?currentHistoryId='+currentHistoryId + '&falseHistoryId=' + falseHistoryId,
+                async: false,
+                dataType: 'json',
+                timeout: 8000, // 8 sec
+                success: function(data) {
+                    jQuery('#waitUpdate').remove();
+                    if (data.success){
+                        jQuery('#myModal').modal('hide');
+                        showAutoDismissMsg('Se han aplicado los cambios!', 'success', 'large');
+                    }
+                    else{
+                        jQuery('#confirmSecSolicitudMatchBtn').show();
+                        showDialogMsg('Error...', 'Hubo un error al intentar realizar la actualización. Por favor, Intente nuevamente. Si el problema persiste, contacte con el Administrador.', 'dialog-error');
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    jQuery('#waitUpdate').remove();
+                    jQuery('#confirmSecSolicitudMatchBtn').show();
+                    console.error('Hubo un error al intentar asociar la Solicitud.\nDetalle del Error: textStatus: '+textStatus+', errorThrown: '+errorThrown);
+                    showDialogMsg('Error...', 'Hubo un error al intentar asociar la Solicitud. Por favor, Intente nuevamente. Si el problema persiste, contacte con el Administrador.', 'dialog-error');
+                }
+            });
+        }
+
+        function setSecSolicitudMatchToModal(){
+
+            return 'La siguiente Solicitud de Examenes será asociada a la Historia Clínica actual:<br/><br/>'+jQuery('#secSolicitudMatch').html();
+        }
+
+    </script>
+{% endblock %}
+{% block sonata_breadcrumb %}
+{% endblock sonata_breadcrumb %}
+{% block actions %}
+{% endblock %}
+{% block form %}
+<form
+    {% if admin_pool.getOption('form_type') == 'horizontal' %}class="form-horizontal"{% endif %}
+    role="form"
+    method="POST"
+    action="{{ admin.generateUrl('cerrar_consulta',{'idHistorialClinico':parameters.idHistorialClinico}) }}"
+    {% if not admin_pool.getOption('html5_validate') %}novalidate="novalidate"{% endif %}
+    >
+    <input type="hidden" name="idEnviar" id="idEnviar" value="">
+    <div class="row">
+        <div class="{{ form_group.class|default('col-md-12') }}">
+            <div class="box box-success">
+                <div class="box-body">
+                    <div class="sonata-ba-collapsed-fields">
+                        {% include 'MinsalSiapsBundle:MntPacienteAdmin:encabezado_paciente.html.twig' %}
+                        {% include 'MinsalSeguimientoBundle:SecHistorialClinico:consultar_historial.html.twig' %}
+                        <br/>
+                        <table class="vista_paciente padding-table" border="0" width="100%">
+                            <tr class="titulo_vista">
+                                <td colspan="4"><li class="fa fa-calendar"></li> <b>Seguimiento de Consulta</b></td>
+                            </tr>
+                            <tr><td colspan="4" style="border-bottom: 2px solid #ffffff;"><label>Asignar Cita:</label></td></tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="col-md-4" align="center">
+                                        <a href="#" id="asignar-cita-control" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Asignación de Cita de Control">
+                                            <li class="fa fa-stethoscope"></li>Cita de Control
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4" align="center">
+                                        <a href="#" id="asignar-cita-seguimiento" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Asignación de Cita de Seguimiento">
+                                            <li class="fa fa-clipboard"></li>Cita de Seguimiento
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4" align="center">
+                                        <a href="#" id="asignar-cita-procedimiento" class="btn btn-app btn-group disabled" data-toggle="tooltip" data-placement="top" title="Asignación de Cita de Procedimiento">
+                                            <li class="fa fa-list-alt"></li>Cita de Procedimiento
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        <br/>
+                        <table class="vista_paciente padding-table" border="0" width="100%">
+                            <tr class="titulo_vista">
+                                <td colspan="4"><b><i class="fa fa-fw fa-medkit"></i> Plan de Atención</b></td>
+                            </tr>
+                            <tr>
+                                <td width="30%"><label>Solicitud de Medicamentos a Farmacia:</label></td>
+                                <td colspan="3">
+                                    <a href="#" id="recetario" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Recetario de Consulta Externa">
+                                        <li class="fa fa-clipboard"></li><span>Recetario<br/>Consulta Externa</span>
+                                    </a>
+
+                            </tr>
+                            <tr>
+                                <td width="30%"><label>Recomendaciones Relacionadas con el Tratamiento:</label></td>
+                                <td colspan="3">
+                                    {% set indicacionObservacion = '' %}
+                                    {% if SecOtrasObservaciones|length > 0 %}
+                                        {% set indicacionObservacion = SecOtrasObservaciones.indicacionObservacion %}
+                                    {% endif %}
+                                    <textarea id="indicaciones_medicas" class=" form-control" name="indicaciones_medicas">{{ indicacionObservacion }}</textarea>
+                                </td>
+                            </tr>
+                        </table>
+                        <br/>
+                        <table class="vista_paciente padding-table" border="0" width="100%">
+                            <tr class="titulo_vista">
+                                <td colspan="4"><b><i class="fa fa-fw fa-ambulance"></i> Plan de Ingreso o Tratamiento</b></td>
+                            </tr>
+                            <tr>
+                                <td width="30%"><label>Detalle:</label></td>
+                                <td colspan="3">
+                                    {% set planIngreso = '' %}
+                                    {% if SecOtrasObservaciones|length > 0 %}
+                                        {% set planIngreso = SecOtrasObservaciones.planIngreso %}
+                                    {% endif %}
+                                    <textarea id="plan_ingreso" class=" form-control" name="plan_ingreso">{{ planIngreso }}</textarea>
+                                </td>
+                            </tr>
+                        </table>
+                        <table class="vista_paciente padding-table" border="0" width="100%">
+                            <tr class="titulo_vista">
+                                <td colspan="5"><b><i class="fa fa-fw fa-warning"></i> Consejería</b></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-md-1">
+                                                <label>Tipo de Consejería:</label>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select id="tipoConsejeria" class="form-control" name="tipoConsejeria">
+                                                    {% for tipoC in parameters.tipoConsejeria %}
+                                                        <option value="{{ tipoC.getId() }}">{{ tipoC.getNombre() }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-1">
+                                                <label>Consejo:</label>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <textarea id="consejeria" style="max-width: 100%;" rows="2" class=" form-control" name="consejeria">{#% if parameters.consejeriaBrindada %}{{ parameters.consejeriaBrindada[0].getConsejo() }}{% endif %#}</textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-primary" id="btn-add-advise" style="min-width: 70%;"><span class="fa fa-plus"></span> Guardar Consejo</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td id="advisesDiv" colspan="5" style="text-align: center;">
+                                    {% if parameters.consejeriaBrindada %}
+                                        {% for consejo in parameters.consejeriaBrindada %}
+                                            <blockquote id="advise{{ consejo.getId() }}" class="advise-block" advise-type="{{ consejo.getIdTipoConsejeria().getId() }}" recently-added="false">
+                                                <p class="text-{% if consejo.getIdTipoConsejeria().getId() == 1  %}green{% elseif consejo.getIdTipoConsejeria().getId() == 2 %}yellow{% else %}light-blue{% endif %}">
+                                                    <b>{{ consejo.getIdTipoConsejeria().getNombre() }}</b>&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-primary btn-xs" id="adviseEditButton{{ consejo.getId() }}" onClick="editAdvise({{ consejo.getId() }});" advise-type="{{ consejo.getIdTipoConsejeria().getId() }}"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Editar</button>
+                                                </p>
+                                                <span id="adviseText{{ consejo.getId() }}">{{ consejo.getConsejo() }}</span>
+                                                <small>Brindada por: {{ consejo.getIdEmpleado() }}</small>
+                                            </blockquote>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                        <br/>
+                        <a href="#myModal" id="verifySecSolicitudMatch" custom-modal="true" data-toggle="modal" data-backdrop="static" data-keyboard="false" style="display: none;"></a>
+                        <div id="secSolicitudMatch" style="display: none;">
+                            {% if params.solicitudEstudio.setFalseHistoryId %}
+                                {% include 'MinsalLaboratorioBundle:Custom:SecSolicitudestudios/body_solicitudestudio.html.twig'%}
+                            {% endif %}
+                        </div>
+                        <table class="vista_paciente padding-table" border="0" width="100%">
+                            <tr class="titulo_vista">
+                                <td colspan="4"><b><i class="fa fa-fw fa-flask"></i> Solicitud Estudios</b></td>
+                            </tr>
+                            <tr>
+                                <td width="30%"><label>Servicio de Apoyo:</label></td>
+                                <td colspan="3">
+                                    <select id="servicio_apoyo">
+                                        <option value="1">Laboratorio</option>
+                                        <option value="2">Imagenología</option>
+                                    </select>
+                                    <button type="button" class="btn btn-primary" id="btn-solicitud-estudios" style="margin-left: 25px;"><span class="fa fa-file-text"></span> Crear Solicitud</button>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td width="30%"><label>Procedimientos:</label></td>
+                                <td colspan="3"> <select id="procedimientos">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="30%"><label>Examenes de Gabinete:</label></td>
+                                <td colspan="3">
+                                    {% set examenGabinete = '' %}
+                                    {% if SecOtrasObservaciones|length > 0 %}
+                                        {% set examenGabinete = SecOtrasObservaciones.examenGabinete %}
+                                    {% endif %}
+                                    <textarea id="examen_gabinete" class=" form-control" name="examen_gabinete">{{ examenGabinete }}</textarea>
+                                </td>
+                            </tr>
+                        </table>
+                        <br/>
+                        <div class="table-responsive">
+                            <table class="vista_paciente padding-table" border="0" width="100%">
+                                <tr class="titulo_vista">
+                                    <td colspan="4"><b><i class="fa fa-fw fa-share-square-o"></i> Referencia, Interconsulta, Retorno</b></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="container-fluid">
+                                            <div class="row"  style="margin-bottom: 5px;">
+                                                <div class="col-md-2" align="center"><label>Establecimiento:</label> </div>
+                                                <div class="col-md-10" align="left">
+                                                    {% if establecimientos is defined %}
+                                                        <select id="establecimiento" class="full-width">
+                                                            {% for esta in establecimientos %}
+                                                                <option value="{{ esta.id }}">{{ esta.nombre }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-2" align="center"><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Especialidad:</label></div>
+                                                <div class="col-md-10" align="left">
+                                                    <select id="especialidad" class="full-width"></select>
+                                                </div>
+                                                <!-- <div class="col-md-2" align="center">
+                                                </div> -->
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="width: 163px;">
+                                        <button type="button" class="btn btn-primary" id="generar-referencia" style=""><span class="fa fa-hospital-o"></span> Generar Referencia</button>
+                                    </td>
+                                </tr>
+                                {% if referencias is not empty%}
+                                    <tr>
+                                        <td colspan="4">
+                                            <div class="container-fluid">
+                                                <div class="row">
+                                                    <div class="col-md-11 col-xs-11">
+                                                    </div>
+                                                    <div class="col-md-1 col-xs-1">
+                                                        <span class="glyphicon glyphicon-print mouse-pointer" id="imprimir-referencia" style="font-size:20px;" role="print"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="container-fluid">
+                                                {% for referencia in referencias %}
+                                                    <div class="row">
+                                                        <div class="col-md-11 col-xs-11">
+                                                            <blockquote class="advise-block">
+                                                                <p class="text-green">
+                                                                    <b>{{referencia.codigo}}</b>
+
+                                                                </p>
+                                                                <strong>Tipo de Remisión:</strong>{{referencia.idTipoRemision }}<br/>
+                                                                <strong>Motivo de Remisión: </strong>{{referencia.idMotivoRemision }}<br/>
+                                                                <strong>Especialidad a la que se refiere: </strong>{{referencia.idAtencionDestino }}<br/>
+                                                                <strong>Establecimiento al que refiere: </strong>{{referencia.idEstablecimientoDestino }}<br/>
+                                                                <small>Fecha de Remisión: {{ referencia.fechaRemision | date('d-m-Y') }}</small>
+                                                            </blockquote>
+                                                        </div>
+                                                        <div class="col-md-1 col-xs-1">
+                                                            <input type="checkbox" id="seleccionarReferencia_{{referencia.id}}"/>
+                                                        </div>
+                                                    </div>
+                                                {% endfor%}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <br/>
+                        <table class="vista_paciente padding-table" border="0" width="100%">
+                            <tr class="titulo_vista">
+                                <td colspan="4"><li class="fa fa-print"></li> <b>Impresiones</b></td>
+                            </tr>
+                            <!--tr><td colspan="4" style="border-bottom: 2px solid #ffffff;"><label>Imprimir:</label></td></tr-->
+                            <tr>
+                                <td colspan="4">
+                                    <div class="row" style="margin-left: 0; margin-right: 0;">
+                                        <div class="col-md-12"><span><b>Comprobantes de Cita:</b></span></div>
+                                    </div>
+                                    <div class="row" style="margin-left: 0; margin-right: 0;">
+                                        <div class="col-md-4" align="center">
+                                            <a href="#" id="comprobante-cita-control" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Comprobante de Cita de Control" target="_blank">
+                                                <div class="multiple-icons">
+                                                    <li class="fa fa-calendar"></li>
+                                                    <li class="fa fa-stethoscope"></li>
+                                                </div>Cita de Control
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4" align="center">
+                                            <a href="#" id="comprobante-cita-seguimiento" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Comprobante de Cita de Seguimiento" target="_blank">
+                                                <div class="multiple-icons">
+                                                    <li class="fa fa-calendar"></li>
+                                                    <li class="fa fa-clipboard"></li>
+                                                </div>Cita de Seguimiento
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4" align="center">
+                                            <a href="#" id="comprobante-cita-procedimiento" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Comprobante de Cita de Procedimiento" target="_blank">
+                                                <div class="multiple-icons">
+                                                    <li class="fa fa-calendar"></li>
+                                                    <li class="fa fa-list-alt"></li>
+                                                </div>Cita de Procedimiento
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="row" style="margin-left: 0; margin-right: 0;">
+                                        <div class="col-md-12"><span><b>De la Historia Clinica:</b></span></div>
+                                    </div>
+                                    <div class="row" style="margin-left: 0; margin-right: 0;">
+                                        <div class="col-md-3" align="center">
+                                            <a href="#" id="imprimir-recetas" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Recetas">
+                                                <li class="fa fa-medkit"></li>Recetas
+                                            </a>
+                                        </div>
+                                        <div class="col-md-3" align="center">
+                                            <a href="#" id="imprimir-solicitud-estudios" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Solicitud Estudios">
+                                                <li class="fa fa-file-text-o"></li>&nbsp;&nbsp;Solicitud de&nbsp;&nbsp;&nbsp;<br/> Estudios
+                                            </a>
+                                        </div>
+                                        <div class="col-md-3" align="center">
+                                            <a href="#" id="imprimir-referencia-interconsulta" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Referencias o Interconsultas">
+                                                <li class="fa fa-hospital-o"></li>Referencias<br/>o Interconsultas
+                                            </a>
+                                        </div>
+                                        <div class="col-md-3" align="center">
+                                            <a href="#" id="imprimir-historia-clincia" style="min-height: 72px;" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir Historia Clinica">
+                                                <!-- <li class="fa fa-user-md"></li> -->
+                                                <span class="glyphicon glyphicon-file" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;&nbsp;Historia&nbsp;&nbsp;&nbsp;&nbsp;<br/>Clinica
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="row" style="margin-left: 0; margin-right: 0;">
+                                        <div class="col-md-12"><span><b>Otros Formularios:</b></span></div>
+                                    </div>
+                                    <div class="row" style="margin-left: 0; margin-right: 0;">
+                                        <div class="col-md-3" align="center">
+                                            <a href="#" id="imprimir-fvih01" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir FVIH01">
+                                                <li class="fa fa-user-md"></li>FVIH01
+                                            </a>
+                                        </div>
+
+                                        <div class="col-md-3" align="center">
+                                            <a href="#" id="imprimir-vigepes01" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir VIGEPES-01">
+                                                <li class="fa fa-user-md"></li>VIGEPES-01
+                                            </a>
+                                        </div>
+
+                                        <div class="col-md-3" align="center">
+                                            <a href="#" id="imprimir-vigepes02" class="btn btn-app btn-group" data-toggle="tooltip" data-placement="top" title="Imprimir VIGEPES-02">
+                                                <li class="fa fa-user-md"></li>VIGEPES-02
+                                            </a>
+                                        </div>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        <br/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% block formactions %}
+        <div class="well well-small form-actions">
+            <input class="btn btn-primary" type="submit" value="Finalizar Consulta"/>
+        </div>
+    {% endblock formactions %}
+</form>
+{% endblock %}

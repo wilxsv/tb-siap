@@ -1,0 +1,118 @@
+{% block javascripts %}
+<script type="text/javascript">
+    jQuery(document).ready(function ($) {
+        var tablaResultados=$('#tablaResultados');
+        var opcionesTable=setDataTableOptions(tablaResultados);
+        var now=moment();
+        opcionesTable['columnDefs'] = [{ "width": "3000px", "targets": 0 }]
+        opcionesTable['bSort']=false;
+        opcionesTable['iDisplayLength']=15;
+        opcionesTable['bFilter']=false;
+        opcionesTable['sDom']="<'row'<'col-sm-12 info-bar'>>" +
+                            "<'row'<'col-sm-6'i><'col-sm-6'p>>" +
+                            "<'row'<'col-sm-12'tr>>";
+        //opcionesTable['sDom']='<"top"pi>t<"bottom">';
+        opcionesTable['aLengthMenu']= [[15,20], [15,20]];
+        tablaResultados.DataTable(opcionesTable);
+
+        var html='<div class="row">\
+            <div class="col-md-9 center-block">\
+                <div class="bs-callout bs-callout-info" id="callout-glyphicons-location">\
+                    <div class="row">\
+                        <div class="col-md-8">\
+                            <h4> Consideraciones a tener en cuenta</h4>\
+                            <p>Abreviaturas utilizadas:\
+                            <ul><li><strong>P:</strong>Citas Asignadas de Primera Vez</li>\
+                                <li><strong>S:</strong>Citas Asignadas Subsecuentes</li>\
+                                <li><strong>TA:</strong>Total de Citas Asignadas</li>\
+                                <li><strong>CT:</strong>Capacidad Total de Citas</li>\
+                            </ul>\
+                            </p>\
+                        </div>\
+                        <div class="col-md-4">\
+                            <div class="accordion-group">\
+                                <div class="accordion-heading">\
+                                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">\
+                                        <div style="font-size: 15px;font-weight:bold;">Código de Colores</div>\
+                                    </a>\
+                                </div>\
+                                <div id="collapseOne" class="accordion-body collapse in">\
+                                    <div class="accordion-inner">\
+                                        <div style="text-align:left;">\
+                                            <table>\
+                                                <tr><td style="background-color:#dff0d8;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Porcentajes de citas asignadas menores al 50%</td></tr>\
+                                                <tr><td style="background-color:#fcf8e3;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Porcentajes de citas asignadas entre el 50% y el 100%</td></tr>\
+                                                <tr><td style="background-color:#f2dede;width:16px;height:36px;"></td><td style="padding-left:10px;border-bottom: 1px solid #DDDDDD;">Porcentajes de citas asignadas mayor al 100% (Sobrecupo)</td></tr>\
+                                            </table>\
+                                        </div>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                        </div>\
+                    </div>\
+                </div>\
+            </div>\
+        </div>';
+        $('.info-bar').append(html);
+    });
+</script>
+{% endblock javascripts %}
+<table id="tablaResultados" class="table table-bordered table-hover" data-table-enabled="true" width="100%">
+    <thead>
+        <tr>
+            <th rowspan="3"><strong>Médico</strong></th>
+            <th colspan="48"><strong>Meses</strong></th>
+        </tr>
+        <tr>
+            <th colspan="4" class="text-center"><strong>Enero</strong></th>
+            <th colspan="4" class="text-center"><strong>Febrero</strong></th>
+            <th colspan="4" class="text-center"><strong>Marzo</strong></th>
+            <th colspan="4" class="text-center"><strong>Abril</strong></th>
+            <th colspan="4" class="text-center"><strong>Mayo</strong></th>
+            <th colspan="4" class="text-center"><strong>Junio</strong></th>
+            <th colspan="4" class="text-center"><strong>Julio</strong></th>
+            <th colspan="4" class="text-center"><strong>Agosto</strong></th>
+            <th colspan="4" class="text-center"><strong>Septiembre</strong></th>
+            <th colspan="4" class="text-center"><strong>Octubre</strong></th>
+            <th colspan="4" class="text-center"><strong>Noviembre</strong></th>
+            <th colspan="4" class="text-center"><strong>Diciembre</strong></th>
+        </tr>
+        <tr>
+            {% for i in 1..12 %}
+                <th class="text-center"><strong>P</strong></th>
+                <th class="text-center"><strong>S</strong></th>
+                <th class="text-center"><strong>TA</strong></th>
+                <th class="text-center"><strong>CT</strong></th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for idMedico,result in resultados %}
+            <tr>
+                <td>{{ result['nombre']}}</td>
+                {% for i in 1..12 %}
+                    {% if result['meses'][i] is defined %}
+                    {% set ta=result['meses'][i]['asignadas_p']+result['meses'][i]['asignadas_s'] %}
+                    {% set ct=result['meses'][i]['capacidad_p']+result['meses'][i]['capacidad_s'] %}
+                    {% if ta > ct %}
+                        {% set color='#f2dede' %}{#ROJO#}
+                    {% elseif ta >= (ct/2) %}
+                        {% set color='#fcf8e3' %}{#NARANJA#}
+                    {% else %}
+                        {% set color='#dff0d8' %}{#VERDE#}
+                    {% endif %}
+                        <td style="background-color:{{ color}}" >{{ result['meses'][i]['asignadas_p']}}</td>
+                        <td style="background-color:{{ color}}">{{ result['meses'][i]['asignadas_s']}}</td>
+                        <td style="background-color:{{ color}}">{{ ta }}</td>
+                        <td >{{ ct }}</td>
+                    {% else %}
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

@@ -1,0 +1,183 @@
+{# src/Minsal/CitasBundle/Resource/view/CitCitasProcedimientos/detalle_agenda.html.twig
+Vista que muestra los pacientes en una determinada fecha. Según el médico
+seleccionado o el que haya iniciado sesión.
+#}
+<script type="text/javascript">
+/*OBTIENE EL MPEDICO YA SEA QUE SE HAYA LOGUEADO EN EL SISTEMA
+* O SI ES ADMINISTRADR EL QUE HAYA SELECCIONADO
+* EN LA LISTA DESPLEGABLE*/
+    function getAgendaProcedimientoData() {
+        var idAreaModEstab      = "0";
+        var nombreAreaModEstab  = "";
+        var idProcedimiento     = "0";
+        var nombreProcedimiento = "";
+
+        if(jQuery('#idProcedimientoEstablecimiento').select2('data') != null) {
+            idProcedimiento     = jQuery('#idProcedimientoEstablecimiento').select2('val');
+            nombreProcedimiento = jQuery('#idProcedimientoEstablecimiento').select2('data').text;
+        }
+
+        {% if superAdmin %}
+            if(jQuery('#idAreaModEstab').select2('data') != null) {
+                idAreaModEstab     = jQuery('#idAreaModEstab').select2('val');
+                nombreAreaModEstab = jQuery('#idAreaModEstab').select2('data').text;
+            }
+        {% else %}
+            var data = getAreaModEstabDeEmpleado('{{ app.user.getIdEmpleado().getId() }}');
+
+            idAreaModEstab     = data.idAreaModEstab;
+            nombreAreaModEstab = data.nombreAreaModEstab;
+        {% endif %}
+
+        return { 'idProcedimiento': idProcedimiento, 'nombreProcedimiento': nombreProcedimiento, 'idAreaModEstab': idAreaModEstab, 'nombreAreaModEstab': nombreAreaModEstab };
+    }
+
+    function obtenerAreaModEstabDeEmpleado(idEmpleado) {
+        var result = [];
+
+        jQuery.ajax({
+            url: Routing.generate("get_area_mod_estab_de_empleado"),
+            data: { 'idEmpleado': idEmpleado },
+            async: false,
+            dataType: 'json',
+            success: function(data) {
+                result = data;
+            }
+        });
+
+        return result;
+    }
+
+    function getAreaModEstabDeEmpleado(idEmpleado) {
+        var data  = obtenerAreaModEstabDeEmpleado(idEmpleado);
+        var count = Object.keys(data).length;
+        var idAreaModEstab     = '0';
+        var nombreAreaModEstab = '';
+
+        if( count > 0 ) {
+            if( count === 1 ) {
+                idAreaModEstab     = data[0].id;
+                nombreAreaModEstab = data[0].nombreModalidad + ' - ' + data[0].nombreAreaAtencion + ( data[0].nombreServicioExterno ? ' - ' + data[0].nombreServicioExterno : '' ) ;
+            } else {
+                if(jQuery('#idAreaModEstab').select2('data') != null) {
+                    idAreaModEstab     = jQuery('#idAreaModEstab').select2('val');
+                    nombreAreaModEstab = jQuery('#idAreaModEstab').select2('data').text;
+                }
+            }
+        } else {
+            console.error('Error el empleado no tiene asociado ninguna area de atencion');
+        }
+
+        return { 'idAreaModEstab': idAreaModEstab, 'nombreAreaModEstab': nombreAreaModEstab };
+    }
+
+
+    /**********************************************************************
+    * FUNCION QUE GENERA LA AGENDA MEDICA, CON LOS PACIENTES ORDINARIOS,  *
+    * AGREGADOS SEGÚN SEA EL CASO.                                        *
+    * PARAMETERS: Contiene la url para obtener los pacientes y la fecha a *
+    * efectuar la evaluación
+    ***********************************************************************/
+    function buildDetailAgendaMedica(parameters) {
+        var content      = "";
+        var detalle      = [];
+        var ordinarios   = "";
+        var agregados    = "";
+        var procData     = getAgendaProcedimientoData();
+        var count        = 0;
+
+        jQuery.ajax({
+            url: parameters['url'],
+            async: false,
+            dataType: 'json',
+            success: function(data) {
+                detalle['ordinarios'] = data.ordinarios;
+                detalle['agregados']  = data.agregados;
+            }
+        });
+
+        if (detalle['ordinarios'].length == 0) {
+            ordinarios = '<tr><td colspan="{% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}5{% else %}6{% endif %}"><span class="disabled-label">No hay resultados para mostrar...</span></td></tr>';
+        } else {
+            count = 0;
+            jQuery.each(detalle['ordinarios'], function(key, value) {
+                count += 1;
+                ordinarios = ordinarios + '\
+                    <tr>'+
+                        '<td>' + count + '</td>'+
+                        {% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}
+                            '<td><a ' + ( value.numeroTemporal ? ('onClick="showDialogMsg(\'Expediente Temporal\',\'' + expTemporalMsg + '\',\'dialog-error\');" href="#"') : 'href="{{ url('admin_minsal_seguimiento_sechistorialclinico_create')}}?id_expediente='+value.idExpediente+'&id_empleado='+medicData.idEmpleado+'&id_aten_area_mod_estab='+medicData.idEmpleadoEspecialidadEstab+'&id_cita='+value.idCita+'"' ) + '>' + value.codExpediente + '</a></td>'+
+                        {% else %}
+                            '<td>' + value.codExpediente + '</td>'+
+                        {% endif %}
+                        '<td>' + value.numeroDocumentoIdentidadPaciente+ '</td>'+
+                        '<td>' + value.nombrePaciente+ '</td>'+
+                        '<td>' + value.nombreEstado+ '</td>'+
+                        {% if app.request.attributes.get('_route') is not sameas('admin_minsal_citas_citcitasdia_agenda_dia') and app.request.attributes.get('_route') is not sameas ('consulta_recibida') %}
+                            '<td><a href="{{ url('procedimientosgetcomprobante') }}?id='+value.idCita+'" target="_blank" class="btn btn-info"><span class="fa fa-print"> Imprimir</span></a></td>' +
+                        {% endif %}
+                    '</tr>';
+            });
+        }
+
+        if (detalle['agregados'].length == 0) {
+            agregados = '<tr><td colspan="{% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' %}5{% else %}6{% endif %}"><span class="disabled-label">No hay resultados para mostrar...</span></td></tr>';
+        } else {
+            {% if app.request.attributes.get('_route') == 'admin_minsal_citas_citcitasdia_agenda_dia' or app.request.attributes.get('_route')=='consulta_recibida' %}
+                {% set citCitasDia = true %}{% else %}{% set citCitasDia = false %}
+            {% endif %}
+            count = 0;
+            jQuery.each(detalle['agregados'], function(key, value) {
+                count += 1;
+                agregados = agregados + '\
+                    <tr>'+
+                        '<td>' + count + '</td>'+
+                        {% if citCitasDia %}
+                            '<td><a ' + ( value.numeroTemporal ? ('onClick="showDialogMsg(\'Expediente Temporal\',\'' + expTemporalMsg + '\',\'dialog-error\');" href="#"') : 'href="{{ url('admin_minsal_seguimiento_sechistorialclinico_create')}}?id_expediente='+value.idExpediente+'&id_empleado='+medicData.idEmpleado+'&id_aten_area_mod_estab='+medicData.idEmpleadoEspecialidadEstab+'&id_cita='+value.idCita+'"' ) + '>' + value.codExpediente + '</a></td>'+
+                        {% else %}
+                            '<td>' + value.codExpediente + '</td>'+
+                        {% endif %}
+                        '<td>' + value.numeroDocumentoIdentidadPaciente+ '</td>'+
+                        '<td>' + value.nombrePaciente+ '</td>'+
+                        '<td>' + value.nombreTipoCita+' - '+(value.idEstado === 6 ? 'Programada' : value.nombreEstado)+ '</td>'+
+                        {% if citCitasDia is sameas(false) %}
+                            '<td><a href="{{ url('procedimientosgetcomprobante') }}?id='+value.idCita+'" target="_blank" class="btn btn-info"><span class="fa fa-print"> Imprimir</span></a></td>' +
+                        {% endif %}
+                    '</tr>';;
+            });
+        }
+
+        content = '<div class="panel panel-primary">\
+                        <div class="panel-heading">Pacientes Citados</div>\
+                        <div class="panel-body" id="pb-ordinarios">\
+                            <div class="table-responsive">\
+                                <table class="table table-striped table-hover table-condensed">\
+                                    <thead>\
+                                        <tr><th>No.</th><th>Expediente</th><th>DUI</th><th>Nombre del paciente</th><th>Estado de la cita</th>{% if citCitasDia is sameas(false) %}<th>Comprobante</th>{% endif %}</tr>\
+                                    </thead>\
+                                    <tbody>\
+                                        ' + ordinarios + '\
+                                    </tbody>\
+                                </table>\
+                            </div>\
+                        </div>\
+                    </div>\
+                    <div class="panel panel-info">\
+                        <div class="panel-heading">Pacientes agregados</div>\
+                        <div class="panel-body" id="pb-agregados">\
+                            <div class="table-responsive">\
+                                <table class="table table-striped table-hover table-condensed">\
+                                    <thead>\
+                                        <tr><th>No.</th><th>Expediente</th><th>DUI</th><th>Nombre del paciente</th><th>Estado de la cita</th>{% if citCitasDia is sameas(false) %}<th>Comprobante</th>{% endif %}</tr>\
+                                    </thead>\
+                                    <tbody>\
+                                        ' + agregados + '\
+                                    </tbody>\
+                                </table>\
+                            </div>\
+                        </div>\
+                    </div>';
+
+        return { content: content };
+    }
+</script>

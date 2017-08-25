@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="TarSolicitudFvih" table="tar_solicitud_fvih">
+    <indexes>
+      <index name="IDX_A618C9DFA7C7EF6A" columns="id_formulario"/>
+      <index name="IDX_A618C9DFD01DB7AA" columns="id_identidad_genero"/>
+      <index name="IDX_A618C9DF31827296" columns="id_historial_clinico"/>
+      <index name="IDX_A618C9DFC2612308" columns="id_datos_clinicos"/>
+      <index name="IDX_A618C9DFAEE2FD4E" columns="id_datos_manejo"/>
+      <index name="IDX_A618C9DFBF09234F" columns="id_formas_transmision"/>
+      <index name="IDX_A618C9DF4E236325" columns="id_indicacion_examen"/>
+      <index name="IDX_A618C9DF63B6488D" columns="id_motivo_solicitud"/>
+      <index name="IDX_A618C9DF31AFB3AD" columns="id_orientacion_sexual"/>
+      <index name="IDX_A618C9DF9650C788" columns="id_grupo_estado_detalle"/>
+    </indexes>
+    <id name="id" type="bigint" column="id">
+      <generator strategy="SEQUENCE"/>
+    </id>
+    <field name="esConsejeria" type="boolean" column="es_consejeria" nullable="false"/>
+    <field name="idSolicitudSumeve" type="integer" column="id_solicitud_sumeve" nullable="true"/>
+    <many-to-one field="idIndicacionExamen" target-entity="TarIndicacionExamen">
+      <join-columns>
+        <join-column name="id_indicacion_examen" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idMotivoSolicitud" target-entity="TarMotivoSolicitud">
+      <join-columns>
+        <join-column name="id_motivo_solicitud" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idOrientacionSexual" target-entity="CtlOrientacionSexual">
+      <join-columns>
+        <join-column name="id_orientacion_sexual" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idGrupoEstadoDetalle" target-entity="CtlGrupoEstadoDetalle">
+      <join-columns>
+        <join-column name="id_grupo_estado_detalle" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idFormulario" target-entity="FrmFormulario">
+      <join-columns>
+        <join-column name="id_formulario" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idFormasTransmision" target-entity="TarFormasTransmision">
+      <join-columns>
+        <join-column name="id_formas_transmision" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="identidadGenero" target-entity="CtlIdentidadGenero">
+      <join-columns>
+        <join-column name="id_identidad_genero" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idDatosManejo" target-entity="TarDatosManejo">
+      <join-columns>
+        <join-column name="id_datos_manejo" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idHistorialClinico" target-entity="SecHistorialClinico">
+      <join-columns>
+        <join-column name="id_historial_clinico" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-one field="idDatosClinicos" target-entity="TarDatosClinicos">
+      <join-columns>
+        <join-column name="id_datos_clinicos" referenced-column-name="id"/>
+      </join-columns>
+    </many-to-one>
+    <many-to-many field="idFactoresRiesgo" target-entity="TarFactoresRiesgo" inversed-by="idSolicitudFvih">
+      <join-table name="tar_sol_factores">
+        <join-columns>
+          <join-column name="id_solicitud_fvih" referenced-column-name="id"/>
+        </join-columns>
+        <inverse-join-columns>
+          <join-column name="id_factores_riesgo" referenced-column-name="id"/>
+        </inverse-join-columns>
+      </join-table>
+    </many-to-many>
+  </entity>
+</doctrine-mapping>

@@ -1,0 +1,100 @@
+{% block registrar_paciente %}
+    <div class="sonata-ba-collapsed-fields">
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <label for="establecimiento">Establecimiento</label>
+                <input readonly="readonly" class="form-control" id="establecimiento" name="establecimiento" placeholder="Ingresar Establecimiento..." type="text">
+            </div>
+        </div>
+
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <label for="expediente2">Número de expediente</label>
+                <input readonly="readonly" class="form-control" id="expediente2" name="expediente2" placeholder="Ingresar expediente..." type="text"></input>
+            </div>
+        </div>
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <!-- <label for="nombres">Nombres</label> -->
+                <div class="row">
+                    <div class="col-xs-4">
+                        <label for="primer_nombres">Primer Nombre *</label>
+                        <input id="primer_nombre" name="primer_nombre" class="form-control" placeholder="Primer Nombre" type="text" required="required">
+                    </div>
+                    <div class="col-xs-4">
+                        <label for="segundo_nombres">Segundo Nombre</label>
+                        <input id="segundo_nombre" name="segundo_nombre" class="form-control" placeholder="Segundo Nombre" type="text">
+                    </div>
+                    <div class="col-xs-4">
+                        <label for="tercer_nombres">Tercer Nombre</label>
+                        <input id="tercer_nombre" name="tercer_nombre" class="form-control" placeholder="Tercer Nombre" type="text">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <!-- <label for="nombres">Apellidos</label> -->
+                <div class="row">
+                    <div class="col-xs-4">
+                        <label for="primer_apellido">Primer Apellido *</label>
+                        <input id="primer_apellido" name="primer_apellido" class="form-control" placeholder="Primer Apellido" type="text" required="required">
+                    </div>
+                    <div class="col-xs-4">
+                        <label for="segundo_apellido">Segundo Apellido</label>
+                        <input id="segundo_apellido" name="segundo_apellido" class="form-control" placeholder="Segundo Apellido" type="text">
+                    </div>
+                    <div class="col-xs-4">
+                        <label for="apellido_casada">Apellido de Casada</label>
+                        <input id="apellido_casada" name="apellido_casada" class="form-control" placeholder="Tercer Apellido" type="text">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <div class="row">
+                    <div class="col-xs-6">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento *</label>
+                        <input id="fecha_nacimiento" name="fecha_nacimiento" type="text" required class="form-control" data-mask="99/99/9999" placeholder="dd/mm/yyyy" value="{{ 'now'|date('d/m/Y') }}"></input>
+                    </div>
+                    <div class="col-xs-2">
+                        <label for="edad_anio">Año(s)</label>
+                        <input id="edad_anio" name="edad_anio" type="number" class="form-control" placeholder="Años" type="text" value="0">
+                    </div>
+                    <div class="col-xs-2">
+                        <label for="edad_meses">Mes(es)</label>
+                        <input id="edad_meses" name="edad_meses" type="number" class="form-control" placeholder="Meses" type="text" value="0">
+                    </div>
+                    <div class="col-xs-2">
+                        <label for="edad_dias">Día(s)</label>
+                        <input id="edad_dias" name="edad_dias" type="number" class="form-control" placeholder="Dias" type="text" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+                <div class="form-group">
+                <label for="id_sexo">Sexo *</label>
+                <select id="id_sexo" name="id_sexo" required="required"></select>
+            </div>
+        </div>
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <label for="nombre_madre">Nombre de la Madre</label>
+                <input class="form-control" id="nombre_madre" name="nombre_madre" placeholder="Nombre de la madre..." type="text"></input>
+            </div>
+        </div>
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <label for="nombre_padre">Nombre del Padre</label>
+                <input class="form-control" id="nombre_padre" name="nombre_padre" placeholder="Nombre del padre..." type="text"></input>
+            </div>
+        </div>
+        <div class=" sonata-ba-field sonata-ba-field-standard-natural">
+            <div class="form-group">
+                <label for="nombre_responsable">Responsable</label>
+                <input class="form-control" id="nombre_responsable" name="nombre_responsable" placeholder="Nombre del responsable..." type="text"></input>
+            </div>
+        </div>
+    </div>
+{% endblock %}
